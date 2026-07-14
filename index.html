@@ -53,10 +53,10 @@
     const ImageIcon = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></Icon>;
     const Download = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></Icon>;
 
-    // --- Gemini API 呼び出し共通関数 ---
+    // --- Gemini API 呼び出し共通関数 (Cloudflare Worker経由) ---
     const callGeminiAPI = async (prompt, systemInstruction = "", isJson = false, schema = null) => {
-      const apiKey = ""; // 実行環境で自動付与されます
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+      // Cloudflare Worker の URL に変更
+      const url = `https://note-syukyaku.yymmatsu.workers.dev/generate-text`;
 
       const payload = {
         contents: [{ parts: [{ text: prompt }] }],
@@ -83,7 +83,8 @@
           });
 
           if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
+            const errBody = await response.text();
+            throw new Error(`API error (${response.status}): ${errBody}`);
           }
 
           const data = await response.json();
@@ -94,17 +95,17 @@
           return isJson ? JSON.parse(text) : text;
         } catch (error) {
           if (attempt === maxRetries - 1) {
-            throw new Error("APIの呼び出しに失敗しました。時間をおいて再度お試しください。");
+            throw new Error("APIの呼び出しに失敗しました。時間をおいて再度お試しください。詳細: " + error.message);
           }
           await new Promise(resolve => setTimeout(resolve, baseDelay * Math.pow(2, attempt)));
         }
       }
     };
 
-    // --- 画像生成API呼び出し関数 (Imagen 4) ---
+    // --- 画像生成API呼び出し関数 (Cloudflare Worker経由) ---
     const generateImageAPI = async (prompt) => {
-      const apiKey = ""; // 実行環境で自動付与されます
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+      // Cloudflare Worker の URL に変更
+      const url = `https://note-syukyaku.yymmatsu.workers.dev/generate-image`;
       
       const payload = {
         instances: { prompt: prompt },
@@ -118,7 +119,8 @@
       });
 
       if (!response.ok) {
-        throw new Error(`画像生成APIエラー: ${response.status}`);
+        const errBody = await response.text();
+        throw new Error(`画像生成APIエラー (${response.status}): ${errBody}`);
       }
 
       const data = await response.json();
@@ -165,7 +167,6 @@
       const [copiedStates, setCopiedStates] = useState({});
 
       const handleCopy = (text, id) => {
-        // iFrameなどでも確実に動作させるためのフォールバック対応コピー処理
         const textArea = document.createElement("textarea");
         textArea.value = text;
         document.body.appendChild(textArea);
