@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>売れるnote＆集客メーカー</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel (ブラウザ内でJSXをコンパイルするため) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans pb-20 min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // --- アイコンコンポーネント (Lucide互換のSVG) ---
+    const Icon = ({ children, className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        {children}
+      </svg>
+    );
+    const Sparkles = ({className=""}) => <Icon className={`w-6 h-6 ${className}`}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></Icon>;
+    const Copy = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></Icon>;
+    const Check = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M20 6 9 17l-5-5"/></Icon>;
+    const ChevronRight = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="m9 18 6-6-6-6"/></Icon>;
+    const FileText = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></Icon>;
+    const Share2 = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></Icon>;
+    const Lightbulb = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></Icon>;
+    const PenTool = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/></Icon>;
+    const AlertCircle = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></Icon>;
+    const Loader2 = ({className=""}) => <Icon className={`w-4 h-4 animate-spin ${className}`}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></Icon>;
+    const ImageIcon = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></Icon>;
+    const Download = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></Icon>;
+
+    // --- Gemini API 呼び出し共通関数 ---
+    const callGeminiAPI = async (prompt, systemInstruction = "", isJson = false, schema = null) => {
+      const apiKey = ""; // 実行環境で自動付与されます
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+      const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        generationConfig: {}
+      };
+
+      if (isJson) {
+        payload.generationConfig.responseMimeType = "application/json";
+        if (schema) {
+          payload.generationConfig.responseSchema = schema;
+        }
+      }
+
+      const maxRetries = 5;
+      const baseDelay = 1000;
+
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
+
+          const data = await response.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          
+          if (!text) throw new Error("No text in response");
+
+          return isJson ? JSON.parse(text) : text;
+        } catch (error) {
+          if (attempt === maxRetries - 1) {
+            throw new Error("APIの呼び出しに失敗しました。時間をおいて再度お試しください。");
+          }
+          await new Promise(resolve => setTimeout(resolve, baseDelay * Math.pow(2, attempt)));
+        }
+      }
+    };
+
+    // --- 画像生成API呼び出し関数 (Imagen 4) ---
+    const generateImageAPI = async (prompt) => {
+      const apiKey = ""; // 実行環境で自動付与されます
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+      
+      const payload = {
+        instances: { prompt: prompt },
+        parameters: { sampleCount: 1 }
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`画像生成APIエラー: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
+        return `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
+      } else {
+        throw new Error("画像の生成に失敗しました。");
+      }
+    };
+
+    const OGP_STYLES = [
+      { id: 1, name: "プロフェッショナル・コーポレート", desc: "清潔感があり、信頼感や知性を与えるデザイン", prompt: "Professional and clean corporate style, modern vector illustration, flat design, high contrast, bright and trustworthy colors" },
+      { id: 2, name: "ジブリ風・ノスタルジックアニメ", desc: "柔らかい水彩画の質感、温かみのある光", prompt: "Studio Ghibli style, hand-drawn anime aesthetic, soft watercolor textures, nostalgic and warm lighting, whimsical feel" },
+      { id: 3, name: "TikTok風・ネオンポップ", desc: "高彩度のビビッドなカラー、トレンド感", prompt: "TikTok style, modern trendy pop aesthetic, vibrant neon colors, high saturation, energetic and youth-focused look" },
+      { id: 4, name: "モダン・ベクターイラスト", desc: "シンプルで洗練された幾何学的なイラスト", prompt: "Modern vector illustration, flat design, clean lines, trustworthy and intelligent colors, tech data overlay" },
+      { id: 5, name: "少年漫画・熱血突破", desc: "力強い線画、燃え上がるオーラ", prompt: "Dynamic Japanese shonen manga style, heroic comic book aesthetic, intense action lines, vibrant and energetic colors" },
+      { id: 6, name: "サイバーパンク・フューチャー", desc: "近未来的なデザイン、ネオンブルーやパープル", prompt: "Cyberpunk aesthetic, futuristic digital look, dark background with glowing neon blue and purple light, tech data overlay" },
+      { id: 7, name: "和風モダン・重厚スタイル", desc: "水墨画の濃淡、伝統的で力強い和風", prompt: "Modern Japanese sumi-e style, ink wash painting aesthetic, dramatic brush strokes, minimalist but powerful feel" }
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState(1);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState("");
+
+      // Step 1
+      const [genre, setGenre] = useState("");
+      const [themes, setThemes] = useState([]);
+      const [selectedTheme, setSelectedTheme] = useState("");
+      const [toc, setToc] = useState("");
+
+      // Step 2
+      const [articleBody, setArticleBody] = useState("");
+
+      // Step 3
+      const [marketingData, setMarketingData] = useState(null);
+
+      // Step 4
+      const [selectedStyleId, setSelectedStyleId] = useState(1);
+      const [generatedImagePrompt, setGeneratedImagePrompt] = useState("");
+      const [generatedImageUrl, setGeneratedImageUrl] = useState("");
+      const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+      const [copiedStates, setCopiedStates] = useState({});
+
+      const handleCopy = (text, id) => {
+        // iFrameなどでも確実に動作させるためのフォールバック対応コピー処理
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          setCopiedStates(prev => ({ ...prev, [id]: true }));
+          setTimeout(() => setCopiedStates(prev => ({ ...prev, [id]: false })), 2000);
+        } catch (err) {
+          console.error('Copy failed', err);
+        }
+        document.body.removeChild(textArea);
+      };
+
+      // 1. テーマ案の生成
+      const generateThemes = async () => {
+        if (!genre) { setError("ジャンルを入力してください（例：ダイエット、副業、人間関係など）"); return; }
+        setLoading(true); setError("");
+        try {
+          const systemPrompt = `あなたは優秀なコンテンツマーケターです。
+          HARMの法則（Health, Ambition, Relation, Money）を意識し、悩み解決につながるnoteの「HowTo系テーマ案（〜の方法、〜の手順など）」を提案してください。
+          出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
+          const prompt = `ジャンル「${genre}」で、ターゲット層が思わず買いたくなる有料noteのテーマ案（タイトル）を5つ作成してください。`;
+          
+          const schema = { type: "ARRAY", items: { type: "STRING" } };
+          const result = await callGeminiAPI(prompt, systemPrompt, true, schema);
+          
+          let parsedThemes = [];
+          if (Array.isArray(result)) {
+            parsedThemes = result.map(t => typeof t === 'string' ? t : (t.title || t.name || JSON.stringify(t)));
+          } else if (result && result.themes && Array.isArray(result.themes)) {
+            parsedThemes = result.themes.map(t => typeof t === 'string' ? t : (t.title || JSON.stringify(t)));
+          }
+          setThemes(parsedThemes);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // 2. 目次案の生成
+      const generateToc = async () => {
+        if (!selectedTheme) { setError("テーマを選択してください"); return; }
+        setLoading(true); setError("");
+        try {
+          const systemPrompt = `あなたは特定のジャンルの専門家です。読者の悩みを解決する有料noteの目次を作成します。
+          大見出しと小見出しを使って、論理的で分かりやすい構成にしてください。導入から具体的な解決策、まとめまでの流れを作ってください。`;
+          const prompt = `テーマ：「${selectedTheme}」\nこのテーマで有料noteを書きます。有料部分を含めた目次を作成してください。`;
+          const result = await callGeminiAPI(prompt, systemPrompt, false);
+          setToc(result);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // 3. 本文の生成
+      const generateArticle = async () => {
+        if (!toc) { setError("目次を入力してください"); return; }
+        setLoading(true); setError("");
+        try {
+          const systemPrompt = `あなたはプロのライターです。提供された目次を元に、noteの本文を執筆します。
+          【重要ルール】
+          - AIっぽい堅苦しい表現は避け、人間らしい自然な言葉遣いにすること。
+          - 読者がイメージしやすいように、具体的な例え話や、よくある失敗談などの「疑似体験談」を交えること。
+          - 読みやすさを重視し、適度に改行や空白行を入れること。
+          - 重要なポイントは「**太字**」にして強調すること。
+          - 箇条書きや引用ブロックなどを効果的に使うこと。`;
+          const prompt = `以下のテーマと目次に従って、有料noteの本文を最後まで書き上げてください。\n\nテーマ：${selectedTheme}\n\n目次：\n${toc}`;
+          const result = await callGeminiAPI(prompt, systemPrompt, false);
+          setArticleBody(result);
+          setActiveTab(3);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // 4. タイトル案＆SNS投稿の生成
+      const generateMarketing = async () => {
+        if (!articleBody) { setError("本文がありません。先に本文を作成してください。"); return; }
+        setLoading(true); setError("");
+        try {
+          const systemPrompt = `あなたはSNSマーケティングのプロフェッショナルです。入力されたnote本文を元に、読者を惹きつけるタイトル案と、各SNS向けの集客用投稿文を作成してください。`;
+          const prompt = `以下のnote本文を元に、次の内容を作成してください。
+
+          1. クリックしたくなる魅力的なnoteのタイトル案（3つ）
+          2. X（Twitter）用投稿：140字程度。強いフック、共感、noteへの誘導を含む。
+          3. Threads用投稿（3段スレッド）：
+             - 1段目：ターゲットの悩みに寄り添い、強い興味を惹く問題提起。
+             - 2段目：noteの中身（ノウハウ）を少しだけチラ見せして価値を証明。
+             - 3段目：結論と、詳細を知りたくなるnoteへの強い誘導（リンク用プレースホルダを含む）。
+          4. Facebook用投稿：少し長めの文章。なぜこのnoteを書いたのかという背景やストーリーを交え、友人やフォロワーに語りかけるような温かみのあるトーン。
+
+          出力は以下のJSONスキーマに従ってください。`;
+          
+          const schema = {
+            type: "OBJECT",
+            properties: {
+              titles: { type: "ARRAY", items: { type: "STRING" } },
+              x_post: { type: "STRING" },
+              threads: { type: "ARRAY", items: { type: "STRING" } },
+              facebook_post: { type: "STRING" }
+            },
+            required: ["titles", "x_post", "threads", "facebook_post"]
+          };
+          
+          const result = await callGeminiAPI(prompt + `\n\n---note本文---\n${articleBody.substring(0, 3000)}`, systemPrompt, true, schema);
+          
+          const sanitizeStringArray = (arr) => {
+            if (!Array.isArray(arr)) return [];
+            return arr.map(item => typeof item === 'string' ? item : (item.title || item.text || JSON.stringify(item)));
+          };
+
+          setMarketingData({
+            titles: sanitizeStringArray(result?.titles || []),
+            x_post: typeof result?.x_post === 'string' ? result.x_post : String(result?.x_post || ''),
+            threads: sanitizeStringArray(result?.threads || []),
+            facebook_post: typeof result?.facebook_post === 'string' ? result.facebook_post : String(result?.facebook_post || '')
+          });
+
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // 5. OGP画像生成
+      const generateOgpImage = async () => {
+        const targetTopic = marketingData?.titles?.[0] || selectedTheme || genre;
+        if (!targetTopic) { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
+        const style = OGP_STYLES.find(s => s.id === selectedStyleId);
+        
+        setIsGeneratingImage(true); setError("");
+        setGeneratedImagePrompt(""); setGeneratedImageUrl("");
+        
+        try {
+          const systemPrompt = `You are an expert prompt engineer for AI image generation.
+          Generate a single English prompt for an OGP thumbnail image (wide landscape orientation).
+          Include instructions to leave some negative space (empty space) at the center or bottom for text overlay.
+          Output ONLY the raw prompt text. No markdown, no quotes, no conversational text.`;
+          const textPrompt = `Topic/Subject: "${targetTopic}"\nArt Style Keywords: "${style.prompt}"\nCreate a highly detailed image generation prompt.`;
+          
+          const imgPrompt = await callGeminiAPI(textPrompt, systemPrompt, false);
+          setGeneratedImagePrompt(imgPrompt);
+
+          const imageUrl = await generateImageAPI(imgPrompt);
+          setGeneratedImageUrl(imageUrl);
+          
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setIsGeneratingImage(false);
+        }
+      };
+
+      return (
+        <div className="w-full">
+          {/* Header */}
+          <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+            <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-indigo-600">
+                <Sparkles />
+                <h1 className="font-bold text-xl tracking-tight">売れるnote＆集客メーカー</h1>
+              </div>
+              <div className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                AI Content Studio
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-5xl mx-auto px-4 mt-8">
+            {/* Error Banner */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 text-red-700 animate-fade-in">
+                <AlertCircle className="flex-shrink-0 mt-0.5" />
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
+
+            {/* Tabs */}
+            <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 p-1 mb-8 overflow-x-auto">
+              {[
+                { id: 1, label: "Step 1: 企画・目次", icon: Lightbulb },
+                { id: 2, label: "Step 2: 本文執筆", icon: PenTool },
+                { id: 3, label: "Step 3: タイトル＆集客", icon: Share2 },
+                { id: 4, label: "Step 4: OGP作成", icon: ImageIcon }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? "bg-indigo-600 text-white shadow-md"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                  }`}
+                >
+                  <tab.icon className="flex-shrink-0" />
+                  <span className="whitespace-nowrap sm:inline">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Content Area */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+              
+              {/* STEP 1 */}
+              {activeTab === 1 && (
+                <div className="space-y-8 animate-fade-in">
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-bold flex items-center gap-2 border-b pb-2">
+                      <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                      ジャンルからテーマを決める
+                    </h2>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <input
+                        type="text"
+                        value={genre}
+                        onChange={(e) => setGenre(e.target.value)}
+                        placeholder="例: ダイエット、副業、恋愛、子育て"
+                        className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      />
+                      <button
+                        onClick={generateThemes}
+                        disabled={loading}
+                        className="bg-slate-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {loading && !themes.length ? <Loader2 /> : <Sparkles className="w-4 h-4" />}
+                        テーマ案を出す
+                      </button>
+                    </div>
+                  </div>
+
+                  {themes.length > 0 && (
+                    <div className="space-y-4 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                      <p className="text-sm font-medium text-indigo-800 mb-2">生成されたテーマ案 (気になるものを選択してください)</p>
+                      <div className="space-y-2">
+                        {themes.map((theme, i) => (
+                          <label key={i} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedTheme === theme ? 'bg-indigo-50 border-indigo-300' : 'bg-white border-slate-200 hover:border-indigo-200'}`}>
+                            <input
+                              type="radio"
+                              name="theme"
+                              value={theme}
+                              checked={selectedTheme === theme}
+                              onChange={(e) => setSelectedTheme(e.target.value)}
+                              className="mt-1 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span className="text-slate-700 text-sm">{theme}</span>
+                          </label>
+                        ))}
+                      </div>
+                      
+                      {selectedTheme && (
+                        <div className="pt-4 flex justify-end">
+                          <button
+                            onClick={generateToc}
+                            disabled={loading}
+                            className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+                          >
+                            {loading ? <Loader2 /> : <ChevronRight />}
+                            このテーマで目次を作る
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {toc && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-slate-700">目次案 (自由に編集してブラッシュアップしましょう)</h3>
+                        <button onClick={() => handleCopy(toc, 'toc')} className="text-slate-400 hover:text-slate-600 flex items-center gap-1 text-xs">
+                          {copiedStates['toc'] ? <Check className="text-green-500" /> : <Copy />}
+                          コピー
+                        </button>
+                      </div>
+                      <textarea
+                        value={toc}
+                        onChange={(e) => setToc(e.target.value)}
+                        rows={12}
+                        className="w-full p-4 border border-slate-300 rounded-lg text-sm leading-relaxed focus:ring-2 focus:ring-indigo-500 outline-none font-mono"
+                      />
+                      <div className="flex justify-end pt-4">
+                        <button
+                          onClick={() => setActiveTab(2)}
+                          className="bg-slate-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-slate-700 transition-colors shadow-md"
+                        >
+                          Step 2: 本文執筆へ進む
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* STEP 2 */}
+              {activeTab === 2 && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                      <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
+                      目次から本文をAI執筆
+                    </h2>
+                  </div>
+                  
+                  {!toc ? (
+                    <div className="text-center py-10 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                      <p className="text-slate-500 mb-4">まだ目次が作成されていません。</p>
+                      <button onClick={() => setActiveTab(1)} className="text-indigo-600 font-medium hover:underline">
+                        Step 1に戻って目次を作成する
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg flex items-start gap-3">
+                        <Lightbulb className="text-blue-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-blue-800">
+                          動画ノウハウを適用し、AIっぽさを消した自然な表現や具体例を交えて文章を生成します。
+                        </p>
+                      </div>
+                      
+                      <button
+                        onClick={generateArticle}
+                        disabled={loading}
+                        className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg"
+                      >
+                        {loading ? <><Loader2 className="w-5 h-5" /> 本文を全力で執筆中...</> : <><PenTool className="w-5 h-5" /> AIで本文を一気に書き上げる</>}
+                      </button>
+
+                      {articleBody && (
+                        <div className="space-y-3 mt-6">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-700">生成された本文 (自由に修正してください)</h3>
+                            <button onClick={() => handleCopy(articleBody, 'body')} className="text-slate-500 hover:text-indigo-600 flex items-center gap-1 text-sm bg-slate-100 px-3 py-1 rounded">
+                              {copiedStates['body'] ? <><Check className="text-green-500" /> コピー完了</> : <><Copy /> 全てコピー</>}
+                            </button>
+                          </div>
+                          <textarea
+                            value={articleBody}
+                            onChange={(e) => setArticleBody(e.target.value)}
+                            rows={20}
+                            className="w-full p-5 border border-slate-300 rounded-lg text-base leading-relaxed focus:ring-2 focus:ring-indigo-500 outline-none"
+                          />
+                          <div className="flex justify-end pt-4">
+                             <button
+                              onClick={() => setActiveTab(3)}
+                              className="bg-slate-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-slate-700 transition-colors shadow-md"
+                            >
+                              Step 3: 集客準備へ進む
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* STEP 3 */}
+              {activeTab === 3 && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                      <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
+                      売るためのタイトル＆SNS投稿文
+                    </h2>
+                  </div>
+
+                  {!articleBody ? (
+                    <div className="text-center py-10 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                      <p className="text-slate-500 mb-4">本文データがありません。</p>
+                      <button onClick={() => setActiveTab(2)} className="text-indigo-600 font-medium hover:underline">
+                        Step 2に戻って本文を作成する
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                       <button
+                        onClick={generateMarketing}
+                        disabled={loading}
+                        className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold hover:bg-emerald-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg"
+                      >
+                        {loading ? <><Loader2 className="w-5 h-5" /> 集客コンテンツを生成中...</> : <><Share2 className="w-5 h-5" /> タイトルとSNS集客文を生成する</>}
+                      </button>
+
+                      {marketingData && (
+                        <div className="space-y-8 mt-6">
+                          
+                          {/* Titles */}
+                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+                              <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                 <FileText className="text-slate-500" /> 売れるタイトル案
+                              </h3>
+                            </div>
+                            <div className="p-4 space-y-3">
+                              {marketingData.titles.map((title, idx) => (
+                                <div key={idx} className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                   <p className="text-sm font-medium text-slate-800">{title}</p>
+                                   <button onClick={() => handleCopy(title, `title-${idx}`)} className="p-2 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm">
+                                      {copiedStates[`title-${idx}`] ? <Check className="text-green-500" /> : <Copy />}
+                                   </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* X */}
+                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <div className="bg-[#000000] px-4 py-3 flex justify-between items-center">
+                              <h3 className="font-bold text-white flex items-center gap-2">𝕏 (Twitter) 投稿案</h3>
+                              <button onClick={() => handleCopy(marketingData.x_post, 'x')} className="text-slate-300 hover:text-white flex items-center gap-1 text-xs">
+                                 {copiedStates['x'] ? <Check className="text-green-400" /> : <Copy />} コピー
+                              </button>
+                            </div>
+                            <div className="p-4">
+                              <textarea readOnly value={marketingData.x_post} rows={5} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent" />
+                            </div>
+                          </div>
+
+                          {/* Threads */}
+                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 flex justify-between items-center">
+                              <h3 className="font-bold text-white flex items-center gap-2">@ Threads 3段スレッド投稿案</h3>
+                            </div>
+                            <div className="p-4 space-y-4">
+                               {marketingData.threads.map((thread, idx) => (
+                                 <div key={idx} className="relative pl-6">
+                                    {idx !== 2 && <div className="absolute left-[11px] top-8 bottom-[-24px] w-0.5 bg-slate-200"></div>}
+                                    <div className="absolute left-0 top-1 w-6 h-6 bg-slate-100 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-slate-400">
+                                      {idx + 1}
+                                    </div>
+                                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 relative group">
+                                      <textarea readOnly value={thread} rows={4} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700" />
+                                      <button onClick={() => handleCopy(thread, `thread-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                          {copiedStates[`thread-${idx}`] ? <Check className="text-green-500" /> : <Copy />}
+                                      </button>
+                                    </div>
+                                 </div>
+                               ))}
+                            </div>
+                          </div>
+
+                          {/* Facebook */}
+                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <div className="bg-[#1877F2] px-4 py-3 flex justify-between items-center">
+                              <h3 className="font-bold text-white flex items-center gap-2">f Facebook 投稿案</h3>
+                              <button onClick={() => handleCopy(marketingData.facebook_post, 'fb')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
+                                 {copiedStates['fb'] ? <Check className="text-green-400" /> : <Copy />} コピー
+                              </button>
+                            </div>
+                            <div className="p-4">
+                              <textarea readOnly value={marketingData.facebook_post} rows={8} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent" />
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end pt-4">
+                             <button
+                              onClick={() => setActiveTab(4)}
+                              className="bg-slate-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-slate-700 transition-colors shadow-md"
+                            >
+                              Step 4: OGP画像生成へ進む
+                            </button>
+                          </div>
+
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* STEP 4 */}
+              {activeTab === 4 && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                      <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">4</span>
+                      売れるnoteの顔「OGP画像」をAI生成
+                    </h2>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg flex items-start gap-3">
+                    <ImageIcon className="text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p>文字入れ前提のレイアウト（テキスト用の余白確保）を考慮した、プロ仕様の画像生成プロンプトを構築し、アプリ内で画像を直接生成します。</p>
+                      <p className="font-medium text-blue-900 mt-2">1. 記事の世界観に合うスタイルを選んでください。</p>
+                    </div>
+                  </div>
+
+                  {/* スタイル選択 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {OGP_STYLES.map((style) => (
+                      <div 
+                        key={style.id}
+                        onClick={() => setSelectedStyleId(style.id)}
+                        className={`cursor-pointer p-4 rounded-xl border transition-all ${
+                          selectedStyleId === style.id 
+                            ? "bg-indigo-50 border-indigo-500 shadow-md ring-1 ring-indigo-500" 
+                            : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-bold text-sm text-slate-800">{style.name}</h3>
+                          {selectedStyleId === style.id && <Check className="text-indigo-600" />}
+                        </div>
+                        <p className="text-xs text-slate-500">{style.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={generateOgpImage}
+                    disabled={isGeneratingImage || (!selectedTheme && !genre)}
+                    className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg mt-6"
+                  >
+                    {isGeneratingImage ? (
+                      <><Loader2 className="w-5 h-5" /> AIが画像を生成中...（約10〜20秒）</>
+                    ) : (
+                      <><ImageIcon className="w-5 h-5" /> このスタイルでOGP画像を生成する</>
+                    )}
+                  </button>
+
+                  {/* 生成結果 */}
+                  {(generatedImageUrl || generatedImagePrompt) && (
+                    <div className="mt-8 space-y-6">
+                      {generatedImageUrl && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                             <h3 className="text-sm font-bold text-slate-700">完成したOGP見出し画像 (16:9)</h3>
+                             <a 
+                               href={generatedImageUrl} 
+                               download="note_ogp_image.png"
+                               className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-sm bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 font-medium transition-colors"
+                             >
+                               <Download /> 画像をダウンロード
+                             </a>
+                          </div>
+                          <div className="bg-slate-100 border border-slate-200 rounded-xl p-2 shadow-inner overflow-hidden flex justify-center">
+                            <img src={generatedImageUrl} alt="Generated OGP" className="w-full max-w-3xl h-auto rounded-lg shadow-sm" />
+                          </div>
+                          <p className="text-xs text-slate-500 text-center">※ ダウンロードした画像にCanva等でnoteのタイトル文字を入れると完璧です！</p>
+                        </div>
+                      )}
+
+                      {generatedImagePrompt && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">画像を生成したプロンプト（裏側）</h4>
+                            <button onClick={() => handleCopy(generatedImagePrompt, 'img-prompt')} className="text-slate-400 hover:text-slate-600 flex items-center gap-1 text-xs">
+                              {copiedStates['img-prompt'] ? <Check className="text-green-500" /> : <Copy />}
+                            </button>
+                          </div>
+                          <p className="text-xs font-mono text-slate-600 break-words leading-relaxed">{generatedImagePrompt}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
