@@ -155,12 +155,17 @@
       const [themes, setThemes] = useState([]);
       const [selectedTheme, setSelectedTheme] = useState("");
       
-      // 価格と提供価値の設定
+      // 有料/無料（外部URL誘導）設定
+      const [isPaid, setIsPaid] = useState(true); // 有料・無料のトグル
       const [price, setPrice] = useState("980");
       const [benefit, setBenefit] = useState("");
       const [hasBonus, setHasBonus] = useState(false);
       const [bonusContent, setBonusContent] = useState("");
       const [hasLimitedSale, setHasLimitedSale] = useState(false);
+      
+      // 無料時の追加フィールド
+      const [redirectUrl, setRedirectUrl] = useState("");
+      const [redirectPurpose, setRedirectPurpose] = useState("");
       
       const [toc, setToc] = useState("");
 
@@ -201,7 +206,7 @@
           const systemPrompt = `あなたは優秀なコンテンツマーケターです。
           HARMの法則（Health, Ambition, Relation, Money）を意識し、悩み解決につながるnoteの「HowTo系テーマ案（〜の方法、〜の手順など）」を提案してください。
           出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
-          const prompt = `ジャンル「${genre}」で、ターゲット層が思わず買いたくなる有料noteのテーマ案（タイトル）を5つ作成してください。`;
+          const prompt = `ジャンル「${genre}」で、ターゲット層が思わず買いたくなる有料または優良フリーのnoteのテーマ案（タイトル）を5つ作成してください。`;
           
           const schema = { type: "ARRAY", items: { type: "STRING" } };
           const result = await callGeminiAPI(prompt, systemPrompt, true, schema);
@@ -226,13 +231,17 @@
         if (!selectedTheme) { setError("テーマを選択してください"); return; }
         setLoading(true); setError("");
         try {
-          const systemPrompt = `あなたは特定のジャンルの専門家です。読者の悩みを解決する有料noteの目次を作成します。
+          const monetizationStrategy = isPaid 
+            ? `【有料販売】: この商品は「予定価格：${price}円」で販売予定です。価格の価値に見合う、満足度の高い構成にしてください。`
+            : `【無料公開＋外部誘導】: この記事は無料で一般公開されますが、最終的に読者を外部サイトへ自然に誘導する目的があります。${redirectUrl ? `誘導先URL: ${redirectUrl}` : ''} ${redirectPurpose ? `誘導目的: ${redirectPurpose}` : ''}`;
+
+          const systemPrompt = `あなたは特定のジャンルの専門家です。読者の悩みを解決するnoteの目次を作成します。
           大見出し（章タイトル等の大枠）のみを使って、シンプルで多すぎない論理的な構成にしてください。導入から具体的な解決策、まとめまでの流れを作ってください。
-          今回、この商品は「価格：${price}円」で販売予定です。価格の価値に見合う、満足度の高い構成にしてください。
+          ${monetizationStrategy}
           ${benefit ? `【提供価値（得られる未来）】: ${benefit}` : ''}
-          ${hasBonus ? `【購入特典】: ${bonusContent || '限定特典・限定付録ワークシート等'}` : ''}`;
+          ${hasBonus ? `【読者特典】: ${bonusContent || '限定特典・限定付録ワークシート等'}` : ''}`;
           
-          const prompt = `テーマ：「${selectedTheme}」\nこのテーマで有料noteを書きます。有料部分を含めた目次を作成してください。`;
+          const prompt = `テーマ：「${selectedTheme}」\nこのテーマでnoteを書きます。目次を作成してください。`;
           const result = await callGeminiAPI(prompt, systemPrompt, false);
           setToc(result);
         } catch (err) {
@@ -242,11 +251,16 @@
         }
       };
 
-      // 3. 本文の生成 (大見出しのみに制限・末尾に7つのハッシュタグを追加するよう最適化)
+      // 3. 本文の生成 (有料/無料誘導の分岐、大見出しのみに制限、末尾ハッシュタグ＆CTA挿入)
       const generateArticle = async () => {
         if (!toc) { setError("目次を入力してください"); return; }
         setLoading(true); setError("");
         try {
+          const monetizationContext = isPaid 
+            ? `この記事は「価格：${price}円」の価値がある有料noteとして販売されます。読者が「購入して本当に良かった！」「価格以上の価値がある！」と大満足するような丁寧で中身の濃い記述を行ってください。`
+            : `この記事は「完全無料」のコンテンツとして公開されます。まずは読者に圧倒的な価値をプレゼントしてファンになってもらうことが目的です。
+               そして、本文の最後の章（まとめ、または結び）のなかで、外部誘導先（目的: ${redirectPurpose || "詳細サイト確認"}, URL: ${redirectUrl || "サイトリンク"}）への案内文（クリックを促す魅力的な導線文章）を、自然かつ強力なCall To Actionとして必ず設置してください。`;
+
           const systemPrompt = `あなたはプロのライターです。提供された目次を元に、noteの本文を執筆します。
           【重要ルール】
           - noteの目次が多すぎて複雑になるのを防ぐため、見出しは「大見出し（## 章タイトル）」のみを使用してください。中見出し（###）や小見出し（####）は絶対に作らないでください。
@@ -256,12 +270,13 @@
           - 読みやすさを重視し、適度に改行や空白行を入れること。
           - 箇条書きや引用ブロックなどを効果的に使うこと。
           - 本文の「一番最後」には、この記事のテーマに関連する効果的なハッシュタグを、横並び（半角スペース区切り）で「ちょうど7つ」出力してください。（例：#タグ1 #タグ2 #タグ3 #タグ4 #タグ5 #タグ6 #タグ7）
-          - この記事は「価格：${price}円」の価値がある有料noteとして販売されます。
-          ${benefit ? `【提供価値（購入後に得られる成果）】: ${benefit}` : ''}
-          ${hasBonus ? `【読者特典】: ${bonusContent}` : ''}
-          読者が「購入して本当に良かった！」「価格以上の価値がある！」と大満足するような丁寧で中身の濃い記述を行ってください。`;
           
-          const prompt = `以下のテーマと目次に従って、有料noteの本文を最後まで書き上げてください。\n\nテーマ：${selectedTheme}\n\n目次：\n${toc}`;
+          【販売戦略コンテキスト】
+          ${monetizationContext}
+          ${benefit ? `【期待される提供価値（購入/完読後に得られる成果）】: ${benefit}` : ''}
+          ${hasBonus ? `【読者特典】: ${bonusContent}` : ''}`;
+          
+          const prompt = `以下のテーマと目次に従って、有料または無料noteの本文を最後まで書き上げてください。\n\nテーマ：${selectedTheme}\n\n目次：\n${toc}`;
           const result = await callGeminiAPI(prompt, systemPrompt, false);
           setArticleBody(result);
           setActiveTab(3);
@@ -272,19 +287,29 @@
         }
       };
 
-      // 4. タイトル案＆SNS投稿の生成
+      // 4. タイトル案＆SNS投稿の生成 (有料/無料の切り替えに対応)
       const generateMarketing = async () => {
         if (!articleBody) { setError("本文がありません。先に本文を作成してください。"); return; }
         setLoading(true); setError("");
         try {
-          const systemPrompt = `あなたはSNSマーケティングのプロフェッショナルです。入力されたnote本文、および設定された「価値と価格、特典情報」を元に、読者を惹きつけるタイトル案と、各SNS向けの集客用投稿文を作成してください。
-          【商品データ】
-          - 販売予定価格: ${price}円
-          ${hasLimitedSale ? `- マーケ戦略: 数量限定販売（売り切れ次第値上げする希少性をアピールしてください）` : ''}
-          ${benefit ? `- 提供価値（得られる未来）: ${benefit}` : ''}
-          ${hasBonus ? `- 購入者特典: ${bonusContent}` : ''}
+          const monetizationStrategy = isPaid
+            ? `【有料note販売】
+               - 販売予定価格: ${price}円
+               ${hasLimitedSale ? `- マーケ戦略: 数量限定販売（売り切れ次第値上げする希少性をアピールしてください）` : ''}
+               SNS投稿（X, Threads, Facebook）では、この価格の「お得感」「今すぐ買うべき理由（限定性・希少性）」を訴求してください。`
+            : `【完全無料note + 外部URL紹介】
+               - 紹介誘導先: ${redirectUrl || "記事内URL"}
+               - 誘導目的: ${redirectPurpose || "サイトアクセス"}
+               SNS投稿（X, Threads, Facebook）では、「有料級の情報が完全無料」「今だけ無料でプレゼント公開中」「今すぐ読める」という障壁の低さとお得感を強く打ち出し、まずはnoteを読んでもらい、外部URLへアクセスしてもらうようなコピーライティングにしてください。絶対にお金や価格、値上げ、数量制限に関する文言は書かないでください。`;
+
+          const systemPrompt = `あなたはSNSマーケティングのプロフェッショナルです。入力されたnote本文、および設定された「販売形式、価値、特典、外部誘導情報」を元に、読者を惹きつけるタイトル案と、各SNS向けの集客用投稿文を作成してください。
           
-          SNS投稿（X, Threads, Facebook）では、この価格の「お得感」「今すぐ買うべき理由（限定性・希少性）」、速度、整理、そして「購入することで得られる未来（価値）」を強く訴求してください。`;
+          【商品データ】
+          ${monetizationStrategy}
+          ${benefit ? `- 提供価値（得られる未来）: ${benefit}` : ''}
+          ${hasBonus ? `- 特典情報: ${bonusContent}` : ''}
+          
+          SNS投稿では、読者がこのコンテンツを読むことで得られる具体的な未来（価値）を強く訴求してください。`;
           
           const prompt = `以下のnote本文を元に、次の内容を作成してください。
 
@@ -292,9 +317,9 @@
           2. X（Twitter）用投稿：140字程度。強いフック、共感、noteへの誘導を含む。
           3. Threads用投稿（3段スレッド）：
              - 1段目：ターゲットの悩みに寄り添い、強い興味を惹く問題提起。
-             - 2段目：noteの中身（ノウハウや提供価値、特典）を少しだけチラ見せして価値を証明。
-             - 3段目：結論と、詳細を知りたくなるnoteへの強い誘導（リンク用プレースホルダ、限定価格情報を含む）。
-          4. Facebook用投稿：少し長めの文章。なぜこの価格でこの価値を届けようと思ったのかという情熱・ストーリーを交え、フォロワーに語りかけるような温かみのあるトーン。
+             - 2段目：noteの中身（ノウハウや提供価値、紹介特典）を少しだけチラ見せして価値を証明。
+             - 3段目：結論と、詳細を知りたくなるnoteへの強い誘導（リンク用プレースホルダ、完全無料または限定価格情報を含む）。
+          4. Facebook用投稿：少し長めの文章。なぜこの記事を書き、この価値を届けようと思ったのかという情熱・ストーリーを交え、フォロワーに語りかけるような温かみのあるトーン。
 
           出力は以下のJSONスキーマに従ってください。`;
           
@@ -330,7 +355,7 @@
         }
       };
 
-      // 5. サムネイル画像生成 (Gemini Engine 本気プロンプト最適化版)
+      // 5. サムネイル画像生成
       const generateThumbnailImage = async () => {
         const targetTopic = marketingData?.titles?.[0] || selectedTheme || genre;
         if (!targetTopic) { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
@@ -340,7 +365,6 @@
         setGeneratedImagePrompt(""); setGeneratedImageUrl("");
         
         try {
-          // AIイメージ生成用の英語プロンプトを「極限までハイクオリティ」に生成させる超強力なインストラクション
           const systemPrompt = `You are a world-class commercial designer and an elite prompt engineer for Imagen 3 and Imagen 4.
 Your goal is to generate an extraordinarily beautiful, professional-grade, high-conversion image generation prompt in English for a 16:9 wide landscape banner thumbnail.
 
@@ -467,67 +491,137 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                       
                       {selectedTheme && (
                         <div className="space-y-6 pt-4 border-t border-indigo-100 animate-fade-in">
-                          <p className="text-sm font-bold text-indigo-900">② 提供価値と販売価格を設定する（AIに学習させて文章を売れやすくします）</p>
+                          <p className="text-sm font-bold text-indigo-900">② 販売形式と提供価値を設定する（無料公開による外部サイトへの誘導も可能です）</p>
                           
-                          {/* 提供価値の入力欄 */}
-                          <div className="space-y-2">
-                            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
-                              この商品が解決する悩み・得られる未来（提供価値）
-                            </label>
-                            <textarea
-                              value={benefit}
-                              onChange={(e) => setBenefit(e.target.value)}
-                              placeholder="例：毎日のコンビニ飯選びに迷わなくなり、ストレスフリーで1ヶ月後に自然と体重を落とせる具体的なメニュー選択術と実践スケジュール"
-                              className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                              rows={2}
-                            />
-                            <p className="text-[11px] text-slate-500">※ 入力すると、本文や集客用のSNSコピーが、この価値を強くアピールする内容に自動調整されます。</p>
+                          {/* 有料・無料のトグルスイッチ */}
+                          <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 max-w-sm">
+                            <button
+                              type="button"
+                              onClick={() => setIsPaid(true)}
+                              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isPaid ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                              💰 有料noteとして販売
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIsPaid(false)}
+                              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isPaid ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                              🎁 無料note（外部URL紹介）
+                            </button>
                           </div>
 
-                          {/* 価格設定と販売戦略 */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
-                                販売予定価格 (円)
-                              </label>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="number"
-                                  value={price}
-                                  onChange={(e) => setPrice(e.target.value)}
-                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
-                                  placeholder="980"
-                                />
-                                <span className="text-slate-600 text-sm font-bold">円</span>
-                              </div>
-                              <p className="text-[11px] text-slate-500 bg-amber-50 text-amber-800 p-2 rounded border border-amber-100">
-                                💡 <strong>価格の決め方アドバイス：</strong><br />
-                                実績がない最初の内は、手に取りやすい <strong>980円〜3,000円</strong> 程度での設定がおすすめです。
-                              </p>
-                            </div>
-
-                            <div className="space-y-3">
-                              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
-                                販売・マーケティング戦略
-                              </label>
-                              <div className="space-y-2 bg-white p-3 rounded-lg border border-slate-200">
-                                <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
-                                  <input
-                                    type="checkbox"
-                                    checked={hasLimitedSale}
-                                    onChange={(e) => setHasLimitedSale(e.target.checked)}
-                                    className="rounded text-indigo-600 focus:ring-indigo-500"
-                                  />
-                                  <span>部数・数量限定で販売（売り切れごとに値上げ）</span>
+                          {/* 有料時の設定項目 */}
+                          {isPaid ? (
+                            <div className="space-y-6 animate-fade-in">
+                              {/* 提供価値の入力欄 */}
+                              <div className="space-y-2">
+                                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                  この商品が解決する悩み・得られる未来（提供価値）
                                 </label>
-                                <p className="text-[10px] text-slate-400 pl-6">
-                                  「今買わないと損をする」という心理が働き、購入率が跳ね上がります（動画ノウハウ直伝）。
-                                </p>
+                                <textarea
+                                  value={benefit}
+                                  onChange={(e) => setBenefit(e.target.value)}
+                                  placeholder="例：毎日のコンビニ飯選びに迷わなくなり、ストレスフリーで1ヶ月後に自然と体重を落とせる具体的なメニュー選択術と実践スケジュール"
+                                  className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                  rows={2}
+                                />
+                              </div>
+
+                              {/* 価格設定と販売戦略 */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                    販売予定価格 (円)
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      value={price}
+                                      onChange={(e) => setPrice(e.target.value)}
+                                      className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                                      placeholder="980"
+                                    />
+                                    <span className="text-slate-600 text-sm font-bold">円</span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 bg-amber-50 text-amber-800 p-2 rounded border border-amber-100">
+                                    💡 <strong>価格の決め方アドバイス：</strong><br />
+                                    実績がない最初の内は、手に取りやすい <strong>980円〜3,000円</strong> 程度での設定がおすすめです。
+                                  </p>
+                                </div>
+
+                                <div className="space-y-3">
+                                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                    販売・マーケティング戦略
+                                  </label>
+                                  <div className="space-y-2 bg-white p-3 rounded-lg border border-slate-200">
+                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+                                      <input
+                                        type="checkbox"
+                                        checked={hasLimitedSale}
+                                        onChange={(e) => setHasLimitedSale(e.target.checked)}
+                                        className="rounded text-indigo-600 focus:ring-indigo-500"
+                                      />
+                                      <span>部数・数量限定で販売（売り切れごとに値上げ）</span>
+                                    </label>
+                                    <p className="text-[10px] text-slate-400 pl-6">
+                                      「今買わないと損をする」という心理が働き、購入率が跳ね上がります（動画ノウハウ直伝）。
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          ) : (
+                            /* 無料（外部URL誘導）設定 */
+                            <div className="space-y-6 animate-fade-in bg-emerald-50/50 p-5 rounded-xl border border-emerald-100">
+                              <p className="text-xs font-bold text-emerald-800">📌 無料noteを活用して、自身のHPや公式LINE、YouTubeへ誘導する導線を作ります。</p>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                    紹介したいサイトのURL
+                                  </label>
+                                  <input
+                                    type="url"
+                                    value={redirectUrl}
+                                    onChange={(e) => setRedirectUrl(e.target.value)}
+                                    placeholder="例: https://line.me/R/ti/p/..."
+                                    className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                  />
+                                  <p className="text-[11px] text-slate-500">※ noteの無料記事の最後（ハッシュタグの直前）にURLが自然に配置されます。</p>
+                                </div>
 
-                          {/* 特典設定 */}
+                                <div className="space-y-2">
+                                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                    URLクリックを促す目的や限定プレゼント
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={redirectPurpose}
+                                    onChange={(e) => setRedirectPurpose(e.target.value)}
+                                    placeholder="例: 公式LINE追加で『コンビニ痩せ即効メニューリストPDF』を無料配布中！"
+                                    className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                  />
+                                  <p className="text-[11px] text-slate-500">※ クリックしたくなるような強力な特典や誘導理由を入れてください。</p>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                  この記事が無料で提供する、読者が一番喜ぶ価値
+                                </label>
+                                <textarea
+                                  value={benefit}
+                                  onChange={(e) => setBenefit(e.target.value)}
+                                  placeholder="例：お金をかけずに今すぐスーパーやコンビニで実践できる、お腹いっぱい食べても太らない魔法の食事ルール解説"
+                                  className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                  rows={2}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 特典設定 (共通) */}
                           <div className="space-y-3 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
                             <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-indigo-900">
                               <input
@@ -536,7 +630,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                 onChange={(e) => setHasBonus(e.target.checked)}
                                 className="rounded text-indigo-600 focus:ring-indigo-500"
                               />
-                              <span>🎁 購入者限定 of 特典・プレゼントを付ける</span>
+                              <span>🎁 購入者/読者限定の追加プレゼントを付ける</span>
                             </label>
                             {hasBonus && (
                               <div className="pl-6 pt-2 animate-fade-in space-y-2">
@@ -618,16 +712,20 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                       <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-xs space-y-1.5 text-slate-600">
                         <p className="font-bold text-slate-700 text-sm mb-1">現在の設定パラメータ</p>
                         <p><strong>選択中のテーマ:</strong> {selectedTheme}</p>
-                        <p><strong>販売予定価格:</strong> <span className="font-bold text-indigo-600 font-mono text-sm">{price}</span> 円</p>
+                        <p><strong>販売設定:</strong> {isPaid ? <span className="text-indigo-600 font-bold">💰 有料note ({price}円)</span> : <span className="text-emerald-600 font-bold">🎁 無料公開＋外部誘導 ({redirectPurpose || "サイト紹介"})</span>}</p>
+                        {!isPaid && redirectUrl && <p><strong>誘導先URL:</strong> <span className="font-mono text-xs">{redirectUrl}</span></p>}
                         {benefit && <p><strong>期待される価値:</strong> {benefit}</p>}
                         {hasBonus && <p><strong>読者特典:</strong> 🎁 {bonusContent || "あり"}</p>}
-                        {hasLimitedSale && <p><strong>販売戦略:</strong> 数量限定販売（値上げ戦略あり）</p>}
+                        {isPaid && hasLimitedSale && <p><strong>販売戦略:</strong> 数量限定販売（値上げ戦略あり）</p>}
                       </div>
 
                       <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg flex items-start gap-3">
                         <Lightbulb className="text-blue-600 flex-shrink-0 mt-0.5" />
                         <p className="text-sm text-blue-800">
-                          入力された「提供価値」と「販売価格（{price}円）」に見合ったクオリティになるようにAIが執筆ルールを自動調整します。
+                          {isPaid 
+                            ? `入力された「提供価値」と「販売価格（${price}円）」に見合ったクオリティになるようにAIが執筆ルールを自動調整します。`
+                            : `無料で最高級の信頼を獲得し、自然と「${redirectPurpose || 'リンクをクリック'}」したくなるように本文の導線文を自動構築します。`
+                          }
                         </p>
                       </div>
                       
@@ -883,7 +981,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                           </div>
                           <p className="text-xs text-slate-500 text-center leading-relaxed">
                             💡 <strong>デザイナーからのヒント：</strong>この画像にはすでに文字入れ用の美しい余白（グラデーションやボケ空間）が施されています。<br />
-                            CanvaやPhonto等のアプリを使い、空いているスペースにお好みのフォントでnoteのタイトルを配置すれば、プロ顔負けのバナーが瞬時に完成します！
+                            CanvaやPhonto等のアプリを使い、空いているスペースにお好みのフォントでnoteのタイトルを配置すれば、プロ顔負け of バナーが瞬時に完成します！
                           </p>
                         </div>
                       )}
