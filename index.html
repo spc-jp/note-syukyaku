@@ -132,7 +132,7 @@
       }
     };
 
-    // サムネイルスタイルを「極限までハイクオリティかつ明確な定義」にアップデート
+    // サムネイルスタイル
     const THUMBNAIL_STYLES = [
       { id: 1, name: "プロフェッショナル・コーポレート", desc: "最先端の3Dアイソメトリックで描かれる、圧倒的な信頼性とモダンなビジネスデザイン", prompt: "Premium professional corporate style, state-of-the-art 3D isometric vector illustration, clean geometric shapes, smooth pastel gradients, volumetric studio lighting, trustworthy indigo and warm gold color scheme, extremely polished and modern corporate aesthetic" },
       { id: 2, name: "ジブリ風・ノスタルジックアニメ", desc: "息をのむような美しい水彩画、どこか温かくノスタルジックなアニメアート", prompt: "Breathtaking Studio Ghibli anime aesthetic, cinematic hand-drawn watercolor illustration, nostalgic golden hour sunlight filtering through clouds, rich grass and wood textures, warm nostalgic atmosphere, masterpiece animation background" },
@@ -155,12 +155,18 @@
       const [themes, setThemes] = useState([]);
       const [selectedTheme, setSelectedTheme] = useState("");
       
-      // 有料/無料（外部URL誘導）設定
-      const [isPaid, setIsPaid] = useState(true); // 有料・無料のトグル
+      // 有料/無料設定
+      const [isPaid, setIsPaid] = useState(true);
       const [price, setPrice] = useState("980");
       const [benefit, setBenefit] = useState("");
+      
+      // 特典設定
       const [hasBonus, setHasBonus] = useState(false);
       const [bonusContent, setBonusContent] = useState("");
+      const [hasLineBonus, setHasLineBonus] = useState(false);
+      const [lineBonusContent, setLineBonusContent] = useState("");
+      const [lineUrl, setLineUrl] = useState("");
+
       const [hasLimitedSale, setHasLimitedSale] = useState(false);
       
       // 無料時の追加フィールド
@@ -232,14 +238,16 @@
         setLoading(true); setError("");
         try {
           const monetizationStrategy = isPaid 
-            ? `【有料販売】: この商品は「予定価格：${price}円」で販売予定です。価格の価値に見合う、満足度の高い構成にしてください。`
+            ? `【有料販売（無料・有料の分割設計）】: この商品は「予定価格：${price}円」で販売予定です。
+               前半の「無料公開エリア」で読者に強い共感を伝え、最高の解決策の手前（はさみマークのペイウォールライン）で有料へと移行する寸止め構成にしてください。`
             : `【無料公開＋外部誘導】: この記事は無料で一般公開されますが、最終的に読者を外部サイトへ自然に誘導する目的があります。${redirectUrl ? `誘導先URL: ${redirectUrl}` : ''} ${redirectPurpose ? `誘導目的: ${redirectPurpose}` : ''}`;
 
           const systemPrompt = `あなたは特定のジャンルの専門家です。読者の悩みを解決するnoteの目次を作成します。
           大見出し（章タイトル等の大枠）のみを使って、シンプルで多すぎない論理的な構成にしてください。導入から具体的な解決策、まとめまでの流れを作ってください。
           ${monetizationStrategy}
           ${benefit ? `【提供価値（得られる未来）】: ${benefit}` : ''}
-          ${hasBonus ? `【読者特典】: ${bonusContent || '限定特典・限定付録ワークシート等'}` : ''}`;
+          ${hasBonus ? `【購入特典】: ${bonusContent || '限定特典・限定付録ワークシート等'}` : ''}
+          ${hasLineBonus ? `【公式LINE登録特典】: ${lineBonusContent} (LINE追加URL: ${lineUrl || '公式LINEリンク'})\n※記事の最後の結びの部分で、公式LINEへの登録とLINE登録特典の受け取りを促す案内セクションを目次に含めてください。` : ''}`;
           
           const prompt = `テーマ：「${selectedTheme}」\nこのテーマでnoteを書きます。目次を作成してください。`;
           const result = await callGeminiAPI(prompt, systemPrompt, false);
@@ -251,13 +259,25 @@
         }
       };
 
-      // 3. 本文の生成 (有料/無料誘導の分岐、大見出しのみに制限、末尾ハッシュタグ＆CTA挿入)
+      // 3. 本文の生成 (無料/有料寸止め境界線挿入を完全自動化)
       const generateArticle = async () => {
         if (!toc) { setError("目次を入力してください"); return; }
         setLoading(true); setError("");
         try {
+          // 有料時のプロンプト：「無料エリア」＋「寸止めコピー」＋「有料エリア」の境界線を強制的に作らせる
           const monetizationContext = isPaid 
-            ? `この記事は「価格：${price}円」の価値がある有料noteとして販売されます。読者が「購入して本当に良かった！」「価格以上の価値がある！」と大満足するような丁寧で中身の濃い記述を行ってください。`
+            ? `この記事は「価格：${price}円」の価値がある有料noteとして販売されます。
+               読者が最初の無料部分を読んだ時点で「この先を読まなければ損をする！」と強く感じ、購入後に「価格以上の価値がある！」と大満足するような二段階構成で執筆してください。
+
+               【有料販売のための分割執筆ルール】
+               1. 本文全体のボリュームの約 35〜45% を「無料部分（導入、ターゲットへの強い共感、悩みの根本原因の指摘）」として執筆してください。
+               2. 無料部分の最後に、読者の購買意欲を最大限に刺激する【魅力的な寸止めセールスコピー】（この課題を克服する具体的な実践手順や、特別なノウハウがこの先で手に入るという期待感の提示）を2段落ほどで熱を込めて書いてください。
+               3. 寸止めコピーの直後に、noteの管理画面で有料ラインを設定するためのコピペ用ガイドラインとして、必ず以下の区切り線を1行独立させて挿入してください。
+                  
+                  ✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー
+                  
+               4. 区切り線の後から、核心部分となる具体的な解決ノウハウ、今日からできる実践ステップ、極秘のテクニックを詳細に解説した「有料エリア」を執筆してください。
+               5. 有料部分の最後には、購入者への感謝のメッセージと、読者限定プレゼント特典の情報（特典: ${bonusContent || "なし"}）を必ず添えてください。`
             : `この記事は「完全無料」のコンテンツとして公開されます。まずは読者に圧倒的な価値をプレゼントしてファンになってもらうことが目的です。
                そして、本文の最後の章（まとめ、または結び）のなかで、外部誘導先（目的: ${redirectPurpose || "詳細サイト確認"}, URL: ${redirectUrl || "サイトリンク"}）への案内文（クリックを促す魅力的な導線文章）を、自然かつ強力なCall To Actionとして必ず設置してください。`;
 
@@ -269,12 +289,18 @@
           - 読者がイメージしやすいように、具体的な例え話や、よくある失敗談などの「疑似体験談」を交えること。
           - 読みやすさを重視し、適度に改行や空白行を入れること。
           - 箇条書きや引用ブロックなどを効果的に使うこと。
-          - 本文の「一番最後」には、この記事のテーマに関連する効果的なハッシュタグを、横並び（半角スペース区切り）で「ちょうど7つ」出力してください。（例：#タグ1 #タグ2 #タグ3 #タグ4 #タグ5 #タグ6 #タグ7）
+          
+          【特典導線ルール】
+          ${hasLineBonus ? `【重要：公式LINE追加特典CTAの自動設置】: 本文の最後の「大見出しの終わり、かつハッシュタグの直前」に、LINE公式アカウントの追加と特典プレゼントを強く呼びかける案内文を自然に挿入してください。
+            特典内容: ${lineBonusContent}
+            LINE追加用URL: ${lineUrl || 'https://line.me/R/ti/p/... (あなたのLINE公式リンク)'}
+            案内は魅力的で、今すぐクリックして受け取りたくなるようなコピーにしてください。` : ''}
+          
+          - 本文の「一番最後（すべての文字の最後）」には、この記事のテーマに関連する効果的なハッシュタグを、横並び（半角スペース区切り）で「ちょうど7つ」出力してください。（例：#タグ1 #タグ2 #タグ3 #タグ4 #タグ5 #タグ6 #タグ7）
           
           【販売戦略コンテキスト】
           ${monetizationContext}
-          ${benefit ? `【期待される提供価値（購入/完読後に得られる成果）】: ${benefit}` : ''}
-          ${hasBonus ? `【読者特典】: ${bonusContent}` : ''}`;
+          ${benefit ? `【期待される提供価値（購入/完読後に得られる成果）】: ${benefit}` : ''}`;
           
           const prompt = `以下のテーマと目次に従って、有料または無料noteの本文を最後まで書き上げてください。\n\nテーマ：${selectedTheme}\n\n目次：\n${toc}`;
           const result = await callGeminiAPI(prompt, systemPrompt, false);
@@ -302,12 +328,13 @@
                - 誘導目的: ${redirectPurpose || "サイトアクセス"}
                SNS投稿（X, Threads, Facebook）では、「有料級の情報が完全無料」「今だけ無料でプレゼント公開中」「今すぐ読める」という障壁の低さとお得感を強く打ち出し、まずはnoteを読んでもらい、外部URLへアクセスしてもらうようなコピーライティングにしてください。絶対にお金や価格、値上げ、数量制限に関する文言は書かないでください。`;
 
-          const systemPrompt = `あなたはSNSマーケティングのプロフェッショナルです。入力されたnote本文、および設定された「販売形式、価値、特典、外部誘導情報」を元に、読者を惹きつけるタイトル案と、各SNS向けの集客用投稿文を作成してください。
+          const systemPrompt = `あなたはSNSマーケティングのプロフェッショナルです。入力されたnote本文、および設定された「販売形式、価値、特典、LINE登録特典、外部誘導情報」を元に、読者を惹きつけるタイトル案と、各SNS向けの集客用投稿文を作成してください。
           
           【商品データ】
           ${monetizationStrategy}
           ${benefit ? `- 提供価値（得られる未来）: ${benefit}` : ''}
-          ${hasBonus ? `- 特典情報: ${bonusContent}` : ''}
+          ${hasBonus ? `- プレゼント特典情報: ${bonusContent}` : ''}
+          ${hasLineBonus ? `- LINE登録特典: ${lineBonusContent} (LINE追加URL: ${lineUrl || '公式LINEリンク'})\n※各SNS投稿の訴求ポイントとして「公式LINE追加で、さらに『${lineBonusContent}』を無料プレゼント中！」というダブルオファーを強力に盛り込んでください。これによりSNSからの追加率とクリック率が劇的に上がります。` : ''}
           
           SNS投稿では、読者がこのコンテンツを読むことで得られる具体的な未来（価値）を強く訴求してください。`;
           
@@ -317,7 +344,7 @@
           2. X（Twitter）用投稿：140字程度。強いフック、共感、noteへの誘導を含む。
           3. Threads用投稿（3段スレッド）：
              - 1段目：ターゲットの悩みに寄り添い、強い興味を惹く問題提起。
-             - 2段目：noteの中身（ノウハウや提供価値、紹介特典）を少しだけチラ見せして価値を証明。
+             - 2段目：noteの中身（ノウハウや提供価値、各種特典、LINE特典）を少しだけチラ見せして価値を証明。
              - 3段目：結論と、詳細を知りたくなるnoteへの強い誘導（リンク用プレースホルダ、完全無料または限定価格情報を含む）。
           4. Facebook用投稿：少し長めの文章。なぜこの記事を書き、この価値を届けようと思ったのかという情熱・ストーリーを交え、フォロワーに語りかけるような温かみのあるトーン。
 
@@ -621,29 +648,72 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                             </div>
                           )}
 
-                          {/* 特典設定 (共通) */}
-                          <div className="space-y-3 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-indigo-900">
-                              <input
-                                type="checkbox"
-                                checked={hasBonus}
-                                onChange={(e) => setHasBonus(e.target.checked)}
-                                className="rounded text-indigo-600 focus:ring-indigo-500"
-                              />
-                              <span>🎁 購入者/読者限定の追加プレゼントを付ける</span>
-                            </label>
-                            {hasBonus && (
-                              <div className="pl-6 pt-2 animate-fade-in space-y-2">
-                                <input
-                                  type="text"
-                                  value={bonusContent}
-                                  onChange={(e) => setBonusContent(e.target.value)}
-                                  placeholder="特典の内容（例：30日間書き込み式コンビニダイエット手帳、おすすめコンビニ商品チェックリストなど）"
-                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                />
-                                <p className="text-[10px] text-indigo-800">※ 特典を付けることで、読者への満足度を高め、高単価でも売れる商品に進化します。</p>
+                          {/* 特典・プレゼント導線の設定セクション */}
+                          <div className="space-y-4 pt-4 border-t border-indigo-100">
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">🎁 特典・プレゼント導線の設計</p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* 1. 購入者/読者限定プレゼント特典 */}
+                              <div className="space-y-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-indigo-900">
+                                  <input
+                                    type="checkbox"
+                                    checked={hasBonus}
+                                    onChange={(e) => setHasBonus(e.target.checked)}
+                                    className="rounded text-indigo-600 focus:ring-indigo-500"
+                                  />
+                                  <span>🎁 限定プレゼント特典を付ける</span>
+                                </label>
+                                {hasBonus ? (
+                                  <div className="pt-2 animate-fade-in space-y-2">
+                                    <input
+                                      type="text"
+                                      value={bonusContent}
+                                      onChange={(e) => setBonusContent(e.target.value)}
+                                      placeholder="特典の内容（例：30日間書き込み式コンビニダイエット手帳）"
+                                      className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                    />
+                                    <p className="text-[10px] text-slate-500">※ note記事に直接添付するか、購入者だけが見られるエリアに用意するプレゼント情報です。</p>
+                                  </div>
+                                ) : (
+                                  <p className="text-[11px] text-slate-400">note単体の価値を倍増させ、購入率や満足度を高めるための特典です。</p>
+                                )}
                               </div>
-                            )}
+
+                              {/* 2. LINE登録特典（公式LINE追加プレゼント） */}
+                              <div className="space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-900">
+                                  <input
+                                    type="checkbox"
+                                    checked={hasLineBonus}
+                                    onChange={(e) => setHasLineBonus(e.target.checked)}
+                                    className="rounded text-emerald-600 focus:ring-emerald-500"
+                                  />
+                                  <span>💬 公式LINE登録特典を付ける</span>
+                                </label>
+                                {hasLineBonus ? (
+                                  <div className="pt-2 animate-fade-in space-y-3">
+                                    <input
+                                      type="text"
+                                      value={lineBonusContent}
+                                      onChange={(e) => setLineBonusContent(e.target.value)}
+                                      placeholder="特典の内容（例：おすすめコンビニ痩せ商品チェックリストPDF）"
+                                      className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                    />
+                                    <input
+                                      type="url"
+                                      value={lineUrl}
+                                      onChange={(e) => setLineUrl(e.target.value)}
+                                      placeholder="LINE公式アカウントの追加URL"
+                                      className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                    />
+                                    <p className="text-[10px] text-slate-500">※ 本文の結びに「LINE登録で〇〇をプレゼント」という最強の顧客リスト収集導線を引きます。</p>
+                                  </div>
+                                ) : (
+                                  <p className="text-[11px] text-slate-400">公式LINEへ自動的に誘導し、見込み客の「友だちリスト」を獲得するための導線です。</p>
+                                )}
+                              </div>
+                            </div>
                           </div>
 
                           <div className="pt-4 flex justify-end">
@@ -715,7 +785,8 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         <p><strong>販売設定:</strong> {isPaid ? <span className="text-indigo-600 font-bold">💰 有料note ({price}円)</span> : <span className="text-emerald-600 font-bold">🎁 無料公開＋外部誘導 ({redirectPurpose || "サイト紹介"})</span>}</p>
                         {!isPaid && redirectUrl && <p><strong>誘導先URL:</strong> <span className="font-mono text-xs">{redirectUrl}</span></p>}
                         {benefit && <p><strong>期待される価値:</strong> {benefit}</p>}
-                        {hasBonus && <p><strong>読者特典:</strong> 🎁 {bonusContent || "あり"}</p>}
+                        {hasBonus && <p><strong>限定プレゼント特典:</strong> 🎁 {bonusContent || "あり"}</p>}
+                        {hasLineBonus && <p><strong>LINE登録特典:</strong> 💬 {lineBonusContent || "あり"}</p>}
                         {isPaid && hasLimitedSale && <p><strong>販売戦略:</strong> 数量限定販売（値上げ戦略あり）</p>}
                       </div>
 
@@ -723,9 +794,10 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         <Lightbulb className="text-blue-600 flex-shrink-0 mt-0.5" />
                         <p className="text-sm text-blue-800">
                           {isPaid 
-                            ? `入力された「提供価値」と「販売価格（${price}円）」に見合ったクオリティになるようにAIが執筆ルールを自動調整します。`
+                            ? `無料エリア（約40%）で課題を浮き彫りにし、寸止めした位置に「✂️ 有料設定ライン」を自動挿入します。その後、有料エリア（約60%）で具体的解決策を執筆します。`
                             : `無料で最高級の信頼を獲得し、自然と「${redirectPurpose || 'リンクをクリック'}」したくなるように本文の導線文を自動構築します。`
                           }
+                          {hasLineBonus && ` また、公式LINE（特典: ${lineBonusContent}）への最強登録導線を、本文の結びに組み込みます。`}
                         </p>
                       </div>
                       
@@ -952,7 +1024,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-4 rounded-xl font-bold hover:from-indigo-500 hover:to-indigo-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg mt-6"
                   >
                     {isGeneratingImage ? (
-                      <><Loader2 className="w-5 h-5" /> Gemini Engineがプロンプトとデザインを極限調整中...（約10〜20秒）</>
+                      <><Loader2 className="w-5 h-5 animate-spin" /> Gemini Engineがプロンプトとデザインを極限調整中...（約10〜20秒）</>
                     ) : (
                       <><Sparkles className="w-5 h-5 text-indigo-200" /> プレミアム仕様でサムネイル画像を自動生成する</>
                     )}
@@ -981,7 +1053,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                           </div>
                           <p className="text-xs text-slate-500 text-center leading-relaxed">
                             💡 <strong>デザイナーからのヒント：</strong>この画像にはすでに文字入れ用の美しい余白（グラデーションやボケ空間）が施されています。<br />
-                            CanvaやPhonto等のアプリを使い、空いているスペースにお好みのフォントでnoteのタイトルを配置すれば、プロ顔負け of バナーが瞬時に完成します！
+                            Canva等を使って、空いているスペースにお好みのフォントでnoteのタイトルを配置すれば、プロ顔負けのバナーが瞬時に完成します！
                           </p>
                         </div>
                       )}
