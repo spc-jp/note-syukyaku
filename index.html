@@ -132,7 +132,7 @@
       }
     };
 
-    // サムネイルスタイル
+    // サムネイルスタイル (Gemini本気バージョン: 9種類の最高解像度プロンプト定義)
     const THUMBNAIL_STYLES = [
       { id: 1, name: "プロフェッショナル・コーポレート", desc: "最先端の3Dアイソメトリックで描かれる、圧倒的な信頼性とモダンなビジネスデザイン", prompt: "Premium professional corporate style, state-of-the-art 3D isometric vector illustration, clean geometric shapes, smooth pastel gradients, volumetric studio lighting, trustworthy indigo and warm gold color scheme, extremely polished and modern corporate aesthetic" },
       { id: 2, name: "ジブリ風・ノスタルジックアニメ", desc: "息をのむような美しい水彩画、どこか温かくノスタルジックなアニメアート", prompt: "Breathtaking Studio Ghibli anime aesthetic, cinematic hand-drawn watercolor illustration, nostalgic golden hour sunlight filtering through clouds, rich grass and wood textures, warm nostalgic atmosphere, masterpiece animation background" },
@@ -309,12 +309,12 @@
 
           const systemPrompt = `あなたはプロのライターです。提供された目次を元に、noteの本文を執筆します。
           【重要ルール】
-          - noteの目次が多すぎて複雑になるのを防ぐため、見出しは「大見出し（## 章タイトル）」のみを使用してください。中見出し（###）や小見出し（####）は絶対に作らないでください。
-          - 詳細なポイントや重要な解説は、見出しを作成せずに、文章のなかで「**太字**」にして強調し分かりやすく説明してください。
-          - AIっぽい堅苦しい表現は避け、人間らしい自然な言葉遣いにすること。
-          - 読者がイメージしやすいように、具体的な例え話や、よくある失敗談などの「疑似体験談」を交えること。
-          - 読みやすさを重視し、適度に改行や空白行を入れること。
-          - 箇条書きや引用ブロックなどを効果的に使うこと。
+          - note의 目次가 너무 복잡해지는 것을 막기 위해, 見出し는「大見出し（## 章タイトル）」만 사용해주세요. 中見出し（###）나 小見出し（####）는 절대로 만들지 마세요.
+          - 상세 포인트나 중요한 해설은, 見出し를 새로 만들지 않고, 문장 내에서「**太字**」로 강조해 이해하기 쉽게 설명하세요.
+          - AI스러운 딱딱한 표현은 피하고, 사람다운 자연스러운 어조(日本語の自然な話し言葉・書き言葉)로 작성하세요.
+          - 독자가 이미지하기 쉽도록 구체적인 비유나, 흔히 겪는 실패담 등의 「유사 체험담」을 섞으세요.
+          - 가독성을 중시해, 적절히 줄바꿈과 공백 라인을 넣으세요.
+          - 글머리 기호(箇条書き)나 인용 블록을 효과적으로 사용하세요.
           
           【特典導線ルール】
           ${hasLineBonus ? `【重要：公式LINE追加特典CTAの自動設置】: 本文の最後の「大見出しの終わり、かつハッシュタグの直前」に、LINE公式アカウントの追加と特典プレゼントを強く呼びかける案内文を自然に挿入してください。
@@ -328,7 +328,7 @@
           ${monetizationContext}
           ${benefit ? `【期待される提供価値（購入/完読後に得られる成果）】: ${benefit}` : ''}`;
           
-          const prompt = `以下のテーマと目次に従って、有料または無料noteの本文を最後まで書き上げてください。\n\nテーマ：${selectedTheme}\n\n目次：\n${toc}`;
+          const prompt = `以下のテーマと目次に従って、有料または無料note의 본문을 끝까지 작성해 주세요.\n\nテーマ：${selectedTheme}\n\n目次：\n${toc}`;
           const result = await callGeminiAPI(prompt, systemPrompt, false);
           setArticleBody(result);
           setActiveTab(3);
@@ -408,7 +408,7 @@
         }
       };
 
-      // 5. サムネイル画像生成
+      // 5. サムネイル画像生成 (Gemini Engine 本気プロンプト最適化版)
       const generateThumbnailImage = async () => {
         const targetTopic = marketingData?.titles?.[0] || selectedTheme || genre;
         if (!targetTopic) { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
@@ -937,7 +937,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                 <div key={idx} className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
                                    <p className="text-sm font-medium text-slate-800">{title}</p>
                                    <button onClick={() => handleCopy(title, `title-${idx}`)} className="p-2 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm">
-                                      {copiedStates[`title-${idx}`] ? <Check className="text-green-500" /> : <Copy />}
+                                      {copiedStates[`title-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                                    </button>
                                 </div>
                               ))}
@@ -949,7 +949,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                             <div className="bg-[#000000] px-4 py-3 flex justify-between items-center">
                               <h3 className="font-bold text-white flex items-center gap-2">𝕏 (Twitter) 投稿案</h3>
                               <button onClick={() => handleCopy(marketingData.x_post, 'x')} className="text-slate-300 hover:text-white flex items-center gap-1 text-xs">
-                                 {copiedStates['x'] ? <Check className="text-green-400" /> : <Copy />} コピー
+                                 {copiedStates['x'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
                               </button>
                             </div>
                             <div className="p-4">
@@ -972,7 +972,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                     <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 relative group">
                                       <textarea readOnly value={thread} rows={4} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700" />
                                       <button onClick={() => handleCopy(thread, `thread-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                          {copiedStates[`thread-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy />}
+                                          {copiedStates[`thread-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                                       </button>
                                     </div>
                                  </div>
@@ -985,7 +985,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                             <div className="bg-[#1877F2] px-4 py-3 flex justify-between items-center">
                               <h3 className="font-bold text-white flex items-center gap-2">f Facebook 投稿案</h3>
                               <button onClick={() => handleCopy(marketingData.facebook_post, 'fb')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
-                                 {copiedStates['fb'] ? <Check className="text-green-400" /> : <Copy />} コピー
+                                 {copiedStates['fb'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
                               </button>
                             </div>
                             <div className="p-4">
