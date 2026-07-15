@@ -204,6 +204,32 @@
         document.body.removeChild(textArea);
       };
 
+      // 【初期画面（完全にクリーンな初期状態）に戻すリセット関数】
+      const handleReset = () => {
+        setActiveTab(1);
+        setGenre("");
+        setThemes([]);
+        setSelectedTheme("");
+        setIsPaid(true);
+        setPrice("980");
+        setBenefit("");
+        setHasBonus(false);
+        setBonusContent("");
+        setHasLineBonus(false);
+        setLineBonusContent("");
+        setLineUrl("");
+        setHasLimitedSale(false);
+        setRedirectUrl("");
+        setRedirectPurpose("");
+        setToc("");
+        setArticleBody("");
+        setMarketingData(null);
+        setSelectedStyleId(1);
+        setGeneratedImagePrompt("");
+        setGeneratedImageUrl("");
+        setError("");
+      };
+
       // 1. テーマ案の生成
       const generateThemes = async () => {
         if (!genre) { setError("ジャンルを入力してください（例：ダイエット、副業、人間関係など）"); return; }
@@ -279,7 +305,7 @@
                4. 区切り線の後から、核心部分となる具体的な解決ノウハウ、今日からできる実践ステップ、極秘のテクニックを詳細に解説した「有料エリア」を執筆してください。
                5. 有料部分の最後には、購入者への感謝のメッセージと、読者限定プレゼント特典の情報（特典: ${bonusContent || "なし"}）を必ず添えてください。`
             : `この記事は「完全無料」のコンテンツとして公開されます。まずは読者に圧倒的な価値をプレゼントしてファンになってもらうことが目的です。
-               そして、本文の最後の章（まとめ、または結び）のなかで、外部誘導先（目的: ${redirectPurpose || "詳細サイト確認"}, URL: ${redirectUrl || "サイトリンク"}）への案内文（クリックを促す魅力的な導線文章）を、自然かつ強力なCall To Actionとして必ず設置してください。`;
+               And, 本文の最後の章（まとめ、または結び）のなかで、外部誘導先（目的: ${redirectPurpose || "詳細サイト確認"}, URL: ${redirectUrl || "サイトリンク"}）への案内文（クリックを促す魅力的な導線文章）を、自然かつ強力なCall To Actionとして必ず設置してください。`;
 
           const systemPrompt = `あなたはプロのライターです。提供された目次を元に、noteの本文を執筆します。
           【重要ルール】
@@ -336,7 +362,7 @@
           ${hasBonus ? `- プレゼント特典情報: ${bonusContent}` : ''}
           ${hasLineBonus ? `- LINE登録特典: ${lineBonusContent} (LINE追加URL: ${lineUrl || '公式LINEリンク'})\n※各SNS投稿の訴求ポイントとして「公式LINE追加で、さらに『${lineBonusContent}』を無料プレゼント中！」というダブルオファーを強力に盛り込んでください。これによりSNSからの追加率とクリック率が劇的に上がります。` : ''}
           
-          SNS投稿では、読者がこのコンテンツを読むことで得られる具体的な未来（価値）を強く訴求してください。`;
+          SNS投稿では、読者がこのコンテンツを読むことで得られる具体的かつ素晴らしい未来（価値）を強く訴求してください。`;
           
           const prompt = `以下のnote本文を元に、次の内容を作成してください。
 
@@ -423,7 +449,12 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
           {/* Header */}
           <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
             <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-indigo-600">
+              {/* ヘッダーロゴクリックで初期状態へリセット */}
+              <div 
+                onClick={handleReset}
+                className="flex items-center gap-2 text-indigo-600 cursor-pointer hover:opacity-80 transition-all select-none"
+                title="初期画面に戻る（データをクリア）"
+              >
                 <Sparkles />
                 <h1 className="font-bold text-xl tracking-tight">売れるnote＆集客メーカー</h1>
               </div>
@@ -806,7 +837,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         disabled={loading}
                         className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg"
                       >
-                        {loading ? <><Loader2 className="w-5 h-5" /> 本文を全力で執筆中...</> : <><PenTool className="w-5 h-5" /> AIで本文を一気に書き上げる</>}
+                        {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> 本文を全力で執筆中...</> : <><PenTool className="w-5 h-5" /> AIで本文を一気に書き上げる</>}
                       </button>
 
                       {articleBody && (
@@ -862,7 +893,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         disabled={loading}
                         className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold hover:bg-emerald-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg"
                       >
-                        {loading ? <><Loader2 className="w-5 h-5" /> 集客コンテンツを生成中...</> : <><Share2 className="w-5 h-5" /> タイトルとSNS集客文を生成する</>}
+                        {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> 集客コンテンツを生成中...</> : <><Share2 className="w-5 h-5" /> タイトルとSNS集客文を生成する</>}
                       </button>
 
                       {marketingData && (
