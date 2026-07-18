@@ -132,19 +132,18 @@
       }
     };
 
-    // サムネイルスタイル (Midjourneyインスパイアスタイルを統合した全11種類)
+    // サムネイルスタイル (スタイル1〜5にMidjourney、スタイル6〜10にNanobananaの表記を完全明記！)
     const THUMBNAIL_STYLES = [
-      { id: 1, name: "プロフェッショナル・コーポレート", desc: "最先端の3Dアイソメトリックで描かれる、圧倒的な信頼性とモダンなビジネスデザイン", prompt: "Premium professional corporate style, state-of-the-art 3D isometric vector illustration, clean geometric shapes, smooth pastel gradients, volumetric studio lighting, trustworthy indigo and warm gold color scheme, extremely polished and modern corporate aesthetic" },
-      { id: 2, name: "ジブリ風・ノスタルジックアニメ", desc: "息をのむような美しい水彩画、どこか温かくノスタルジックなアニメアート", prompt: "Breathtaking Studio Ghibli anime aesthetic, cinematic hand-drawn watercolor illustration, nostalgic golden hour sunlight filtering through clouds, rich grass and wood textures, warm nostalgic atmosphere, masterpiece animation background" },
-      { id: 3, name: "TikTok風・ネオンポップ", desc: "Z世代を釘付けにする、鮮やかでダイナミックな未来型デュオトーンポップ", prompt: "Vibrant Gen-Z neon pop aesthetic, ultra-modern bold 3D elements, energetic magenta and electric cyan duotone glow, abstract liquid fluid shapes, high contrast, highly engaging social media trendy design, polished and dynamic" },
-      { id: 4, name: "モダン・ベクターイラスト", desc: "シンプルかつ洗練されたライン。海外の有名Web誌のようなエディトリアルデザイン", prompt: "High-end editorial vector illustration, sophisticated flat design, clean thin outline path, minimalist geometry, smart and intelligent color palette (deep navy, muted orange, cream white), professional publication aesthetic, extremely clean layout" },
-      { id: 5, name: "少年漫画・熱血突破", desc: "荒々しくも美しい筆致で描かれた、魂を燃え上がらせるエネルギッシュな漫画風", prompt: "Epic dynamic Japanese shonen manga style, powerful ink-painted action lines, roaring energy aura, dramatic cinematic framing, high-contrast heroic color scheme (burning orange and deep black), intense and passionate anime concept art" },
-      { id: 6, name: "サイバーパンク・フューチャー", desc: "ダークトーンの背景に走るレーザー光。近未来を彷彿とさせる圧倒的テック感", prompt: "Stunning cyberpunk digital cityscape, ultra-detailed futuristic tech UI overlay, dark glossy background with glowing neon violet and laser green lights, high-tech holographic interface, octane render, cinematic synthwave vibe" },
-      { id: 7, name: "和風モダン・重厚スタイル", desc: "水墨画 of 濃淡に金箔の輝きが交わる、日本の伝統と高級感を極めた和モダン", prompt: "Exquisite modern Japanese sumi-e wash, traditional wet ink-brush strokes, gold leaf accents glowing under soft dramatic spotlight, rich paper texture, elegant minimalist composition, wabi-sabi luxury aesthetic, high-contrast black, white, and deep gold" },
-      { id: 8, name: "YouTubeサムネイル・超目立つポップ", desc: "文字を乗せたときに最もクリックを誘発する、視認性とインパクトを極めた王道ポップ", prompt: "Ultra-high-impact professional YouTube thumbnail style, dramatic high-contrast studio scene, bold glowing outline around a high-fidelity 3D rendered key focal object on the right side, premium dark-to-bright colored textured background, perfect left-side empty space meticulously designed for large title overlay" },
-      { id: 9, name: "実写・ビジネスインフルエンサー風", desc: "1億画素のプロ機材で撮られたような、ラグジュアリーな空気感を纏う実写クオリティ", prompt: "Premium editorial business portrait photography, shot on Hasselblad 100MP, luxurious modern office workspace background with stunning golden sunlight and soft cinematic f/1.4 lens bokeh, ultra-realistic skin and fabric textures, sophisticated and trustworthy professional atmosphere, minimalist composition with professional empty space" },
-      { id: 10, name: "シネマティック・ファンタジーイラスト（Midjourney画像1参照型）", desc: "深みのあるファンタジー映画調のライティング。画像1の最高峰のアートトーンをシード化", prompt: "Masterpiece high-fidelity digital concept art, beautiful cinematic fantasy scene, atmospheric studio volumetric lighting, deep dual-tone color grading, rich hand-painted details, highly aesthetic fantasy and epic storytelling mood" },
-      { id: 11, name: "3Dクレイ＆ミニマリズム（Midjourney画像2参照型）", desc: "クリーンで愛らしいクレイフィギュア調。画像2の温かく高品質な粘土・トイテイストを完全学習", prompt: "Masterpiece cute 3D claymation style, soft clay model texture, minimalist clean pastel-colored miniature landscape, smooth lighting, adorable toy design, high-contrast octane render, heartwarming clean visual aesthetic" }
+      { id: 1, name: "[Midjourney] ① プレミアム日本イラスト風（本気推奨）", desc: "やさしい水彩タッチと上品な線画。みっけシリーズ等どんなジャンルにも親しまれる傑作トーン", prompt: "premium Japanese illustration, hand-painted illustration, storybook illustration, soft watercolor texture, elegant line art, clean outlines, subtle brush strokes, warm earthy color palette, friendly corporate mascot style, non-photorealistic, slightly stylized proportions" },
+      { id: 2, name: "[Midjourney] ② スタジオジブリ風ファンタジーイラスト", desc: "温かく優しい感情がダイレクトに伝わる、SNS映え間違いなしのスタジオアニメ風", prompt: "Japanese animated fantasy illustration, whimsical atmosphere, lush natural colors, soft painterly texture, expressive characters, cozy lighting, magical storytelling feeling, hand-painted animation style" },
+      { id: 3, name: "[Midjourney] ③ ピクサー風3Dイラスト", desc: "表情がとても豊かでキャラクター性が強い、YouTubeの動画告知や目に留まるバナー向け", prompt: "stylized 3D animated character, expressive face, cinematic lighting, colorful environment, smooth rendering, playful proportions, premium animated illustration" },
+      { id: 4, name: "[Midjourney] ④ 北欧フラットデザイン風", desc: "アプリの解説やマニュアル紹介に最適。シンプルでおしゃれなミニマルジオメトリック", prompt: "modern Scandinavian illustration, flat design, minimalistic shapes, clean composition, soft pastel colors, friendly business illustration, geometric style" },
+      { id: 5, name: "[Midjourney] ⑤ Apple広告・Airbnb風プレミアムイラスト", desc: "圧倒的な高級感とスタートアップらしい信頼感。洗練されたミニマリズムと上品なカラー", prompt: "premium editorial illustration, Apple-inspired minimalism, clean white background, modern business illustration, elegant composition, soft gradients, sophisticated color palette, premium startup branding" },
+      { id: 6, name: "[Nanobanana] ⑥ シネマティック・ファンタジーイラスト", desc: "深みのある映画調のライティング。1枚目の中世風幻想的アートトーンをシード化", prompt: "Masterpiece high-fidelity digital concept art, beautiful cinematic fantasy scene, atmospheric studio volumetric lighting, deep dual-tone color grading, rich hand-painted details, highly aesthetic fantasy and epic storytelling mood" },
+      { id: 7, name: "[Nanobanana] ⑦ 3Dクレイ＆ミニマリズム", desc: "クリーンで愛らしい粘土フィギュア調。2枚目の温かいトイテイストを完全学習", prompt: "Masterpiece cute 3D claymation style, soft clay model texture, minimalist clean pastel-colored miniature landscape, smooth lighting, adorable toy design, high-contrast octane render, heartwarming clean visual aesthetic" },
+      { id: 8, name: "[Nanobanana] ⑧ YouTubeサムネイル・超目立つネオンポップ", desc: "文字を乗せたときに最もクリックを誘発する、視認性とコントラストを極めた王道ポップ", prompt: "Ultra-high-impact professional YouTube thumbnail style, dramatic high-contrast studio scene, bold glowing outline around a high-fidelity 3D rendered key focal object on the right side, premium dark-to-bright colored textured background, perfect left-side empty space meticulously designed for large title overlay" },
+      { id: 9, name: "[Nanobanana] ⑨ サイバーパンク・フューチャーテック", desc: "ダークトーンの背景に走るネオン。SF、AI、Web3、テック系などで抜群のバズを誘発", prompt: "Stunning cyberpunk digital cityscape, ultra-detailed futuristic tech UI overlay, dark glossy background with glowing neon violet and laser green lights, high-tech holographic interface, octane render, cinematic synthwave vibe" },
+      { id: 10, name: "[Nanobanana] ⑩ 実写・ビジネスインフルエンサー風", desc: "1億画素のプロ機材で撮られたような、高級なオフィス空気感と信頼感を纏う実写クオリティ", prompt: "Premium editorial business portrait photography, shot on Hasselblad 100MP, luxurious modern office workspace background with stunning golden sunlight and soft cinematic f/1.4 lens bokeh, ultra-realistic skin and fabric textures, sophisticated and trustworthy professional atmosphere, minimalist composition with professional empty space" }
     ];
 
     function App() {
@@ -201,8 +200,8 @@
       // Step 3
       const [marketingData, setMarketingData] = useState(null);
 
-      // Step 4 - サムネイル用の状態 (アスペクト比ステートを新設)
-      const [selectedStyleId, setSelectedStyleId] = useState(1);
+      // Step 4 - サムネイル用の状態
+      const [selectedStyleId, setSelectedStyleId] = useState(1); // スタイル①を初期選択に
       const [aspectRatio, setAspectRatio] = useState("16:9"); // "16:9", "9:16", "1:1"
       const [generatedImagePrompt, setGeneratedImagePrompt] = useState("");
       const [generatedImageUrl, setGeneratedImageUrl] = useState("");
@@ -254,8 +253,8 @@
         setToc("");
         setArticleBody("");
         setMarketingData(null);
-        setSelectedStyleId(1);
-        setAspectRatio("16:9"); // 初期化
+        setSelectedStyleId(1); // リセット時も①推奨
+        setAspectRatio("16:9");
         setGeneratedImagePrompt("");
         setGeneratedImageUrl("");
         setError("");
@@ -359,9 +358,22 @@
         if (!toc) { setError("目次を入力してください"); return; }
         setLoading(true); setError("");
         try {
-          // 有料時のプロンプト：「無料エリア」＋「寸止めコピー」＋「有料エリア」の境界線を強制的に作らせる
-          const monetizationContext = isPaid 
-            ? `この記事は「価格：${price}円」の価値がある有料noteとして販売されます。
+          let monetizationContext = "";
+          let appStoryPrompt = "";
+
+          if (creationMode === "app") {
+            appStoryPrompt = `【超重要：アプリ開発ストーリーテリング指示】
+            単なるアプリの使い方マニュアルにしないでください。
+            読者が「まさにかつての自分と同じ状況だ」と感動し、没頭するストーリーを描いてください。
+            1. 「こんな悩み・相談（${appTrigger}）をリアルに受けたことがきっかけでした」という開発の原体験を、生々しい相談の様子とともに熱く語ってください。
+            2. 既存のやり方では解決できなかった葛藤を提示します。
+            3. だから「私はこの問題を解決するための『${appName}』という専用の道具（アプリ）を作りました」という開発の瞬間をドラマチックに書いてください。
+            4. アプリによって「こんな成果（${appValue}）が一瞬で手に入るようになりました」という劇的変化を詳しく書いてください。
+            ${appUrl ? `5. アプリのアクセスURL（${appUrl}）を魅力的な文字付きリンクカードのようにアピールして本文中に必ず配置してください。` : ''}`;
+          }
+
+          if (isPaid) {
+            monetizationContext = `この記事は「価格：${price}円」の価値がある有料noteとして販売されます。
                読者が最初の無料部分を読んだ時点で「この先を読まなければ損をする！」と強く感じ、購入後に「価格以上の価値がある！」と大満足するような二段階構成で執筆してください。
 
                【有料販売のための分割執筆ルール】
@@ -372,9 +384,11 @@
                   ✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー
                   
                4. 区切り線の後から、核心部分となる具体的な解決ノウハウ、今日からできる実践ステップ、極秘のテクニックを詳細に解説した「有料エリア」を執筆してください。
-               5. 有料部分の最後には、購入者への感謝のメッセージと、読者限定プレゼント特典の情報（特典: ${bonusContent || "なし"}）を必ず添えてください。`
-            : `この記事は「完全無料」のコンテンツとして公開されます。まずは読者に圧倒的な価値をプレゼントしてファンになってもらうことが目的です。
+               5. 有料部分の最後には、購入者への感謝 of メッセージと、読者限定プレゼント特典の情報（特典: ${bonusContent || "なし"}）を必ず添えてください。`;
+          } else {
+            monetizationContext = `この記事は「完全無料」のコンテンツとして公開されます。まずは読者に圧倒的な価値をプレゼントしてファンになってもらうことが目的です。
                And, 本文の最後の章（まとめ、または結び）のなかで、外部誘導先（目的: ${redirectPurpose || (creationMode === "app" ? `${appName}の無料体験・アクセス` : "詳細サイト確認")}, URL: ${redirectUrl || appUrl || "サイトリンク"}）への案内文（クリックを促す魅力的な導線文章）を、自然かつ強力なCall To Actionとして必ず設置してください。`;
+          }
 
           const systemPrompt = `あなたはプロのライターであり、かつ一流のプロダクトマーケターです。提供された目次を元に、noteの本文を執筆します。
           【重要ルール】
@@ -452,7 +466,7 @@
             // ショート動画集客モードのデータ構築とプロンプト
             if (!appName) { setError("アプリ名を入力してください"); setLoading(false); return; }
             if (!appSummary) { setError("アプリの概要を入力してください"); setLoading(false); return; }
-            if (!appValue) { setError("解決できる悩み・提供できる価値を入力してください"); setLoading(false); return; }
+            if (!appValue) { setError("解決できる悩み・提供できる具体的な価値を入力してください"); setLoading(false); return; }
 
             contentSourceText = `【ショート動画告知用アプリデータ】
             - アプリ名: ${appName}
@@ -534,7 +548,7 @@
           const systemPrompt = `あなたはSNSマーケティングのプロフェッショナルです。入力された情報、および設定された「販売形式、価値、特典、LINE登録特典、告知形式」を元に、読者を惹きつけるタイトル案と、各SNS向けの集客用投稿文を作成してください。
           各SNS投稿のハッシュタグ設定が厳格に「ちょうど5つ」で「横並び（半角スペース区切り）」になっていることを必ず確認してください。`;
           
-          const prompt = `以下のソースデータを元に、指示されたSNS投稿案を作成してください。\n\n--- ソースデータ ---\n${contentSourceText}`;
+          const prompt = `以下のソースデータを元に、指示されたSNS投稿案を作成してください。\n\n---ソースデータ---\n${contentSourceText}`;
           
           let schema = null;
           if (creationMode === "short_video") {
@@ -633,12 +647,21 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
           
           const imgPrompt = await callGeminiAPI(textPrompt, systemPrompt, false);
           
-          // Midjourney画像URLをプロンプトの先頭にプレフィックスとして注入し、再現性を高める
+          // 選択されたスタイルIDに応じて、Midjourney参照URL（シード画像）をプロンプトの最先頭にインジェクションしてImagen 4に指示します
           let finalPrompt = imgPrompt;
-          if (style.id === 10) {
+          if (style.id === 1) {
+            // ① プレミアム日本イラスト風: 指定された「みっけトーン」の3Dフラット画像をブレンド
+            finalPrompt = "https://cdn.midjourney.com/acb14bb9-7279-47c3-a98f-5d22730251da/0_3.png " + imgPrompt;
+          } else if (style.id === 6) {
+            // ⑥ シネマティック・ファンタジーイラスト: 1枚目のSFファンタジー画像をブレンド
             finalPrompt = "https://cdn.midjourney.com/2babba26-bfc0-44de-a49e-56f622b7283e/0_0.png " + imgPrompt;
-          } else if (style.id === 11) {
+          } else if (style.id === 7) {
+            // ⑦ 3Dクレイ＆ミニマリズム: 2枚目の可愛いおもちゃ調クレイ画像をブレンド
             finalPrompt = "https://cdn.midjourney.com/d99e1051-9d0f-425a-9cd1-2ab18516ca04/0_0.png " + imgPrompt;
+          } else if (style.id === 2 || style.id === 3 || style.id === 4 || style.id === 5) {
+            // 2〜5の他の基本イラストスタイルを選んだ場合も、安っぽさを防ぎ一貫したプレミアムデザイン質感（3Dフラット調）を担保するため、
+            // プレミアム日本イラスト風のURLを先頭にシードとして自動ブレンドします
+            finalPrompt = "https://cdn.midjourney.com/acb14bb9-7279-47c3-a98f-5d22730251da/0_3.png " + imgPrompt;
           }
 
           setGeneratedImagePrompt(finalPrompt);
@@ -970,7 +993,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                   onChange={(e) => setLineBonusContent(e.target.value)}
                                   placeholder="特典の内容（例：おすすめコンビニ痩せ商品チェックリストPDF）"
                                   className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-                                />
+                                  />
                                 <input
                                   type="url"
                                   value={lineUrl}
@@ -1271,7 +1294,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                   value={benefit}
                                   onChange={(e) => setBenefit(e.target.value)}
                                   placeholder="例：お金をかけずに今すぐスーパーやコンビニで実践できる、お腹いっぱい食べても太らない魔法の食事ルール解説"
-                                  className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                  className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                                   rows={2}
                                 />
                               </div>
@@ -1399,6 +1422,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     </h2>
                   </div>
                   
+                  {/* written_note または short_video モードの場合、Step 2はジャンプ制限し、案内を表示 */}
                   {creationMode === "written_note" || creationMode === "short_video" ? (
                     <div className="text-center py-12 bg-emerald-50/50 rounded-2xl border border-dashed border-emerald-200 max-w-2xl mx-auto p-6">
                       <FileText className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
@@ -1580,7 +1604,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                   {marketingData.video_captions?.map((cap, idx) => (
                                     <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group">
                                       <span className="absolute -top-2 -left-2 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">パターン {idx + 1}</span>
-                                      <textarea readOnly value={cap} rows={12} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2 font-mono" />
+                                      <textarea readOnly value={cap} rows={12} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2 font-mono whitespace-pre-wrap" />
                                       <button onClick={() => handleCopy(cap, `video-cap-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
                                           {copiedStates[`video-cap-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                                       </button>
@@ -1798,7 +1822,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     </div>
                   </div>
 
-                  {/* 新設：アスペクト比選択セクション */}
+                  {/* アスペクト比選択セクション */}
                   <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-200">
                     <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
                       <span className="bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">1</span>
@@ -1840,7 +1864,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                           onClick={() => setSelectedStyleId(style.id)}
                           className={`cursor-pointer p-4 rounded-xl border transition-all ${
                             selectedStyleId === style.id 
-                              ? "bg-indigo-50 border-indigo-500 shadow-md ring-1 ring-indigo-500" 
+                              ? "bg-indigo-50 border-indigo-500 shadow-md ring-1 ring-indigo-500 animate-fade-in" 
                               : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                           }`}
                         >
@@ -1904,7 +1928,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                           
                           <p className="text-xs text-slate-500 text-center leading-relaxed">
                             💡 <strong>デザイナーからのヒント：</strong>アスペクト比「<strong>{aspectRatio}</strong>」に合わせて文字入れ用の美しい余白（フェード空間やボケ）が最適化されています。<br />
-                            Canva等を使って、空いているスペースにお好みのフォントでタイトルを配置すれば、プロ顔負けのバナーが瞬時に完成します！
+                            Canva等を使って、空いているスペースにお好みのフォントでnoteのタイトルを配置すれば、プロ顔負けのバナーが瞬時に完成します！
                           </p>
                         </div>
                       )}
