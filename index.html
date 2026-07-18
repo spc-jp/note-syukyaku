@@ -201,8 +201,9 @@
       // Step 3
       const [marketingData, setMarketingData] = useState(null);
 
-      // Step 4
+      // Step 4 - サムネイル用の状態 (アスペクト比ステートを新設)
       const [selectedStyleId, setSelectedStyleId] = useState(1);
+      const [aspectRatio, setAspectRatio] = useState("16:9"); // "16:9", "9:16", "1:1"
       const [generatedImagePrompt, setGeneratedImagePrompt] = useState("");
       const [generatedImageUrl, setGeneratedImageUrl] = useState("");
       const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -254,6 +255,7 @@
         setArticleBody("");
         setMarketingData(null);
         setSelectedStyleId(1);
+        setAspectRatio("16:9"); // 初期化
         setGeneratedImagePrompt("");
         setGeneratedImageUrl("");
         setError("");
@@ -357,22 +359,9 @@
         if (!toc) { setError("目次を入力してください"); return; }
         setLoading(true); setError("");
         try {
-          let monetizationContext = "";
-          let appStoryPrompt = "";
-
-          if (creationMode === "app") {
-            appStoryPrompt = `【超重要：アプリ開発ストーリーテリング指示】
-            単なるアプリの使い方マニュアルにしないでください。
-            読者が「まさにかつての自分と同じ状況だ」と感動し、没頭するストーリーを描いてください。
-            1. 「こんな悩み・相談（${appTrigger}）をリアルに受けたことがきっかけでした」という開発の原体験を、生々しい相談の様子とともに熱く語ってください。
-            2. 既存のやり方では解決できなかった葛藤を提示します。
-            3. だから「私はこの問題を解決するための『${appName}』という専用の道具（アプリ）を作りました」という開発の瞬間をドラマチックに書いてください。
-            4. アプリによって「こんな成果（${appValue}）が一瞬で手に入るようになりました」という劇的変化を詳しく書いてください。
-            ${appUrl ? `5. アプリのアクセスURL（${appUrl}）を魅力的な文字付きリンクカードのようにアピールして本文中に必ず配置してください。` : ''}`;
-          }
-
-          if (isPaid) {
-            monetizationContext = `この記事は「価格：${price}円」の価値がある有料noteとして販売されます。
+          // 有料時のプロンプト：「無料エリア」＋「寸止めコピー」＋「有料エリア」の境界線を強制的に作らせる
+          const monetizationContext = isPaid 
+            ? `この記事は「価格：${price}円」の価値がある有料noteとして販売されます。
                読者が最初の無料部分を読んだ時点で「この先を読まなければ損をする！」と強く感じ、購入後に「価格以上の価値がある！」と大満足するような二段階構成で執筆してください。
 
                【有料販売のための分割執筆ルール】
@@ -383,11 +372,9 @@
                   ✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー
                   
                4. 区切り線の後から、核心部分となる具体的な解決ノウハウ、今日からできる実践ステップ、極秘のテクニックを詳細に解説した「有料エリア」を執筆してください。
-               5. 有料部分の最後には、購入者への感謝のメッセージと、読者限定プレゼント特典の情報（特典: ${bonusContent || "なし"}）を必ず添えてください。`;
-          } else {
-            monetizationContext = `この記事は「完全無料」のコンテンツとして公開されます。まずは読者に圧倒的な価値をプレゼントしてファンになってもらうことが目的です。
+               5. 有料部分の最後には、購入者への感謝のメッセージと、読者限定プレゼント特典の情報（特典: ${bonusContent || "なし"}）を必ず添えてください。`
+            : `この記事は「完全無料」のコンテンツとして公開されます。まずは読者に圧倒的な価値をプレゼントしてファンになってもらうことが目的です。
                And, 本文の最後の章（まとめ、または結び）のなかで、外部誘導先（目的: ${redirectPurpose || (creationMode === "app" ? `${appName}の無料体験・アクセス` : "詳細サイト確認")}, URL: ${redirectUrl || appUrl || "サイトリンク"}）への案内文（クリックを促す魅力的な導線文章）を、自然かつ強力なCall To Actionとして必ず設置してください。`;
-          }
 
           const systemPrompt = `あなたはプロのライターであり、かつ一流のプロダクトマーケターです。提供された目次を元に、noteの本文を執筆します。
           【重要ルール】
@@ -462,7 +449,7 @@
                - ビジュアルイメージを想起させるフックから始まり、noteの内容の3つの見どころや学び、そして「プロフィールのリンク（またはコメント欄）からnoteへアクセス！」の誘導導線を作ります。
                - 文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。`;
           } else if (creationMode === "short_video") {
-            // 新設：ショート動画集客モードのデータ構築とプロンプト
+            // ショート動画集客モードのデータ構築とプロンプト
             if (!appName) { setError("アプリ名を入力してください"); setLoading(false); return; }
             if (!appSummary) { setError("アプリの概要を入力してください"); setLoading(false); return; }
             if (!appValue) { setError("解決できる悩み・提供できる価値を入力してください"); setLoading(false); return; }
@@ -477,48 +464,43 @@
             あなたはショート動画（リール、TikTok、YouTubeショート）での集客を熟知したトップマーケターです。
             指定されたアプリの情報をベースに、最もクリックを誘発する動画用の「キャプション（3パターン）」および他SNSへの告知拡散文を作成してください。
 
-            【出力重要ルール（※これらを厳格に遵守してください。JSON内の各項目にそれぞれバリエーション等を詰め込んでください）】
+            【出力重要ルール（※これらを厳格に遵守してください）】
             
             1. **video_captions (ショート動画用キャプション案 - 3パターン)**:
-               - リールやTikTok投稿の概要欄にそのまま使えるキャプション文章を、アプローチを変えて「3パターン」作成してください。
-               - LINE公式登録を促す「詳細はLINE登録で【無料スタートアップガイド】をチェック！」のような文言は絶対に含めないでください。
-               - 各パターンは、必ず以下の【構文構成テンプレート（改行数も忠実に再現）】に従って正確に執筆してください：
+               - 各パターンの末尾に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】を配置してください。
+               - 以下のテンプレート構造に従ってください。
                  
-                 [フックとなる問いかけ（アプリのジャンルに紐づく一般的な悩みや問題提起を問いかけるフックの1行。例：ダイエットアプリ、入れてみたものの気づけば開かなくなっていませんか？）]
+                 [フックとなる問いかけ（例：ダイエットアプリ、入れてみたものの気づけば開かなくなっていませんか？）]
                  （1行空ける）
-                 [具体的な悩み・不満の提示（例：みんな同じアドバイスばかりで自分ごとに感じられない、記録が面倒で三日坊主、高齢の家族にどう勧めればいいかわからない…そんな悩みありませんか。のように、アプリの解決課題に関連する課題を3つほど具体的に並べ、「〜そんな悩みありませんか。」という一文で結んでください。）]
+                 [具体的な悩み・不満の提示（例：みんな同じアドバイスばかりで自分ごとに感じられない、記録が面倒で三日坊主、高齢の家族にどう勧めればいいかわからない…そんな悩みありませんか。）]
                  （1行空ける）
-                 [「\${appName}」の紹介と、独自の解決アプローチ、主要な機能・仕組みを、提供されたアプリデータ（概要、価値）を基に詳細かつ魅力的に3行〜4行で執筆。]
+                 [アプリ名と独自の解決アプローチ、主要な機能の解説（3〜4行）]
                  （1行空ける）
-                 [まとめ・理想的な未来（今日のやることが一目でわかるから、迷わず続けられます。のような確信と期待に満ちた魅力的な一文）]
+                 [まとめ・理想的な未来（今日のやることが一目でわかるから、迷わず続けられます。のような魅力的な一文）]
                  （1行空ける）
                  ▶ \${appName}
-                 \${appUrl || "[アプリURLを入力してください]"}
+                 \${appUrl || "[アプリURL]"}
                  （1行空ける）
                  ▶ 他のAIツールをまとめて見るならこちら
                  https://mikke-catalog.pages.dev/
                  （1行空ける）
-                 [半角スペース区切りの横並びハッシュタグをちょうど5つ（例：#ダイエット #ダイエット記録 #フレイル予防 #AIダイエット #みっけシリーズ）]
+                 [半角スペース区切りの横並びハッシュタグ5つ]
 
                - JSONでは文字列の配列（3要素）として出力してください。
 
             2. **x_posts (𝕏/Twitter投稿案 - 2回分)**:
-               - 140字以内。アプリを紹介する投稿コピーを切り口を変えて「2回分（2パターン）」作成してください。
+               - 140字以内。アプリを紹介する投稿コピーを切り口を変えて「2回分」作成してください。
                - 各パターンの文末に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】設置してください。
-               - JSONでは文字列の配列（2要素）として出力してください。
-
+            
             3. **threads_variations (Threads3段スレッド投稿案 - 3種類)**:
-               - 3段スレッド形式の投稿コピーを、完全に異なる3つの切り口（3バリエーション）で作成してください。
-                 - 1段目：ターゲットの悩みに寄り添う問題提起。
-                 - 2段目：アプリ（\${appName}）の中身や劇的価値のチラ見せ。
-                 - 3段目：結論と、URL（\${appUrl}）への誘導、およびカタログURL（https://mikke-catalog.pages.dev/）への誘導。
-               - JSONでは「スレッドの配列（3つの要素があり、各要素がさらに3つの文字列［1段目, 2段目, 3段目］の配列になっている構造）」として出力してください。
+               - スリーステップスレッド形式を「3パターン」作成してください。
+                 - 1段目：悩みへの共感。
+                 - 2段目：アプリ（\${appName}）によるメリット。
+                 - 3段目：URL（\${appUrl}）とカタログURL（https://mikke-catalog.pages.dev/）への誘導。
 
             4. **facebook_posts (Facebook投稿案 - 2投稿分)**:
-               - Facebook用の親密でストーリー性豊かな投稿案を、切り口を変えて「2回分（2パターン）」作成してください。
-               - アプリ（\${appName}）を開発した背景、URL（\${appUrl}）、カタログURL（https://mikke-catalog.pages.dev/）への誘導。
-               - 各パターンの末尾に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】を配置してください。
-               - JSONでは文字列の配列（2要素）として出力してください。`;
+               - Facebook用のストーリー性の豊かな投稿案を、切り口を変えて「2回分」作成してください。
+               - 各パターンの末尾に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】を配置してください。`;
 
           } else {
             // 通常＆アプリモード
@@ -536,49 +518,26 @@
                  ${hasLimitedSale ? `- マーケ戦略: 数量限定販売（売り切れ次第値上げする希少性をアピールしてください）` : ''}
                  SNS投稿（X, Threads, Facebook, Instagram）では、この価格の「お得感」「今すぐ買うべき理由（限定性・希少性）」を訴求してください。
                  
-                 【SNS告知アルゴリズム重要ルール（※これらを厳格に遵守してください）】
-                 1. **𝕏 (Twitter) 投稿案**:
-                    - 文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置。140字以内。
-                 2. **Threads 3段スレッド投稿案**:
-                    - 1段目（問題提起）➡ 2段目（チラ見せ・価値） ➡ 3段目（限定オファー・CTA）。
-                 3. **Facebook 投稿案**:
-                    - ストーリー性の長文。文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置。
-                 4. **Instagram キャプション投稿案**:
-                    - 画像用のフック＋3つの学び＋CTA導線。文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置。`;
+                 【SNS告知アルゴリズム重要ルール】
+                 - 各投稿、文末等に必ず【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。`;
             } else {
               monetizationStrategy = `【完全無料note + 外部URL紹介】
                  - 紹介誘導先: ${redirectUrl || appUrl || "記事内URL"}
                  - 誘導目的: ${redirectPurpose || appValue || "サイトアクセス"}
-                 SNS投稿（X, Threads, Facebook, Instagram）では、「有料級の情報やツールが完全無料」「今だけ無料でプレゼント公開中」「今すぐ使えて劇的解決」という障壁の低さとお得感を強く打ち出し、まずはnoteを読んでもらうようなコピーライティングにしてください。絶対にお金や価格、値上げ、数量制限に関する文言は書かないでください。
+                 SNS投稿（X, Threads, Facebook, Instagram）では、「有料級の情報やツールが完全無料」という点とお得感を強く打ち出し、まずはnoteを読んでもらう構成にしてください。
                  
-                 【SNS告知アルゴリズム重要ルール（※これらを厳格に遵守してください）】
-                 1. **𝕏 (Twitter) 投稿案**:
-                    - 文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置。140字以内。
-                 2. **Threads 3段スレッド投稿案**:
-                    - 1段目（問題提起）➡ 2段目（チラ見せ） ➡ 3段目（無料URL・CTA）。
-                 3. **Facebook 投稿案**:
-                    - 温かい応援ストーリー。文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置。
-                 4. **Instagram キャプション投稿案**:
-                    - 画像用のフック＋3つの学び＋CTA導線。文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置。`;
+                 【SNS告知アルゴリズム重要ルール】
+                 - 各投稿、文末等に必ず【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。`;
             }
           }
 
           const systemPrompt = `あなたはSNSマーケティングのプロフェッショナルです。入力された情報、および設定された「販売形式、価値、特典、LINE登録特典、告知形式」を元に、読者を惹きつけるタイトル案と、各SNS向けの集客用投稿文を作成してください。
-          
-          【商品・投稿データ】
-          ${monetizationStrategy}
-          ${benefit ? `- 提供価値（得られる未来）: ${benefit}` : ''}
-          ${hasBonus ? `- プレゼント特典情報: ${bonusContent}` : ''}
-          ${hasLineBonus ? `- LINE登録特典: ${lineBonusContent} (LINE追加URL: ${lineUrl || '公式LINEリンク'})\n※各SNS投稿の訴求ポイントとして「公式LINE追加で、さらに『${lineBonusContent}』を無料プレゼント中！」というダブルオファーを強力に盛り込んでください。` : ''}
-          ${appMarketingPrompt}
-          
-          各SNS投稿では、読者がこのコンテンツを読むことで得られる具体的かつ素晴らしい未来（価値）を強く訴求してください。`;
+          各SNS投稿のハッシュタグ設定が厳格に「ちょうど5つ」で「横並び（半角スペース区切り）」になっていることを必ず確認してください。`;
           
           const prompt = `以下のソースデータを元に、指示されたSNS投稿案を作成してください。\n\n--- ソースデータ ---\n${contentSourceText}`;
           
           let schema = null;
           if (creationMode === "short_video") {
-            // ショート動画用専用JSONスキーマ
             schema = {
               type: "OBJECT",
               properties: {
@@ -596,7 +555,6 @@
               required: ["video_captions", "x_posts", "threads_variations", "facebook_posts"]
             };
           } else {
-            // 通常スキーマ
             schema = {
               type: "OBJECT",
               properties: {
@@ -636,7 +594,6 @@
             });
           }
 
-          // 直接集客用のStep 3にジャンプ
           setActiveTab(3);
 
         } catch (err) {
@@ -646,7 +603,7 @@
         }
       };
 
-      // 5. サムネイル画像生成 (Gemini Engine 本気プロンプト＋Midjourney画像インジェクション対応)
+      // 5. サムネイル画像生成 (Gemini Engine 本気プロンプト＋アスペクト比アライン＋Midjourney画像インジェクション対応)
       const generateThumbnailImage = async () => {
         const targetTopic = marketingData?.titles?.[0] || appName || noteTitle || selectedTheme || genre;
         if (!targetTopic) { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
@@ -657,17 +614,22 @@
         
         try {
           const systemPrompt = `You are a world-class commercial designer and an elite prompt engineer for Imagen 3 and Imagen 4.
-Your goal is to generate an extraordinarily beautiful, professional-grade, high-conversion image generation prompt in English for a 16:9 wide landscape banner thumbnail.
+Your goal is to generate an extraordinarily beautiful, professional-grade, high-conversion image generation prompt in English for a banner thumbnail.
 
-To ensure the output image is of the highest professional quality (NOT cheap or generic), strictly apply these guidelines in your generated prompt:
+The user has specifically selected an aspect ratio of: "${aspectRatio}".
+Based on this aspect ratio, strictly apply these composition guidelines in your generated prompt:
+- If aspect ratio is "16:9": Instruct to create a wide landscape composition (16:9 aspect ratio) with negative space (empty blurred area, solid minimalist background, or soft gradient fade) occupying either the left 50% or right 50% of the image. This is critical for users to overlay big titles later on the side.
+- If aspect ratio is "9:16": Instruct to create a vertical portrait composition (9:16 aspect ratio) suitable for mobile reels, with negative space (clean empty space) at the top 40% or bottom 40% of the image for vertical text overlay.
+- If aspect ratio is "1:1": Instruct to create a balanced square composition (1:1 aspect ratio) suitable for social media feed, with negative space around the borders or at the bottom for clean text overlay.
+
+Strictly apply these overall guidelines:
 1. **Cinematic Lighting & Color**: Use premium, atmospheric lighting terms such as "cinematic backlighting", "soft studio key light", "subtle neon glow", "golden hour glow", or "sophisticated dual-tone color scheme". Avoid flat or boring colors.
-2. **Composition & Layout (Negative Space for Text)**: The thumbnail MUST have a clear, intentional negative space (empty blurred area, solid minimalist background, or soft gradient fade) occupying either the left 50%, right 50%, or bottom 30% of the image. This is critical for users to overlay big note titles later. Mention this layout rule clearly in the prompt.
-3. **Quality & Render Style**: Use high-end rendering terms suitable for the chosen art style. For 3D/Vectors, use "trending on ArtStation, Octane Render, 8k, masterpiece, clean path, smooth gradients". For photographic styles, use "shot on 85mm lens, f/1.8, soft bokeh, high-end commercial photography, photorealistic, sharp focus on subject, detailed textures".
-4. **Subject Integration**: Seamlessly translate the Japanese/English topic into a stunning visual metaphor or focal point placed strategically to avoid cluttering the negative space.
+2. **Quality & Render Style**: Use high-end rendering terms suitable for the chosen art style. For 3D/Vectors, use "trending on ArtStation, Octane Render, 8k, masterpiece, clean path, smooth gradients". For photographic styles, use "shot on 85mm lens, f/1.8, soft bokeh, high-end commercial photography, photorealistic, sharp focus on subject, detailed textures".
+3. **Subject Integration**: Seamlessly translate the Japanese/English topic into a stunning visual metaphor or focal point placed strategically to avoid cluttering the negative space.
 
 Output ONLY the final raw English prompt text. Do not include any quotes, introductions, markdown formatting, or conversational text.`;
           
-          const textPrompt = `Topic/Subject: "${targetTopic}"\nArt Style Keywords: "${style.prompt}"\nCreate a highly detailed image generation prompt.`;
+          const textPrompt = `Topic/Subject: "${targetTopic}"\nArt Style Keywords: "${style.prompt}"\nDesired Aspect Ratio: "${aspectRatio}"\nCreate a highly detailed image generation prompt.`;
           
           const imgPrompt = await callGeminiAPI(textPrompt, systemPrompt, false);
           
@@ -731,7 +693,6 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  // note告知、およびショート動画集客モードの場合、Step 2はジャンプを制限
                   disabled={(creationMode === "written_note" || creationMode === "short_video") && tab.id === 2}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                     (creationMode === "written_note" || creationMode === "short_video") && tab.id === 2 ? "opacity-30 cursor-not-allowed" : ""
@@ -1037,7 +998,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                   )}
 
                   {creationMode === "short_video" && (
-                    /* 4. 新設：🎬 ショート動画集客 (リール・TikTok) 用フォーム */
+                    /* 4. 🎬 ショート動画集客 (リール・TikTok) 用フォーム */
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-purple-50/40 to-indigo-50/40 rounded-2xl border border-indigo-150 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
                         <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -1296,7 +1257,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                     value={redirectPurpose}
                                     onChange={(e) => setRedirectPurpose(e.target.value)}
                                     placeholder="例: 公式LINE追加で『コンビニ痩せ即効メニューリストPDF』を無料配布中！"
-                                    className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                    className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                                   />
                                   <p className="text-[11px] text-slate-500">※ クリックしたくなるような強力な特典や誘導理由を入れてください。</p>
                                 </div>
@@ -1438,7 +1399,6 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     </h2>
                   </div>
                   
-                  {/* written_note または short_video モードの場合、Step 2はジャンプ制限し、案内を表示 */}
                   {creationMode === "written_note" || creationMode === "short_video" ? (
                     <div className="text-center py-12 bg-emerald-50/50 rounded-2xl border border-dashed border-emerald-200 max-w-2xl mx-auto p-6">
                       <FileText className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
@@ -1486,7 +1446,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         <p className="text-sm text-blue-800">
                           {isPaid 
                             ? `無料エリア（約40%）で課題や葛藤、開発ストーリーを語り、寸止めした位置に「✂️ 有料設定ライン」を自動挿入します。その後、有料エリア（約60%）でアプリの具体的な活用ノウハウを執筆します。`
-                            : `無料で最高級の信頼を獲得し、自然と「${redirectPurpose || (creationMode === "app" ? "アプリリンク" : "リンクをクリック")}」したくなるように本文の導線文を自動構築します。`
+                            : `無料で最高級 of 信頼を獲得し、自然と「${redirectPurpose || (creationMode === "app" ? "アプリリンク" : "リンクをクリック")}」したくなるように本文の導線文を自動構築します。`
                           }
                           {hasLineBonus && ` また、公式LINE（特典: ${lineBonusContent}）への最強登録導線を、本文の結びに組み込みます。`}
                         </p>
@@ -1620,7 +1580,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                   {marketingData.video_captions?.map((cap, idx) => (
                                     <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group">
                                       <span className="absolute -top-2 -left-2 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">パターン {idx + 1}</span>
-                                      <textarea readOnly value={cap} rows={12} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2" />
+                                      <textarea readOnly value={cap} rows={12} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2 font-mono" />
                                       <button onClick={() => handleCopy(cap, `video-cap-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
                                           {copiedStates[`video-cap-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                                       </button>
@@ -1835,29 +1795,63 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     <div className="text-sm text-slate-700 space-y-1">
                       <p className="font-semibold text-indigo-900">✨ Gemini 2.5 Pro &amp; Imagen 4 プレミアム最適化モード稼働中</p>
                       <p>文字入れ前提の洗練された比率、商業アワード級の空気感、そしてテキストスペースを完璧に確保した高級感溢れるプロンプトを自動生成します。</p>
-                      <p className="font-semibold text-indigo-900 mt-2">1. 記事やコンテンツの世界観に合うスタイル（全9タイプ）を選んでください。</p>
                     </div>
                   </div>
 
-                  {/* スタイル選択 (全9タイプ) */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {THUMBNAIL_STYLES.map((style) => (
-                      <div 
-                        key={style.id}
-                        onClick={() => setSelectedStyleId(style.id)}
-                        className={`cursor-pointer p-4 rounded-xl border transition-all ${
-                          selectedStyleId === style.id 
-                            ? "bg-indigo-50 border-indigo-500 shadow-md ring-1 ring-indigo-500" 
-                            : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-bold text-sm text-slate-800">{style.name}</h3>
-                          {selectedStyleId === style.id && <Check className="text-indigo-600" />}
+                  {/* 新設：アスペクト比選択セクション */}
+                  <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-200">
+                    <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">1</span>
+                      アスペクト比を選択してください
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: "16:9", label: "横長 16:9", desc: "note見出し・YouTube・Xバナー等" },
+                        { id: "9:16", label: "縦長 9:16", desc: "スマホ壁紙・リール・TikTokサムネ等" },
+                        { id: "1:1", label: "正方形 1:1", desc: "Instagram投稿・公式LINE・アイコン等" }
+                      ].map((ratio) => (
+                        <button
+                          key={ratio.id}
+                          type="button"
+                          onClick={() => setAspectRatio(ratio.id)}
+                          className={`p-3 rounded-lg border text-left transition-all ${
+                            aspectRatio === ratio.id
+                              ? "bg-indigo-600 border-indigo-600 text-white shadow-md"
+                              : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
+                          }`}
+                        >
+                          <div className="font-bold text-sm">{ratio.label}</div>
+                          <div className={`text-[10px] mt-1 ${aspectRatio === ratio.id ? "text-indigo-200" : "text-slate-400"}`}>{ratio.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* スタイル選択 */}
+                  <div className="space-y-3">
+                    <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">2</span>
+                      記事やコンテンツの世界観に合うスタイルを選んでください
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {THUMBNAIL_STYLES.map((style) => (
+                        <div 
+                          key={style.id}
+                          onClick={() => setSelectedStyleId(style.id)}
+                          className={`cursor-pointer p-4 rounded-xl border transition-all ${
+                            selectedStyleId === style.id 
+                              ? "bg-indigo-50 border-indigo-500 shadow-md ring-1 ring-indigo-500" 
+                              : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-bold text-sm text-slate-800">{style.name}</h3>
+                            {selectedStyleId === style.id && <Check className="text-indigo-600" />}
+                          </div>
+                          <p className="text-xs text-slate-500 leading-relaxed">{style.desc}</p>
                         </div>
-                        <p className="text-xs text-slate-500 leading-relaxed">{style.desc}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
 
                   <button
@@ -1880,22 +1874,37 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                           <div className="flex items-center justify-between border-b pb-2">
                              <div className="flex items-center gap-2">
                                <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">生成成功</span>
-                               <h3 className="text-sm font-bold text-slate-800">完成したサムネイル見出し画像 (16:9)</h3>
+                               <h3 className="text-sm font-bold text-slate-800">完成したサムネイル見出し画像 ({aspectRatio})</h3>
                              </div>
                              <a 
                                href={generatedImageUrl} 
-                               download="note_thumbnail_image.png"
+                               download={`note_thumbnail_image_${aspectRatio.replace(':', '_')}.png`}
                                className="text-white bg-indigo-600 hover:bg-indigo-700 flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg font-bold shadow-sm transition-colors"
                              >
                                <Download className="w-4 h-4" /> 画像を保存
                              </a>
                           </div>
-                          <div className="bg-slate-100 border border-slate-200 rounded-2xl p-3 shadow-inner overflow-hidden flex justify-center">
-                            <img src={generatedImageUrl} alt="Generated Thumbnail" className="w-full max-w-3xl h-auto rounded-xl shadow-md border border-white" />
+                          
+                          {/* 選択したアスペクト比に応じてプレビュー比率を動的に変化させるコンテナ */}
+                          <div className="bg-slate-100 border border-slate-200 rounded-2xl p-4 shadow-inner flex justify-center items-center overflow-hidden">
+                            <div className={`w-full flex justify-center ${
+                              aspectRatio === "9:16" ? "max-w-[340px]" : "max-w-3xl"
+                            }`}>
+                              <img 
+                                src={generatedImageUrl} 
+                                alt="Generated Thumbnail" 
+                                className={`rounded-xl shadow-md border border-white w-full object-cover transition-all ${
+                                  aspectRatio === "16:9" ? "aspect-video" :
+                                  aspectRatio === "9:16" ? "aspect-[9/16] max-h-[600px]" :
+                                  "aspect-square max-w-[500px]"
+                                }`} 
+                              />
+                            </div>
                           </div>
+                          
                           <p className="text-xs text-slate-500 text-center leading-relaxed">
-                            💡 <strong>デザイナーからのヒント：</strong>この画像にはすでに文字入れ用の美しい余白（グラデーションやボケ空間）が施されています。<br />
-                            Canva等を使って、空いているスペースにお好みのフォントでnoteのタイトルを配置すれば、プロ顔負けのバナーが瞬時に完成します！
+                            💡 <strong>デザイナーからのヒント：</strong>アスペクト比「<strong>{aspectRatio}</strong>」に合わせて文字入れ用の美しい余白（フェード空間やボケ）が最適化されています。<br />
+                            Canva等を使って、空いているスペースにお好みのフォントでタイトルを配置すれば、プロ顔負けのバナーが瞬時に完成します！
                           </p>
                         </div>
                       )}
@@ -1905,7 +1914,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <span className="bg-indigo-100 text-indigo-800 text-xs px-2.5 py-0.5 rounded-full font-bold">Prompt Generated</span>
-                              <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">AI専用高精細プログラマブルプロンプト（英語）</h4>
+                              <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">AI専用高精細プログラマブルプロンプト</h4>
                             </div>
                             <button onClick={() => handleCopy(generatedImagePrompt, 'img-prompt')} className="text-slate-400 hover:text-slate-600 flex items-center gap-1 text-xs">
                               {copiedStates['img-prompt'] ? <Check className="text-green-500" /> : <Copy />}
@@ -1914,9 +1923,6 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                           <div className="bg-white border border-slate-150 p-4 rounded-lg">
                             <p className="text-xs font-mono text-slate-600 break-words leading-relaxed select-all">{generatedImagePrompt}</p>
                           </div>
-                          <p className="text-[10px] text-slate-400 italic">
-                            ※この高度なプロンプトは、構図・質感・空きスペース・ライティング・アングルすべてが最先端のImagen用に細かくチューニングされています。
-                          </p>
                         </div>
                       )}
                     </div>
