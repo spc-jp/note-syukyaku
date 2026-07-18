@@ -132,7 +132,7 @@
       }
     };
 
-    // サムネイルスタイル (全9種類)
+    // サムネイルスタイル (Midjourneyインスパイアスタイルを統合した全11種類)
     const THUMBNAIL_STYLES = [
       { id: 1, name: "プロフェッショナル・コーポレート", desc: "最先端の3Dアイソメトリックで描かれる、圧倒的な信頼性とモダンなビジネスデザイン", prompt: "Premium professional corporate style, state-of-the-art 3D isometric vector illustration, clean geometric shapes, smooth pastel gradients, volumetric studio lighting, trustworthy indigo and warm gold color scheme, extremely polished and modern corporate aesthetic" },
       { id: 2, name: "ジブリ風・ノスタルジックアニメ", desc: "息をのむような美しい水彩画、どこか温かくノスタルジックなアニメアート", prompt: "Breathtaking Studio Ghibli anime aesthetic, cinematic hand-drawn watercolor illustration, nostalgic golden hour sunlight filtering through clouds, rich grass and wood textures, warm nostalgic atmosphere, masterpiece animation background" },
@@ -142,7 +142,9 @@
       { id: 6, name: "サイバーパンク・フューチャー", desc: "ダークトーンの背景に走るレーザー光。近未来を彷彿とさせる圧倒的テック感", prompt: "Stunning cyberpunk digital cityscape, ultra-detailed futuristic tech UI overlay, dark glossy background with glowing neon violet and laser green lights, high-tech holographic interface, octane render, cinematic synthwave vibe" },
       { id: 7, name: "和風モダン・重厚スタイル", desc: "水墨画 of 濃淡に金箔の輝きが交わる、日本の伝統と高級感を極めた和モダン", prompt: "Exquisite modern Japanese sumi-e wash, traditional wet ink-brush strokes, gold leaf accents glowing under soft dramatic spotlight, rich paper texture, elegant minimalist composition, wabi-sabi luxury aesthetic, high-contrast black, white, and deep gold" },
       { id: 8, name: "YouTubeサムネイル・超目立つポップ", desc: "文字を乗せたときに最もクリックを誘発する、視認性とインパクトを極めた王道ポップ", prompt: "Ultra-high-impact professional YouTube thumbnail style, dramatic high-contrast studio scene, bold glowing outline around a high-fidelity 3D rendered key focal object on the right side, premium dark-to-bright colored textured background, perfect left-side empty space meticulously designed for large title overlay" },
-      { id: 9, name: "実写・ビジネスインフルエンサー風", desc: "1億画素のプロ機材で撮られたような、ラグジュアリーな空気感を纏う実写クオリティ", prompt: "Premium editorial business portrait photography, shot on Hasselblad 100MP, luxurious modern office workspace background with stunning golden sunlight and soft cinematic f/1.4 lens bokeh, ultra-realistic skin and fabric textures, sophisticated and trustworthy professional atmosphere, minimalist composition with professional empty space" }
+      { id: 9, name: "実写・ビジネスインフルエンサー風", desc: "1億画素のプロ機材で撮られたような、ラグジュアリーな空気感を纏う実写クオリティ", prompt: "Premium editorial business portrait photography, shot on Hasselblad 100MP, luxurious modern office workspace background with stunning golden sunlight and soft cinematic f/1.4 lens bokeh, ultra-realistic skin and fabric textures, sophisticated and trustworthy professional atmosphere, minimalist composition with professional empty space" },
+      { id: 10, name: "シネマティック・ファンタジーイラスト（Midjourney画像1参照型）", desc: "深みのあるファンタジー映画調のライティング。画像1の最高峰のアートトーンをシード化", prompt: "Masterpiece high-fidelity digital concept art, beautiful cinematic fantasy scene, atmospheric studio volumetric lighting, deep dual-tone color grading, rich hand-painted details, highly aesthetic fantasy and epic storytelling mood" },
+      { id: 11, name: "3Dクレイ＆ミニマリズム（Midjourney画像2参照型）", desc: "クリーンで愛らしいクレイフィギュア調。画像2の温かく高品質な粘土・トイテイストを完全学習", prompt: "Masterpiece cute 3D claymation style, soft clay model texture, minimalist clean pastel-colored miniature landscape, smooth lighting, adorable toy design, high-contrast octane render, heartwarming clean visual aesthetic" }
     ];
 
     function App() {
@@ -164,7 +166,7 @@
       const [appTrigger, setAppTrigger] = useState("");
       const [appValue, setAppValue] = useState("");
 
-      // Step 1 - note書きました告知用 (新規追加)
+      // Step 1 - note書きました告知用
       const [noteTitle, setNoteTitle] = useState("");
       const [noteUrl, setNoteUrl] = useState("");
       const [noteSummary, setNoteSummary] = useState("");
@@ -386,10 +388,10 @@
           【重要ルール】
           - note의 目次가 너무 복잡해지는 것을 막기 위해, 見出し는「大見出し（## 章タイトル）」만 사용해주세요. 中見出し（###）나 小見出し（####）는 절대로 만들지 마세요.
           - 상세 포인트나 중요한 해설은, 見出し를 새로 만들지 않고, 문장 내에서「**太字**」로 강조해 이해하기 쉽게 설명하세요.
-          - AI스러운 딱딱한 표현은 피하고, 사람다운 자연스러운 어조(日本語の自然な話し言葉・書き言葉)로 작성하세요.
-          - 독자가 이미지하기 쉽도록 구체적인 비유나, 흔히 겪는 실패담 등의 「유사 체험담」을 섞으세요.
-          - 가독성을 중시해, 적절히 줄바꿈과 공백 라인을 넣으세요.
-          - 글머리 기호(箇条書き)나 인용 블록을 효과적으로 사용하세요.
+          - AIっぽい堅苦しい表現は避け、人間らしい自然な言葉遣いにすること。
+          - 読者がイメージしやすいように、具体的な例え話や、よくある失敗談などの「疑似体験談」を交えること。
+          - 読みやすさを重視し、適度に改行や空白行を入れること。
+          - 箇条書きや引用ブロックなどを効果的に使うこと。
           
           【特典導線ルール】
           ${hasLineBonus ? `【重要：公式LINE追加特典CTAの自動設置】: 本文の最後の「大見出しの終わり、かつハッシュタグの直前」に、LINE公式アカウントの追加と特典プレゼントを強く呼びかける案内文を自然に挿入してください。
@@ -487,7 +489,7 @@
                  
                  【SNS告知アルゴリズム重要ルール（※これらを厳格に遵守してください）】
                  1. **𝕏 (Twitter) 投稿案**:
-                    - 文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置。140字以内。
+                    - 文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置. 140字以内。
                  2. **Threads 3段スレッド投稿案**:
                     - 1段目（問題提起）➡ 2段目（チラ見せ） ➡ 3段目（無料URL・CTA）。
                  3. **Facebook 投稿案**:
@@ -547,7 +549,7 @@
         }
       };
 
-      // 5. サムネイル画像生成 (Gemini Engine 本気プロンプト最適化版)
+      // 5. サムネイル画像生成 (Gemini Engine 本気プロンプト＋Midjourney画像インジェクション対応)
       const generateThumbnailImage = async () => {
         const targetTopic = marketingData?.titles?.[0] || noteTitle || selectedTheme || genre;
         if (!targetTopic) { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
@@ -571,9 +573,18 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
           const textPrompt = `Topic/Subject: "${targetTopic}"\nArt Style Keywords: "${style.prompt}"\nCreate a highly detailed image generation prompt.`;
           
           const imgPrompt = await callGeminiAPI(textPrompt, systemPrompt, false);
-          setGeneratedImagePrompt(imgPrompt);
+          
+          // Midjourney画像URLをプロンプトの先頭にプレフィックスとして注入し、再現性を高める
+          let finalPrompt = imgPrompt;
+          if (style.id === 10) {
+            finalPrompt = "https://cdn.midjourney.com/2babba26-bfc0-44de-a49e-56f622b7283e/0_0.png " + imgPrompt;
+          } else if (style.id === 11) {
+            finalPrompt = "https://cdn.midjourney.com/d99e1051-9d0f-425a-9cd1-2ab18516ca04/0_0.png " + imgPrompt;
+          }
 
-          const imageUrl = await generateImageAPI(imgPrompt);
+          setGeneratedImagePrompt(finalPrompt);
+
+          const imageUrl = await generateImageAPI(finalPrompt);
           setGeneratedImageUrl(imageUrl);
           
         } catch (err) {
@@ -691,7 +702,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
 
                   {/* モードに応じた入力フォーム切り替え */}
                   {creationMode === "normal" && (
-                    /* 1. 悩み解決テーマ用 (これまでの仕様を維持) */
+                    /* 1. 悩み解決テーマ用 */
                     <div className="space-y-4 animate-fade-in">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b pb-2">
                         <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -768,7 +779,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         <textarea
                           value={appValue}
                           onChange={(e) => setAppValue(e.target.value)}
-                          placeholder="例: 難しい販売心理学を学ばなくても、トグルやフォームを埋めるだけで、数万文字クラスの売れる有料・無料記事と全SNS用の集客告知文が自動で一瞬で組み上がること。"
+                          placeholder="例: 難しい販売心理学を学ばなくても、トグルやフォームを埋めるだけで、数万文字クラス of 売れる有料・無料記事と全SNS用の集客告知文が自動で一瞬で組み上がること。"
                           className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                           rows={2}
                         />
@@ -788,7 +799,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                   )}
 
                   {creationMode === "written_note" && (
-                    /* 3. note書きました告知・拡散用フォーム (新設) */
+                    /* 3. note書きました告知・拡散用フォーム */
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-emerald-50/40 to-teal-50/40 rounded-2xl border border-emerald-100 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-emerald-100 pb-2 text-emerald-950">
                         <span className="bg-emerald-100 text-emerald-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -845,7 +856,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         />
                       </div>
 
-                      {/* 特典設定セクション（告知モードでもLINE/限定プレゼントをアピールできるよう統合） */}
+                      {/* 特典設定セクション */}
                       <div className="space-y-4 pt-4 border-t border-emerald-100/50">
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">🎁 特典アピールの設定（LINE特典などを絡めることでSNSクリック率が跳ね上がります）</p>
                         
@@ -887,7 +898,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                   type="text"
                                   value={lineBonusContent}
                                   onChange={(e) => setLineBonusContent(e.target.value)}
-                                  placeholder="特典の内容（例：コンビニ痩せチェックシートPDF）"
+                                  placeholder="特典の内容（例：おすすめコンビニ痩せ商品チェックリストPDF）"
                                   className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                                 />
                                 <input
@@ -1347,7 +1358,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                   <div key={idx} className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
                                      <p className="text-sm font-medium text-slate-800">{title}</p>
                                      <button onClick={() => handleCopy(title, `title-${idx}`)} className="p-2 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm">
-                                        {copiedStates[`title-${idx}`] ? <Check className="text-green-500" /> : <Copy />}
+                                        {copiedStates[`title-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                                      </button>
                                   </div>
                                 ))}
@@ -1363,7 +1374,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                 <h3 className="font-bold text-white">𝕏 (Twitter) 投稿案</h3>
                               </div>
                               <button onClick={() => handleCopy(marketingData.x_post, 'x')} className="text-slate-300 hover:text-white flex items-center gap-1 text-xs">
-                                 {copiedStates['x'] ? <Check className="text-green-400" /> : <Copy />} コピー
+                                 {copiedStates['x'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
                               </button>
                             </div>
                             <div className="p-4 bg-slate-50">
@@ -1389,7 +1400,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                     <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 relative group">
                                       <textarea readOnly value={thread} rows={4} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700" />
                                       <button onClick={() => handleCopy(thread, `thread-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                          {copiedStates[`thread-${idx}`] ? <Check className="text-green-500" /> : <Copy />}
+                                          {copiedStates[`thread-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                                       </button>
                                     </div>
                                  </div>
@@ -1405,7 +1416,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                 <h3 className="font-bold text-white">f Facebook 投稿案</h3>
                               </div>
                               <button onClick={() => handleCopy(marketingData.facebook_post, 'fb')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
-                                 {copiedStates['fb'] ? <Check className="text-green-400" /> : <Copy />} コピー
+                                 {copiedStates['fb'] ? <Check className="text-green-400" /> : <Copy className="w-4 h-4" />} コピー
                               </button>
                             </div>
                             <div className="p-4 bg-slate-50">
@@ -1421,7 +1432,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                 <h3 className="font-bold text-white">📷 Instagram キャプション投稿案</h3>
                               </div>
                               <button onClick={() => handleCopy(marketingData.instagram_post, 'insta')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
-                                 {copiedStates['insta'] ? <Check className="text-green-400" /> : <Copy />} コピー
+                                 {copiedStates['insta'] ? <Check className="text-green-400" /> : <Copy className="w-4 h-4" />} コピー
                               </button>
                             </div>
                             <div className="p-4 bg-slate-50">
