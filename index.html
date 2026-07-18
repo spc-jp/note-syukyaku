@@ -152,7 +152,8 @@
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState("");
 
-      // 作成モード切り替え ("normal" = 通常テーマ, "app" = 自作アプリ紹介テーマ, "written_note" = note書きました告知)
+      // 作成モード切り替え 
+      // "normal" = 通常テーマ, "app" = 自作アプリ紹介テーマ, "written_note" = note書きました告知, "short_video" = ショート動画集客
       const [creationMode, setCreationMode] = useState("normal");
 
       // Step 1 - 通常テーマ用
@@ -160,11 +161,14 @@
       const [themes, setThemes] = useState([]);
       const [selectedTheme, setSelectedTheme] = useState("");
 
-      // Step 1 - アプリ紹介テーマ用
+      // Step 1 - アプリ紹介テーマ用 / ショート動画用共通
       const [appName, setAppName] = useState("");
       const [appUrl, setAppUrl] = useState("");
       const [appTrigger, setAppTrigger] = useState("");
       const [appValue, setAppValue] = useState("");
+
+      // Step 1 - ショート動画集客用専用 (アプリ概要)
+      const [appSummary, setAppSummary] = useState("");
 
       // Step 1 - note書きました告知用
       const [noteTitle, setNoteTitle] = useState("");
@@ -231,6 +235,7 @@
         setAppUrl("");
         setAppTrigger("");
         setAppValue("");
+        setAppSummary("");
         setNoteTitle("");
         setNoteUrl("");
         setNoteSummary("");
@@ -373,7 +378,7 @@
                【有料販売のための分割執筆ルール】
                1. 本文全体のボリュームの約 35〜45% を「無料部分（導入、ターゲットへの強い共感、悩みの根本原因の指摘、開発に至るエピソードストーリー等）」として執筆してください。
                2. 無料部分の最後に、読者の購買意欲を最大限に刺激する【魅力的な寸止めセールスコピー】（この課題を克服する具体的な実践手順や、特別なノウハウ、アプリの最も効率的な裏ワザがこの先で手に入るという期待感の提示）を2段落ほどで熱を込めて書いてください。
-               3. 寸止めコピーの直後に、noteの管理画面で有料ラインを設定するためのコピペ用ガイドラインとして、必ず以下の区切り線を1行独立させて挿入してください。
+               3. 寸止めコピー of 直後に、noteの管理画面で有料ラインを設定するためのコピペ用ラインとして、必ず以下の区切り線を1行独立させて挿入してください。
                   
                   ✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー
                   
@@ -417,7 +422,7 @@
         }
       };
 
-      // 4. タイトル案＆SNS投稿の生成 (有料/無料、さらに自作note告知の分岐を搭載)
+      // 4. タイトル案＆SNS投稿の生成 (有料/無料、自作note告知、さらに🎬ショート動画集客モードの分岐を搭載)
       const generateMarketing = async () => {
         setLoading(true); setError("");
         try {
@@ -426,7 +431,7 @@
           let contentSourceText = "";
 
           if (creationMode === "written_note") {
-            // note書きました告知モードの場合、入力パラメータから要約コンテキストを作る
+            // note書きました告知モード
             if (!noteTitle) { setError("noteのタイトルを入力してください"); setLoading(false); return; }
             if (!noteUrl) { setError("noteのURLを入力してください"); setLoading(false); return; }
             
@@ -456,6 +461,50 @@
                - フィードやリール画像の投稿キャプションとして使えるコピペ用文章。
                - ビジュアルイメージを想起させるフックから始まり、noteの内容の3つの見どころや学び、そして「プロフィールのリンク（またはコメント欄）からnoteへアクセス！」の誘導導線を作ります。
                - 文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。`;
+          } else if (creationMode === "short_video") {
+            // 新設：ショート動画集客モードのデータ構築とプロンプト
+            if (!appName) { setError("アプリ名を入力してください"); setLoading(false); return; }
+            if (!appSummary) { setError("アプリの概要を入力してください"); setLoading(false); return; }
+            if (!appValue) { setError("解決できる悩み・提供できる価値を入力してください"); setLoading(false); return; }
+
+            contentSourceText = `【ショート動画告知用アプリデータ】
+            - アプリ名: ${appName}
+            - アプリのURL: ${appUrl}
+            - アプリの概要: ${appSummary}
+            - 解決できる悩み・価値: ${appValue}
+            ${hasLineBonus ? `- LINE登録特典: ${lineBonusContent} (LINE追加URL: ${lineUrl || '公式LINEリンク'})` : ''}
+            ${hasBonus ? `- プレゼント特典: ${bonusContent}` : ''}`;
+
+            monetizationStrategy = `【ショート動画集客（リール・TikTok）モード】
+            あなたはショート動画（リール、TikTok、YouTubeショート）での集客を熟知したトップマーケターです。
+            指定されたアプリの情報をベースに、最もクリックを誘発する動画用の「キャプション」および告知用の「各種SNS投稿文」を完璧に生成してください。
+
+            【出力重要ルール（※これらを厳格に遵守してください。JSON内の各項目にそれぞれバリエーション等を詰め込んでください）】
+            
+            1. **video_captions (ショート動画用キャプション案 - 3パターン)**:
+               - リールやTikTok投稿にそのまま使えるキャプション文章を「3パターン（全く異なるフック）」作成してください。
+               - 視聴者のスクロールを一瞬で止める最初の1行、アプリ（${appName}）によるメリット概要、LINE登録特典、そして「プロフィールリンクから今すぐアクセス！」という動画アクセス導線を明記。
+               - 各パターンの末尾に必ず【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】を配置してください。
+               - JSONでは文字列の配列（3要素）として出力してください。
+
+            2. **x_posts (𝕏/Twitter投稿案 - 2回分)**:
+               - X用の告知投稿案を「2回分（2パターン）」作成してください。各140字以内。
+               - アプリ名（${appName}）やURL（${appUrl}）のリンク、LINE特典訴求、および文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】を設置。
+               - JSONでは文字列の配列（2要素）として出力してください。
+
+            3. **threads_variations (Threads3段スレッド投稿案 - 3投稿分)**:
+               - 3段スレッド形式の投稿コピーを、全く違う角度から「3つのアプローチ（3バリエーション）」で作成してください。
+                 - 1段目：読者が日常的に抱える悩み（${appTrigger}を基にした生々しい痛み）への強烈な共感と問題提起。
+                 - 2段目：アプリ（${appName}）がもたらす革新的なベネフィット・概要（${appValue}）、LINE特典アピール。
+                 - 3段目：今すぐクリックすべきURL（${appUrl}）への強烈な誘導導線。
+               - JSONでは「スレッドの配列（3つの要素があり、各要素がさらに3つの文字列［1段目, 2段目, 3段目］の配列になっている構造）」として出力してください。
+
+            4. **facebook_posts (Facebook投稿案 - 2投稿分)**:
+               - Facebook用の親密でストーリー性豊かな投稿案を「2回分（2パターン）」作成してください。
+               - アプリ（${appName}）を開発した理由や熱い想いを語り、URL（${appUrl}）へと誘導。
+               - 各パターンの末尾に必ず【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】を設置してください。
+               - JSONでは文字列の配列（2要素）として出力してください。`;
+
           } else {
             // 通常＆アプリモード
             contentSourceText = `【note本文データ】\n${articleBody.substring(0, 3000)}`;
@@ -489,7 +538,7 @@
                  
                  【SNS告知アルゴリズム重要ルール（※これらを厳格に遵守してください）】
                  1. **𝕏 (Twitter) 投稿案**:
-                    - 文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置. 140字以内。
+                    - 文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置。140字以内。
                  2. **Threads 3段スレッド投稿案**:
                     - 1段目（問題提起）➡ 2段目（チラ見せ） ➡ 3段目（無料URL・CTA）。
                  3. **Facebook 投稿案**:
@@ -512,34 +561,67 @@
           
           const prompt = `以下のソースデータを元に、指示されたSNS投稿案を作成してください。\n\n--- ソースデータ ---\n${contentSourceText}`;
           
-          const schema = {
-            type: "OBJECT",
-            properties: {
-              titles: { type: "ARRAY", items: { type: "STRING" } },
-              x_post: { type: "STRING" },
-              threads: { type: "ARRAY", items: { type: "STRING" } },
-              facebook_post: { type: "STRING" },
-              instagram_post: { type: "STRING" } // 新設
-            },
-            required: ["titles", "x_post", "threads", "facebook_post", "instagram_post"]
-          };
+          let schema = null;
+          if (creationMode === "short_video") {
+            // ショート動画用専用JSONスキーマ
+            schema = {
+              type: "OBJECT",
+              properties: {
+                video_captions: { type: "ARRAY", items: { type: "STRING" } },
+                x_posts: { type: "ARRAY", items: { type: "STRING" } },
+                threads_variations: {
+                  type: "ARRAY",
+                  items: {
+                    type: "ARRAY",
+                    items: { type: "STRING" }
+                  }
+                },
+                facebook_posts: { type: "ARRAY", items: { type: "STRING" } }
+              },
+              required: ["video_captions", "x_posts", "threads_variations", "facebook_posts"]
+            };
+          } else {
+            // 通常スキーマ
+            schema = {
+              type: "OBJECT",
+              properties: {
+                titles: { type: "ARRAY", items: { type: "STRING" } },
+                x_post: { type: "STRING" },
+                threads: { type: "ARRAY", items: { type: "STRING" } },
+                facebook_post: { type: "STRING" },
+                instagram_post: { type: "STRING" }
+              },
+              required: ["titles", "x_post", "threads", "facebook_post", "instagram_post"]
+            };
+          }
           
           const result = await callGeminiAPI(prompt, systemPrompt, true, schema);
           
           const sanitizeStringArray = (arr) => {
             if (!Array.isArray(arr)) return [];
-            return arr.map(item => typeof item === 'string' ? item : (item.title || item.text || JSON.stringify(item)));
+            return arr.map(item => typeof item === 'string' ? item : JSON.stringify(item));
           };
 
-          setMarketingData({
-            titles: sanitizeStringArray(result?.titles || []),
-            x_post: typeof result?.x_post === 'string' ? result.x_post : String(result?.x_post || ''),
-            threads: sanitizeStringArray(result?.threads || []),
-            facebook_post: typeof result?.facebook_post === 'string' ? result.facebook_post : String(result?.facebook_post || ''),
-            instagram_post: typeof result?.instagram_post === 'string' ? result.instagram_post : String(result?.instagram_post || '') // 新設
-          });
+          if (creationMode === "short_video") {
+            setMarketingData({
+              video_captions: sanitizeStringArray(result?.video_captions || []),
+              x_posts: sanitizeStringArray(result?.x_posts || []),
+              threads_variations: Array.isArray(result?.threads_variations) 
+                ? result.threads_variations.map(thread => sanitizeStringArray(thread)) 
+                : [],
+              facebook_posts: sanitizeStringArray(result?.facebook_posts || [])
+            });
+          } else {
+            setMarketingData({
+              titles: sanitizeStringArray(result?.titles || []),
+              x_post: typeof result?.x_post === 'string' ? result.x_post : String(result?.x_post || ''),
+              threads: sanitizeStringArray(result?.threads || []),
+              facebook_post: typeof result?.facebook_post === 'string' ? result.facebook_post : String(result?.facebook_post || ''),
+              instagram_post: typeof result?.instagram_post === 'string' ? result.instagram_post : String(result?.instagram_post || '')
+            });
+          }
 
-          // note書きました告知モードの場合は直接Step 3にジャンプ
+          // 直接集客用のStep 3にジャンプ
           setActiveTab(3);
 
         } catch (err) {
@@ -551,7 +633,7 @@
 
       // 5. サムネイル画像生成 (Gemini Engine 本気プロンプト＋Midjourney画像インジェクション対応)
       const generateThumbnailImage = async () => {
-        const targetTopic = marketingData?.titles?.[0] || noteTitle || selectedTheme || genre;
+        const targetTopic = marketingData?.titles?.[0] || appName || noteTitle || selectedTheme || genre;
         if (!targetTopic) { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
         const style = THUMBNAIL_STYLES.find(s => s.id === selectedStyleId);
         
@@ -634,10 +716,10 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  // note書きました告知モードの場合、Step 2は非表示にするかジャンプを制限するなどのUI配慮
-                  disabled={creationMode === "written_note" && tab.id === 2}
+                  // note告知、およびショート動画集客モードの場合、Step 2はジャンプを制限
+                  disabled={(creationMode === "written_note" || creationMode === "short_video") && tab.id === 2}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    creationMode === "written_note" && tab.id === 2 ? "opacity-30 cursor-not-allowed" : ""
+                    (creationMode === "written_note" || creationMode === "short_video") && tab.id === 2 ? "opacity-30 cursor-not-allowed" : ""
                   } ${
                     activeTab === tab.id
                       ? "bg-indigo-600 text-white shadow-md"
@@ -657,10 +739,10 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
               {activeTab === 1 && (
                 <div className="space-y-8 animate-fade-in">
                   
-                  {/* 作成モード選択トグル (3つのモード対応) */}
+                  {/* 作成モード選択トグル (4つのモード対応に完全アップグレード) */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">作成する記事のタイプ</label>
-                    <div className="flex flex-col sm:flex-row bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">作成する記事・告知のタイプ</label>
+                    <div className="flex flex-col md:flex-row bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1">
                       <button
                         type="button"
                         onClick={() => {
@@ -683,7 +765,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         }}
                         className={`flex-1 py-3 px-2 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "app" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                       >
-                        🚀 アプリ紹介 (開発ストーリー)
+                        🚀 アプリ紹介 (ストーリー)
                       </button>
                       <button
                         type="button"
@@ -695,14 +777,26 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         }}
                         className={`flex-1 py-3 px-2 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "written_note" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                       >
-                        📝 note書きました告知 (既存記事の拡散)
+                        📝 note告知 (既存拡散)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreationMode("short_video");
+                          setThemes([]);
+                          setSelectedTheme("");
+                          setToc("");
+                        }}
+                        className={`flex-1 py-3 px-2 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "short_video" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        🎬 ショート動画集客
                       </button>
                     </div>
                   </div>
 
                   {/* モードに応じた入力フォーム切り替え */}
                   {creationMode === "normal" && (
-                    /* 1. 悩み解決テーマ用 */
+                    /* 1. 悩み解決テーマ用 (仕様維持) */
                     <div className="space-y-4 animate-fade-in">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b pb-2">
                         <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -876,7 +970,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                 type="text"
                                 value={bonusContent}
                                 onChange={(e) => setBonusContent(e.target.value)}
-                                placeholder="特典の内容（例：そのままコピペして使える10個の厳選プロンプト）"
+                                placeholder="特典の内容（例：そのままコピペして使える10個 of 厳選プロンプト）"
                                 className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                               />
                             )}
@@ -927,7 +1021,135 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     </div>
                   )}
 
-                  {creationMode !== "written_note" && themes.length > 0 && (
+                  {creationMode === "short_video" && (
+                    /* 4. 新設：🎬 ショート動画集客 (リール・TikTok) 用フォーム */
+                    <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-purple-50/40 to-indigo-50/40 rounded-2xl border border-indigo-150 shadow-inner">
+                      <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
+                        <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                        ショート動画を投稿するアプリ・ツールの情報
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">アプリ名</label>
+                          <input
+                            type="text"
+                            value={appName}
+                            onChange={(e) => setAppName(e.target.value)}
+                            placeholder="例: 売れるnote＆集客メーカー"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">アプリのURL</label>
+                          <input
+                            type="url"
+                            value={appUrl}
+                            onChange={(e) => setAppUrl(e.target.value)}
+                            placeholder="例: https://example.com/app"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          アプリの概要 (どんな機能があるか、何ができるか)
+                        </label>
+                        <textarea
+                          value={appSummary}
+                          onChange={(e) => setAppSummary(e.target.value)}
+                          placeholder="例: フォームに情報を入れるだけで、売れる構成の有料/無料記事が作れて、各SNS告知文章や、文字入れを完璧に想定したハイクオリティサムネイル画像プロンプトまでをGemini APIが自動作成してくれるツールです。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          解決できる悩み・提供できる具体的な価値
+                        </label>
+                        <textarea
+                          value={appValue}
+                          onChange={(e) => setAppValue(e.target.value)}
+                          placeholder="例: 難しいマーケティングやプロンプトエンジニアリングを勉強しなくても、誰でも一瞬で集客導線付きのバズるnoteと告知ビジュアルを作って収益化・ファン化が狙えること。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      {/* 特典設定セクション */}
+                      <div className="space-y-4 pt-4 border-t border-indigo-100/50">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">🎁 特典アピールの設定（LINE特典などを絡めることでSNSクリック率が跳ね上がります）</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-indigo-900">
+                              <input
+                                type="checkbox"
+                                checked={hasBonus}
+                                onChange={(e) => setHasBonus(e.target.checked)}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span>🎁 アプリ購入者限定のプレゼント特典がある</span>
+                            </label>
+                            {hasBonus && (
+                              <input
+                                type="text"
+                                value={bonusContent}
+                                onChange={(e) => setBonusContent(e.target.value)}
+                                placeholder="特典の内容（例：そのままコピペして使える10個の厳選プロンプト）"
+                                className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                              />
+                            )}
+                          </div>
+
+                          <div className="space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-900">
+                              <input
+                                type="checkbox"
+                                checked={hasLineBonus}
+                                onChange={(e) => setHasLineBonus(e.target.checked)}
+                                className="rounded text-emerald-600 focus:ring-emerald-500"
+                              />
+                              <span>💬 公式LINE登録特典を一緒にアピールする</span>
+                            </label>
+                            {hasLineBonus && (
+                              <div className="space-y-2 pt-1">
+                                <input
+                                  type="text"
+                                  value={lineBonusContent}
+                                  onChange={(e) => setLineBonusContent(e.target.value)}
+                                  placeholder="特典の内容（例：おすすめコンビニ痩せ商品チェックリストPDF）"
+                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                />
+                                <input
+                                  type="url"
+                                  value={lineUrl}
+                                  onChange={(e) => setLineUrl(e.target.value)}
+                                  placeholder="LINE公式アカウントの追加URL"
+                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          onClick={generateMarketing}
+                          disabled={loading}
+                          className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-base"
+                        >
+                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 text-indigo-200" />}
+                          ショート動画・告知SNSコピーを一括生成する
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {creationMode !== "written_note" && creationMode !== "short_video" && themes.length > 0 && (
                     <div className="space-y-6 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100">
                       <div>
                         <p className="text-sm font-medium text-indigo-800 mb-2">① 生成されたテーマ案 (気になるものを選択してください)</p>
@@ -1201,13 +1423,19 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     </h2>
                   </div>
                   
-                  {creationMode === "written_note" ? (
+                  {/* written_note または short_video モードの場合、Step 2はジャンプ制限し、案内を表示 */}
+                  {creationMode === "written_note" || creationMode === "short_video" ? (
                     <div className="text-center py-12 bg-emerald-50/50 rounded-2xl border border-dashed border-emerald-200 max-w-2xl mx-auto p-6">
                       <FileText className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
-                      <h3 className="font-bold text-slate-800 text-base mb-1">本文執筆は不要です（告知モード稼働中）</h3>
+                      <h3 className="font-bold text-slate-800 text-base mb-1">
+                        本文執筆は不要です（{creationMode === "written_note" ? "告知モード" : "ショート動画集客モード"}稼働中）
+                      </h3>
                       <p className="text-sm text-slate-500 leading-relaxed mb-6">
-                        すでに書き上げたnote記事を拡散・告知するモードです。一から本文を自動生成する必要はありません。<br />
-                        情報をもとにした4大SNS（𝕏、Threads、Facebook、Instagram）用の集客コピー生成に直接お進みください。
+                        {creationMode === "written_note" 
+                          ? "すでに書き上げたnote記事を拡散・告知するモードです。一から本文を自動生成する必要はありません。" 
+                          : "ツール・アプリのショート動画用の集客文章と各SNSコピーを直接出力するモードです。note本文の自動生成はスキップされます。"
+                        }<br />
+                        情報をもとにした集客用コピー生成に直接お進みください。
                       </p>
                       <button 
                         onClick={() => setActiveTab(3)} 
@@ -1296,7 +1524,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     </h2>
                   </div>
 
-                  {creationMode !== "written_note" && !articleBody ? (
+                  {creationMode !== "written_note" && creationMode !== "short_video" && !articleBody ? (
                     <div className="text-center py-10 bg-slate-50 rounded-lg border border-dashed border-slate-300">
                       <p className="text-slate-500 mb-4">本文データがありません。</p>
                       <button onClick={() => setActiveTab(2)} className="text-indigo-600 font-medium hover:underline">
@@ -1305,7 +1533,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     </div>
                   ) : (
                     <div className="space-y-6">
-                       {creationMode !== "written_note" && (
+                       {creationMode !== "written_note" && creationMode !== "short_video" && (
                          <button
                            onClick={generateMarketing}
                            disabled={loading}
@@ -1318,21 +1546,38 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                       {marketingData && (
                         <div className="space-y-8 mt-6">
                           
-                          {/* 一括コピーセクション (4大SNS対応) */}
+                          {/* 一括コピーセクション (通常・告知モード vs ショート動画モード) */}
                           <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div>
-                              <h4 className="font-bold text-indigo-900 text-sm">📣 すべてのSNS投稿案を一発で一括コピー</h4>
-                              <p className="text-xs text-indigo-700">𝕏、Threads（3段分）、Facebook、Instagramのすべての集客告知テキストを、ワンクリックでまとめてコピーします。</p>
+                              <h4 className="font-bold text-indigo-900 text-sm">📣 すべての投稿案を一発で一括コピー</h4>
+                              <p className="text-xs text-indigo-700">
+                                {creationMode === "short_video" 
+                                  ? "🎬ショート動画用キャプション（ハッシュタグ5つ）、𝕏（2回分）、Threads（3投稿分）、Facebook（2回分）を一発で1つのテキストにまとめてコピーします。" 
+                                  : "𝕏、Threads（3段分）、Facebook、Instagramのすべての集客告知テキストを、ワンクリックでまとめてコピーします。"
+                                }
+                              </p>
                             </div>
                             <button
                               onClick={() => {
-                                const allSnsText = `【𝕏 (Twitter) 投稿案】\n${marketingData.x_post}\n\n` +
-                                  `【@ Threads 3段スレッド投稿案】\n` +
-                                  `1段目:\n${marketingData.threads[0] || ""}\n\n` +
-                                  `2段目:\n${marketingData.threads[1] || ""}\n\n` +
-                                  `3段目:\n${marketingData.threads[2] || ""}\n\n` +
-                                  `【f Facebook 投稿案】\n${marketingData.facebook_post}\n\n` +
-                                  `【📷 Instagram キャプション案】\n${marketingData.instagram_post}`;
+                                let allSnsText = "";
+                                if (creationMode === "short_video") {
+                                  allSnsText = "【🎬 ショート動画用キャプション案 (3パターン)】\n\n" +
+                                    (marketingData.video_captions?.map((cap, i) => `■ パターン ${i+1}\n${cap}\n`).join("\n") || "") + "\n" +
+                                    "【𝕏 (Twitter) 投稿案 (2回分)】\n\n" +
+                                    (marketingData.x_posts?.map((post, i) => `■ 投稿 ${i+1}\n${post}\n`).join("\n") || "") + "\n" +
+                                    "【@ Threads 3段スレッド投稿案 (3バリエーション)】\n\n" +
+                                    (marketingData.threads_variations?.map((threads, idx) => `■ バリエーション ${idx+1}\n` + threads.map((t, i) => `  [${i+1}段目]\n  ${t}\n`).join("")).join("\n") || "") + "\n" +
+                                    "【f Facebook 投稿案 (2回分)】\n\n" +
+                                    (marketingData.facebook_posts?.map((post, i) => `■ 投稿 ${i+1}\n${post}\n`).join("\n") || "");
+                                } else {
+                                  allSnsText = `【𝕏 (Twitter) 投稿案】\n${marketingData.x_post}\n\n` +
+                                    `【@ Threads 3段スレッド投稿案】\n` +
+                                    `1段目:\n${marketingData.threads[0] || ""}\n\n` +
+                                    `2段目:\n${marketingData.threads[1] || ""}\n\n` +
+                                    `3段目:\n${marketingData.threads[2] || ""}\n\n` +
+                                    `【f Facebook 投稿案】\n${marketingData.facebook_post}\n\n` +
+                                    `【📷 Instagram キャプション案】\n${marketingData.instagram_post}`;
+                                }
                                 handleCopy(allSnsText, 'copy-all-sns');
                               }}
                               className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm transition-all duration-200 animate-pulse"
@@ -1340,105 +1585,209 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                               {copiedStates['copy-all-sns'] ? (
                                 <><Check className="w-4 h-4 text-green-300" /> コピー完了！</>
                               ) : (
-                                <><Copy className="w-4 h-4" /> SNS投稿をすべて一括コピー</>
+                                <><Copy className="w-4 h-4" /> すべて一括コピー</>
                               )}
                             </button>
                           </div>
                           
-                          {/* Titles (通常・アプリモード用) */}
-                          {marketingData.titles && marketingData.titles.length > 0 && (
-                            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                              <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
-                                <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                   <FileText className="text-slate-500" /> 売れるタイトル案
-                                </h3>
-                              </div>
-                              <div className="p-4 space-y-3">
-                                {marketingData.titles.map((title, idx) => (
-                                  <div key={idx} className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                     <p className="text-sm font-medium text-slate-800">{title}</p>
-                                     <button onClick={() => handleCopy(title, `title-${idx}`)} className="p-2 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm">
-                                        {copiedStates[`title-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                                     </button>
+                          {/* 🎬 ショート動画集客モード専用UI */}
+                          {creationMode === "short_video" ? (
+                            <div className="space-y-8 animate-fade-in">
+                              {/* 🎬 ショート動画用キャプション案 */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-indigo-950 px-2 py-0.5 rounded font-bold font-mono">ハッシュタグ5つ</span>
+                                    <h3 className="font-bold text-white">🎬 ショート動画（リール・TikTok）用キャプション案</h3>
                                   </div>
-                                ))}
+                                </div>
+                                <div className="p-4 space-y-4 bg-slate-50">
+                                  {marketingData.video_captions?.map((cap, idx) => (
+                                    <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group">
+                                      <span className="absolute -top-2 -left-2 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">パターン {idx + 1}</span>
+                                      <textarea readOnly value={cap} rows={6} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2" />
+                                      <button onClick={() => handleCopy(cap, `video-cap-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                          {copiedStates[`video-cap-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* 𝕏 (Twitter) 投稿案（2回分） */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-[#000000] px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-slate-800 px-2 py-0.5 rounded font-bold font-mono">2回投稿分 / タグ5つ</span>
+                                    <h3 className="font-bold text-white">𝕏 (Twitter) 投稿案（2回分）</h3>
+                                  </div>
+                                </div>
+                                <div className="p-4 space-y-4 bg-slate-50">
+                                  {marketingData.x_posts?.map((post, idx) => (
+                                    <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group">
+                                      <span className="absolute -top-2 -left-2 bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">1回目・2回目の差別化</span>
+                                      <textarea readOnly value={post} rows={4} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2" />
+                                      <button onClick={() => handleCopy(post, `x-post-sv-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                          {copiedStates[`x-post-sv-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* @ Threads 3段スレッド投稿案（3バリエーション） */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-purple-900 px-2 py-0.5 rounded font-bold font-mono">3段スレッド × 3パターン</span>
+                                    <h3 className="font-bold text-white">@ Threads 3段スレッド投稿案</h3>
+                                  </div>
+                                </div>
+                                <div className="p-4 space-y-6 bg-slate-50">
+                                  {marketingData.threads_variations?.map((threads, idx) => (
+                                    <div key={idx} className="bg-white p-5 rounded-xl border border-slate-200 space-y-4 relative">
+                                      <span className="absolute -top-2.5 left-4 bg-purple-600 text-white text-xs px-3 py-0.5 rounded-full font-bold shadow-sm">バリエーション {idx + 1}</span>
+                                      <div className="space-y-4 pt-2">
+                                        {threads.map((thread, i) => (
+                                          <div key={i} className="relative pl-6">
+                                            {i !== 2 && <div className="absolute left-[11px] top-8 bottom-[-24px] w-0.5 bg-slate-200"></div>}
+                                            <div className="absolute left-0 top-1 w-6 h-6 bg-slate-100 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-slate-400">
+                                              {i + 1}
+                                            </div>
+                                            <div className="bg-slate-50/50 p-3 rounded-lg border border-slate-100 relative group">
+                                              <textarea readOnly value={thread} rows={3} className="w-full text-xs resize-none outline-none bg-transparent text-slate-700" />
+                                              <button onClick={() => handleCopy(thread, `thread-sv-${idx}-${i}`)} className="absolute top-1 right-1 p-1 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                  {copiedStates[`thread-sv-${idx}-${i}`] ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* f Facebook 投稿案（2回分） */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-[#1877F2] px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-blue-900 px-2 py-0.5 rounded font-bold font-mono">2投稿 / タグ5つ</span>
+                                    <h3 className="font-bold text-white">f Facebook 投稿案（2回分）</h3>
+                                  </div>
+                                </div>
+                                <div className="p-4 space-y-4 bg-slate-50">
+                                  {marketingData.facebook_posts?.map((post, idx) => (
+                                    <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group">
+                                      <span className="absolute -top-2 -left-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">Facebook投稿案 {idx + 1}</span>
+                                      <textarea readOnly value={post} rows={6} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2" />
+                                      <button onClick={() => handleCopy(post, `fb-post-sv-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                          {copiedStates[`fb-post-sv-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            /* 通常・アプリ・告知モードのUI (既存) */
+                            <div className="space-y-8">
+                              {/* Titles */}
+                              {marketingData.titles && marketingData.titles.length > 0 && (
+                                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                  <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                       <FileText className="w-4 h-4 text-slate-500" /> 売れるタイトル案
+                                    </h3>
+                                  </div>
+                                  <div className="p-4 space-y-3">
+                                    {marketingData.titles.map((title, idx) => (
+                                      <div key={idx} className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                         <p className="text-sm font-medium text-slate-800">{title}</p>
+                                         <button onClick={() => handleCopy(title, `title-${idx}`)} className="p-2 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm">
+                                            {copiedStates[`title-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                         </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* X */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-[#000000] px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-slate-800 px-2 py-0.5 rounded font-bold font-mono">X アルゴリズム準拠</span>
+                                    <h3 className="font-bold text-white">𝕏 (Twitter) 投稿案</h3>
+                                  </div>
+                                  <button onClick={() => handleCopy(marketingData.x_post, 'x')} className="text-slate-300 hover:text-white flex items-center gap-1 text-xs">
+                                     {copiedStates['x'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
+                                  </button>
+                                </div>
+                                <div className="p-4 bg-slate-50">
+                                  <textarea readOnly value={marketingData.x_post} rows={5} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent" />
+                                </div>
+                              </div>
+
+                              {/* Threads */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-purple-900 px-2 py-0.5 rounded font-bold font-mono">スレッド型構成</span>
+                                    <h3 className="font-bold text-white">@ Threads 3段スレッド投稿案</h3>
+                                  </div>
+                                </div>
+                                <div className="p-4 space-y-4">
+                                   {marketingData.threads.map((thread, idx) => (
+                                     <div key={idx} className="relative pl-6">
+                                        {idx !== 2 && <div className="absolute left-[11px] top-8 bottom-[-24px] w-0.5 bg-slate-200"></div>}
+                                        <div className="absolute left-0 top-1 w-6 h-6 bg-slate-100 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-slate-400">
+                                          {idx + 1}
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 relative group">
+                                          <textarea readOnly value={thread} rows={4} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700" />
+                                          <button onClick={() => handleCopy(thread, `thread-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                              {copiedStates[`thread-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                          </button>
+                                        </div>
+                                     </div>
+                                   ))}
+                                </div>
+                              </div>
+
+                              {/* Facebook */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-[#1877F2] px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-blue-900 px-2 py-0.5 rounded font-bold font-mono">共感重視</span>
+                                    <h3 className="font-bold text-white">f Facebook 投稿案</h3>
+                                  </div>
+                                  <button onClick={() => handleCopy(marketingData.facebook_post, 'fb')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
+                                     {copiedStates['fb'] ? <Check className="text-green-400" /> : <Copy className="w-4 h-4" />} コピー
+                                  </button>
+                                </div>
+                                <div className="p-4 bg-slate-50">
+                                  <textarea readOnly value={marketingData.facebook_post} rows={8} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent" />
+                                </div>
+                              </div>
+
+                              {/* Instagram */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-gradient-to-r from-yellow-500 via-red-500 to-purple-600 px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-red-900 px-2 py-0.5 rounded font-bold font-mono">画像キャプション用</span>
+                                    <h3 className="font-bold text-white">📷 Instagram キャプション投稿案</h3>
+                                  </div>
+                                  <button onClick={() => handleCopy(marketingData.instagram_post, 'insta')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
+                                     {copiedStates['insta'] ? <Check className="text-green-400" /> : <Copy className="w-4 h-4" />} コピー
+                                  </button>
+                                </div>
+                                <div className="p-4 bg-slate-50">
+                                  <textarea readOnly value={marketingData.instagram_post} rows={8} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent" />
+                                </div>
                               </div>
                             </div>
                           )}
-
-                          {/* X */}
-                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                            <div className="bg-[#000000] px-4 py-3 flex justify-between items-center">
-                              <div className="flex items-center gap-2">
-                                <span className="text-white text-xs bg-slate-800 px-2 py-0.5 rounded font-bold font-mono">X アルゴリズム準拠</span>
-                                <h3 className="font-bold text-white">𝕏 (Twitter) 投稿案</h3>
-                              </div>
-                              <button onClick={() => handleCopy(marketingData.x_post, 'x')} className="text-slate-300 hover:text-white flex items-center gap-1 text-xs">
-                                 {copiedStates['x'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
-                              </button>
-                            </div>
-                            <div className="p-4 bg-slate-50">
-                              <textarea readOnly value={marketingData.x_post} rows={5} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent" />
-                            </div>
-                          </div>
-
-                          {/* Threads */}
-                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                            <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 flex justify-between items-center">
-                              <div className="flex items-center gap-2">
-                                <span className="text-white text-xs bg-purple-900 px-2 py-0.5 rounded font-bold font-mono">スレッド型構成</span>
-                                <h3 className="font-bold text-white">@ Threads 3段スレッド投稿案</h3>
-                              </div>
-                            </div>
-                            <div className="p-4 space-y-4">
-                               {marketingData.threads.map((thread, idx) => (
-                                 <div key={idx} className="relative pl-6">
-                                    {idx !== 2 && <div className="absolute left-[11px] top-8 bottom-[-24px] w-0.5 bg-slate-200"></div>}
-                                    <div className="absolute left-0 top-1 w-6 h-6 bg-slate-100 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-slate-400">
-                                      {idx + 1}
-                                    </div>
-                                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 relative group">
-                                      <textarea readOnly value={thread} rows={4} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700" />
-                                      <button onClick={() => handleCopy(thread, `thread-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                          {copiedStates[`thread-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                                      </button>
-                                    </div>
-                                 </div>
-                               ))}
-                            </div>
-                          </div>
-
-                          {/* Facebook */}
-                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                            <div className="bg-[#1877F2] px-4 py-3 flex justify-between items-center">
-                              <div className="flex items-center gap-2">
-                                <span className="text-white text-xs bg-blue-900 px-2 py-0.5 rounded font-bold font-mono">共感重視</span>
-                                <h3 className="font-bold text-white">f Facebook 投稿案</h3>
-                              </div>
-                              <button onClick={() => handleCopy(marketingData.facebook_post, 'fb')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
-                                 {copiedStates['fb'] ? <Check className="text-green-400" /> : <Copy className="w-4 h-4" />} コピー
-                              </button>
-                            </div>
-                            <div className="p-4 bg-slate-50">
-                              <textarea readOnly value={marketingData.facebook_post} rows={8} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent" />
-                            </div>
-                          </div>
-
-                          {/* Instagram (新設) */}
-                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                            <div className="bg-gradient-to-r from-yellow-500 via-red-500 to-purple-600 px-4 py-3 flex justify-between items-center">
-                              <div className="flex items-center gap-2">
-                                <span className="text-white text-xs bg-red-900 px-2 py-0.5 rounded font-bold font-mono">画像コプション用</span>
-                                <h3 className="font-bold text-white">📷 Instagram キャプション投稿案</h3>
-                              </div>
-                              <button onClick={() => handleCopy(marketingData.instagram_post, 'insta')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
-                                 {copiedStates['insta'] ? <Check className="text-green-400" /> : <Copy className="w-4 h-4" />} コピー
-                              </button>
-                            </div>
-                            <div className="p-4 bg-slate-50">
-                              <textarea readOnly value={marketingData.instagram_post} rows={8} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent" />
-                            </div>
-                          </div>
 
                           <div className="flex justify-end pt-4">
                              <button
@@ -1498,7 +1847,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
 
                   <button
                     onClick={generateThumbnailImage}
-                    disabled={isGeneratingImage || (creationMode === "normal" && !selectedTheme && !genre) || (creationMode === "app" && !appName) || (creationMode === "written_note" && !noteTitle)}
+                    disabled={isGeneratingImage || (creationMode === "normal" && !selectedTheme && !genre) || (creationMode === "app" && !appName) || (creationMode === "written_note" && !noteTitle) || (creationMode === "short_video" && !appName)}
                     className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-4 rounded-xl font-bold hover:from-indigo-500 hover:to-indigo-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg mt-6"
                   >
                     {isGeneratingImage ? (
