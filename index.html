@@ -395,7 +395,7 @@
           - 상세 포인트나 중요한 해설은, 見出し를 새로 만들지 않고, 문장 내에서「**太字**」로 강조해 이해하기 쉽게 설명하세요.
           - AIっぽい堅苦しい表現は避け、人間らしい自然な言葉遣いにすること。
           - 読者がイメージしやすいように、具体的な例え話や、よくある失敗談などの「疑似体験談」を交えること。
-          - 読みやすさを重視し、適度に改行や空白行を入れること。
+          - 読みやすさを重視し、適度に改行や空白行を入れること.
           - 箇条書きや引用ブロックなどを効果的に使うこと。
           
           【特典導線ルール】
@@ -471,38 +471,53 @@
             - アプリ名: ${appName}
             - アプリのURL: ${appUrl}
             - アプリの概要: ${appSummary}
-            - 解決できる悩み・価値: ${appValue}
-            ${hasLineBonus ? `- LINE登録特典: ${lineBonusContent} (LINE追加URL: ${lineUrl || '公式LINEリンク'})` : ''}
-            ${hasBonus ? `- プレゼント特典: ${bonusContent}` : ''}`;
+            - 解決できる悩み・価値: ${appValue}`;
 
             monetizationStrategy = `【ショート動画集客（リール・TikTok）モード】
             あなたはショート動画（リール、TikTok、YouTubeショート）での集客を熟知したトップマーケターです。
-            指定されたアプリの情報をベースに、最もクリックを誘発する動画用の「キャプション」および告知用の「各種SNS投稿文」を完璧に生成してください。
+            指定されたアプリの情報をベースに、最もクリックを誘発する動画用の「キャプション（3パターン）」および他SNSへの告知拡散文を作成してください。
 
             【出力重要ルール（※これらを厳格に遵守してください。JSON内の各項目にそれぞれバリエーション等を詰め込んでください）】
             
             1. **video_captions (ショート動画用キャプション案 - 3パターン)**:
-               - リールやTikTok投稿にそのまま使えるキャプション文章を「3パターン（全く異なるフック）」作成してください。
-               - 視聴者のスクロールを一瞬で止める最初の1行、アプリ（${appName}）によるメリット概要、LINE登録特典、そして「プロフィールリンクから今すぐアクセス！」という動画アクセス導線を明記。
-               - 各パターンの末尾に必ず【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】を配置してください。
+               - リールやTikTok投稿の概要欄にそのまま使えるキャプション文章を、アプローチを変えて「3パターン」作成してください。
+               - LINE公式登録を促す「詳細はLINE登録で【無料スタートアップガイド】をチェック！」のような文言は絶対に含めないでください。
+               - 各パターンは、必ず以下の【構文構成テンプレート（改行数も忠実に再現）】に従って正確に執筆してください：
+                 
+                 [フックとなる問いかけ（アプリのジャンルに紐づく一般的な悩みや問題提起を問いかけるフックの1行。例：ダイエットアプリ、入れてみたものの気づけば開かなくなっていませんか？）]
+                 （1行空ける）
+                 [具体的な悩み・不満の提示（例：みんな同じアドバイスばかりで自分ごとに感じられない、記録が面倒で三日坊主、高齢の家族にどう勧めればいいかわからない…そんな悩みありませんか。のように、アプリの解決課題に関連する課題を3つほど具体的に並べ、「〜そんな悩みありませんか。」という一文で結んでください。）]
+                 （1行空ける）
+                 [「\${appName}」の紹介と、独自の解決アプローチ、主要な機能・仕組みを、提供されたアプリデータ（概要、価値）を基に詳細かつ魅力的に3行〜4行で執筆。]
+                 （1行空ける）
+                 [まとめ・理想的な未来（今日のやることが一目でわかるから、迷わず続けられます。のような確信と期待に満ちた魅力的な一文）]
+                 （1行空ける）
+                 ▶ \${appName}
+                 \${appUrl || "[アプリURLを入力してください]"}
+                 （1行空ける）
+                 ▶ 他のAIツールをまとめて見るならこちら
+                 https://mikke-catalog.pages.dev/
+                 （1行空ける）
+                 [半角スペース区切りの横並びハッシュタグをちょうど5つ（例：#ダイエット #ダイエット記録 #フレイル予防 #AIダイエット #みっけシリーズ）]
+
                - JSONでは文字列の配列（3要素）として出力してください。
 
             2. **x_posts (𝕏/Twitter投稿案 - 2回分)**:
-               - X用の告知投稿案を「2回分（2パターン）」作成してください。各140字以内。
-               - アプリ名（${appName}）やURL（${appUrl}）のリンク、LINE特典訴求、および文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】を設置。
+               - 140字以内。アプリを紹介する投稿コピーを切り口を変えて「2回分（2パターン）」作成してください。
+               - 各パターンの文末に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】設置してください。
                - JSONでは文字列の配列（2要素）として出力してください。
 
-            3. **threads_variations (Threads3段スレッド投稿案 - 3投稿分)**:
-               - 3段スレッド形式の投稿コピーを、全く違う角度から「3つのアプローチ（3バリエーション）」で作成してください。
-                 - 1段目：読者が日常的に抱える悩み（${appTrigger}を基にした生々しい痛み）への強烈な共感と問題提起。
-                 - 2段目：アプリ（${appName}）がもたらす革新的なベネフィット・概要（${appValue}）、LINE特典アピール。
-                 - 3段目：今すぐクリックすべきURL（${appUrl}）への強烈な誘導導線。
+            3. **threads_variations (Threads3段スレッド投稿案 - 3種類)**:
+               - 3段スレッド形式の投稿コピーを、完全に異なる3つの切り口（3バリエーション）で作成してください。
+                 - 1段目：ターゲットの悩みに寄り添う問題提起。
+                 - 2段目：アプリ（\${appName}）の中身や劇的価値のチラ見せ。
+                 - 3段目：結論と、URL（\${appUrl}）への誘導、およびカタログURL（https://mikke-catalog.pages.dev/）への誘導。
                - JSONでは「スレッドの配列（3つの要素があり、各要素がさらに3つの文字列［1段目, 2段目, 3段目］の配列になっている構造）」として出力してください。
 
             4. **facebook_posts (Facebook投稿案 - 2投稿分)**:
-               - Facebook用の親密でストーリー性豊かな投稿案を「2回分（2パターン）」作成してください。
-               - アプリ（${appName}）を開発した理由や熱い想いを語り、URL（${appUrl}）へと誘導。
-               - 各パターンの末尾に必ず【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】を設置してください。
+               - Facebook用の親密でストーリー性豊かな投稿案を、切り口を変えて「2回分（2パターン）」作成してください。
+               - アプリ（\${appName}）を開発した背景、URL（\${appUrl}）、カタログURL（https://mikke-catalog.pages.dev/）への誘導。
+               - 各パターンの末尾に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】を配置してください。
                - JSONでは文字列の配列（2要素）として出力してください。`;
 
           } else {
@@ -739,7 +754,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
               {activeTab === 1 && (
                 <div className="space-y-8 animate-fade-in">
                   
-                  {/* 作成モード選択トグル (4つのモード対応に完全アップグレード) */}
+                  {/* 作成モード選択トグル (4つのモード対応) */}
                   <div className="space-y-2">
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">作成する記事・告知のタイプ</label>
                     <div className="flex flex-col md:flex-row bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1">
@@ -970,7 +985,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                 type="text"
                                 value={bonusContent}
                                 onChange={(e) => setBonusContent(e.target.value)}
-                                placeholder="特典の内容（例：そのままコピペして使える10個 of 厳選プロンプト）"
+                                placeholder="特典の内容（例：そのままコピペして使える10個の厳選プロンプト）"
                                 className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                               />
                             )}
@@ -1036,7 +1051,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                             type="text"
                             value={appName}
                             onChange={(e) => setAppName(e.target.value)}
-                            placeholder="例: 売れるnote＆集客メーカー"
+                            placeholder="例: ダイエットみっけ"
                             className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                           />
                         </div>
@@ -1059,7 +1074,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         <textarea
                           value={appSummary}
                           onChange={(e) => setAppSummary(e.target.value)}
-                          placeholder="例: フォームに情報を入れるだけで、売れる構成の有料/無料記事が作れて、各SNS告知文章や、文字入れを完璧に想定したハイクオリティサムネイル画像プロンプトまでをGemini APIが自動作成してくれるツールです。"
+                          placeholder="例: 性別×年代で8パターンの専用プランを用意。写真・音声・バーコード・手入力の4通りで記録でき、80〜90代は「痩せる」ではなく「しっかり食べる」方向へ発想転換してフレイル予防もサポート。ストリークやバッジで自然と続けたくなる仕組みもあります。"
                           className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                           rows={2}
                         />
@@ -1072,7 +1087,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                         <textarea
                           value={appValue}
                           onChange={(e) => setAppValue(e.target.value)}
-                          placeholder="例: 難しいマーケティングやプロンプトエンジニアリングを勉強しなくても、誰でも一瞬で集客導線付きのバズるnoteと告知ビジュアルを作って収益化・ファン化が狙えること。"
+                          placeholder="例: ダイエットアプリを気づけば開かなくなって三日坊主で終わってしまう悩みや、高齢の家族への健康管理・フレイル予防支援を解決。今日のやることが一目でわかるから、迷わず続けられます。"
                           className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                           rows={2}
                         />
@@ -1358,7 +1373,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                       type="url"
                                       value={lineUrl}
                                       onChange={(e) => setLineUrl(e.target.value)}
-                                      placeholder="LINE公式アカウントの追加URL"
+                                      placeholder="LINE公式アカウント of 追加URL"
                                       className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                                     />
                                     <p className="text-[10px] text-slate-500">※ 本文の結びに「LINE登録で〇〇をプレゼント」という最強の顧客リスト収集導線を引きます。</p>
@@ -1390,7 +1405,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold text-slate-700">目次案 (自由に編集してブラッシュアップしましょう)</h3>
                         <button onClick={() => handleCopy(toc, 'toc')} className="text-slate-400 hover:text-slate-600 flex items-center gap-1 text-xs">
-                          {copiedStates['toc'] ? <Check className="text-green-500" /> : <Copy />}
+                          {copiedStates['toc'] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                           コピー
                         </button>
                       </div>
@@ -1605,7 +1620,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                   {marketingData.video_captions?.map((cap, idx) => (
                                     <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group">
                                       <span className="absolute -top-2 -left-2 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">パターン {idx + 1}</span>
-                                      <textarea readOnly value={cap} rows={6} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2" />
+                                      <textarea readOnly value={cap} rows={12} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2" />
                                       <button onClick={() => handleCopy(cap, `video-cap-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
                                           {copiedStates[`video-cap-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                                       </button>
@@ -1625,7 +1640,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                 <div className="p-4 space-y-4 bg-slate-50">
                                   {marketingData.x_posts?.map((post, idx) => (
                                     <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group">
-                                      <span className="absolute -top-2 -left-2 bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">1回目・2回目の差別化</span>
+                                      <span className="absolute -top-2 -left-2 bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">投稿 {idx + 1}</span>
                                       <textarea readOnly value={post} rows={4} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2" />
                                       <button onClick={() => handleCopy(post, `x-post-sv-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
                                           {copiedStates[`x-post-sv-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
@@ -1679,7 +1694,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                 <div className="p-4 space-y-4 bg-slate-50">
                                   {marketingData.facebook_posts?.map((post, idx) => (
                                     <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group">
-                                      <span className="absolute -top-2 -left-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">Facebook投稿案 {idx + 1}</span>
+                                      <span className="absolute -top-2 -left-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">投稿 {idx + 1}</span>
                                       <textarea readOnly value={post} rows={6} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2" />
                                       <button onClick={() => handleCopy(post, `fb-post-sv-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
                                           {copiedStates[`fb-post-sv-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
@@ -1763,7 +1778,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                     <h3 className="font-bold text-white">f Facebook 投稿案</h3>
                                   </div>
                                   <button onClick={() => handleCopy(marketingData.facebook_post, 'fb')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
-                                     {copiedStates['fb'] ? <Check className="text-green-400" /> : <Copy className="w-4 h-4" />} コピー
+                                     {copiedStates['fb'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
                                   </button>
                                 </div>
                                 <div className="p-4 bg-slate-50">
@@ -1779,7 +1794,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                     <h3 className="font-bold text-white">📷 Instagram キャプション投稿案</h3>
                                   </div>
                                   <button onClick={() => handleCopy(marketingData.instagram_post, 'insta')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
-                                     {copiedStates['insta'] ? <Check className="text-green-400" /> : <Copy className="w-4 h-4" />} コピー
+                                     {copiedStates['insta'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
                                   </button>
                                 </div>
                                 <div className="p-4 bg-slate-50">
