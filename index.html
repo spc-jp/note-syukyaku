@@ -132,7 +132,7 @@
       }
     };
 
-    // サムネイルスタイル (スタイル1〜5にMidjourney、スタイル6〜10にNanobananaの表記を明記)
+    // サムネイルスタイル (ユーザー指定スタイル1〜5にMidjourney、スタイル6〜10にNanobananaの表記を明記)
     const THUMBNAIL_STYLES = [
       { id: 1, name: "[Midjourney] ① プレミアム日本イラスト風（本気推奨）", desc: "やさしい水彩タッチと上品な線画。みっけシリーズ等どんなジャンルにも親しまれる傑作トーン", prompt: "premium Japanese illustration, hand-painted illustration, storybook illustration, soft watercolor texture, elegant line art, clean outlines, subtle brush strokes, warm earthy color palette, friendly corporate mascot style, non-photorealistic, slightly stylized proportions" },
       { id: 2, name: "[Midjourney] ② スタジオジブリ風ファンタジーイラスト", desc: "温かく優しい感情がダイレクトに伝わる、SNS映え間違いなしのスタジオアニメ風", prompt: "Japanese animated fantasy illustration, whimsical atmosphere, lush natural colors, soft painterly texture, expressive characters, cozy lighting, magical storytelling feeling, hand-painted animation style" },
@@ -367,7 +367,7 @@
             読者が「まさにかつての自分と同じ状況だ」と感動し、没頭するストーリーを描いてください。
             1. 「こんな悩み・相談（${appTrigger}）をリアルに受けたことがきっかけでした」という開発の原体験を、生々しい相談の様子とともに熱く語ってください。
             2. 既存のやり方では解決できなかった葛藤を提示します。
-            3. だから「私はこの問題を解決するための『${appName}』という専用の道具（アプリ）を作りました」という開発の瞬間をドラマチックに書いてください。
+            3. だから「私はこの問題を解決するための『${appName}』という専用 of 道具（アプリ）を作りました」という開発の瞬間をドラマチックに書いてください。
             4. アプリによって「こんな成果（${appValue}）が一瞬で手に入るようになりました」という劇的変化を詳しく書いてください。
             ${appUrl ? `5. アプリのアクセスURL（${appUrl}）を魅力的な文字付きリンクカードのようにアピールして本文中に必ず配置してください。` : ''}`;
           }
@@ -456,7 +456,7 @@
                - 2段目（チラ見せ）：note記事（タイトル: ${noteTitle}）の中身や価値を少しだけチラ見せして「もっと読みたい」欲求を引き出します。
                - 3段目（CTA導線）：結論と、詳細を知りたくなるnote（URL: ${noteUrl}）への誘導リンク。LINE登録特典（${lineBonusContent}）があればそれも訴求.
             3. **Facebook 投稿案**:
-               - noteのタイトル（${noteTitle}）とURL（${noteUrl}）を含め、ストーリーを交えた温かみのあるトーンの長文を作成。
+               - note의 タイトル（${noteTitle}）とURL（${noteUrl}）を含め、ストーリーを交えた温かみのあるトーンの長文を作成。
                - 記事を書いた背景、誰を救いたいかを語り、文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。
             4. **Instagram キャプション投稿案**:
                - フィードやリール画像の投稿キャプションとして使えるコピペ用文章。
@@ -478,7 +478,7 @@
             あなたはショート動画（リール、TikTok、YouTubeショート）での集客を熟知したトップマーケターです。
             指定されたアプリの情報をベースに、最もクリックを誘発する動画用の「キャプション（3パターン）」および他SNSへの告知拡散文を作成してください。
 
-            【出力重要ルール（※これらを厳格に遵守してください。JSON内の各項目にそれぞれバリエーション等を詰め込んでください）】
+            【出力重要ルール（※これらを厳格に遵守してください）】
             
             1. **video_captions (ショート動画用キャプション案 - 3パターン)**:
                - 各パターンの末尾に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】を配置してください。
@@ -627,25 +627,62 @@
         setGeneratedImagePrompt(""); setGeneratedImageUrl("");
         
         try {
-          const systemPrompt = `You are a world-class commercial designer and an elite prompt engineer for Imagen 3 and Imagen 4.
+          // 13の極意を動的分析させるため、入力コンテキストを構造化ペイロードとして提供
+          const contextPayload = {
+            creationMode,
+            targetTopic,
+            genre,
+            selectedTheme,
+            appName,
+            appSummary,
+            appValue,
+            appTrigger,
+            noteTitle,
+            noteSummary,
+            benefit,
+            isPaid,
+            price,
+            bonusContent,
+            lineBonusContent,
+            aspectRatio
+          };
+
+          const systemPrompt = `You are a world-class commercial designer and an elite prompt engineer specializing in Midjourney and Imagen 4.
 Your goal is to generate an extraordinarily beautiful, professional-grade, high-conversion image generation prompt in English for a banner thumbnail.
 
-The user has specifically selected an aspect ratio of: "${aspectRatio}".
-Based on this aspect ratio, strictly apply these composition guidelines in your generated prompt:
-- If aspect ratio is "16:9": Instruct to create a wide landscape composition (16:9 aspect ratio) with negative space (empty blurred area, solid minimalist background, or soft gradient fade) occupying either the left 50% or right 50% of the image. This is critical for users to overlay big titles later on the side.
-- If aspect ratio is "9:16": Instruct to create a vertical portrait composition (9:16 aspect ratio) suitable for mobile reels, with negative space (clean empty space) at the top 40% or bottom 40% of the image for vertical text overlay.
-- If aspect ratio is "1:1": Instruct to create a balanced square composition (1:1 aspect ratio) suitable for social media feed, with negative space around the borders or at the bottom for clean text overlay.
+To ensure the output image is of the absolute highest clickable and professional quality (avoiding any generic or cheap AI look), you MUST strictly apply these "13 Secrets of Clickable Thumbnails" (①〜⑬) when constructing the prompt:
 
-Strictly apply these overall guidelines:
-1. **Cinematic Lighting & Color**: Use premium, atmospheric lighting terms such as "cinematic backlighting", "soft studio key light", "subtle neon glow", "golden hour glow", or "sophisticated dual-tone color scheme". Avoid flat or boring colors.
-2. **Quality & Render Style**: Use high-end rendering terms suitable for the chosen art style. For 3D/Vectors, use "trending on ArtStation, Octane Render, 8k, masterpiece, clean path, smooth gradients". For photographic styles, use "shot on 85mm lens, f/1.8, soft bokeh, high-end commercial photography, photorealistic, sharp focus on subject, detailed textures".
-3. **Subject Integration**: Seamlessly translate the Japanese/English topic into a stunning visual metaphor or focal point placed strategically to avoid cluttering the negative space.
+1. **Who is the Protagonist (① 主役を明確化)**: Automatically analyze the input context and specify a clear human protagonist that fits the target audience (e.g., "Japanese businessman", "senior citizen", "young female developer", "busy clinic doctor", "restaurant owner", etc.).
+2. **Action & Motion (② 動き・行動)**: Describe the protagonist in a natural, active state (e.g., "smiling and pointing at a glowing tablet", "looking surprised and relieved while holding a sleek smartphone", "scanning a QR code with a smile", "joyfully demonstrating on screen"). Avoid static poses.
+3. **Draw the Future, Not Just the App (③ アプリではなく未来)**: Visually represent the positive outcome or transformation. Show elements representing the transition "from complex/cluttered paper records to clean/simplified digital charts/vibrant healthy lifestyle graphics/organized success".
+4. **Integrate App Screens (④ アプリ画面)**: Describe a smartphone or tablet screen visible in the scene showing beautiful modern UI elements such as "clean analytical dashboard", "vibrant color progress charts", "clean chat interface with AI sparkles", or "accomplished checklist with clean checkmarks".
+5. **Value Icons (⑤ アイコンによる価値提示)**: Seamlessly blend small metaphorical floating icons into the composition (e.g., "floating glowing clean icons of AI sparkle, chat bubble, spreadsheets, health heart, or calendar").
+6. **Specify Background Scene (⑥ 利用シーン背景)**: Clearly describe the background context that matches the niche (e.g., "minimalist Scandinavian style cozy office with soft bokeh", "organized medical clinic", "cozy home workspace with warm lighting", "stylish restaurant kitchen").
+7. **Express Emotions (⑦ 感情表現)**: Infuse clear emotional keywords into the protagonist's face and overall atmosphere (e.g., "expression of relief, deep confidence, sense of hope, joyful smile, exciting discovery").
+8. **Brand Color Palette (⑧ ブランドカラー)**: Specify a premium and sophisticated color palette (e.g., "elegant white and deep indigo blue", "clean white and soft mint green", "sophisticated navy and gold accents", "vibrant sky blue and cream").
+9. **Spacious Negative Space for Titles (⑩ タイトル用の余白)**: Apply the negative space rules below to leave clean space for overlaying headline text:
+   - If selected aspect ratio is "16:9": Instruct to keep one side (left 50% or right 50%) completely clear ("large spacious negative space for title overlay").
+   - If selected aspect ratio is "9:16": Instruct to keep the top 45% or bottom 45% clear ("large spacious negative space at the top/bottom for vertical text overlay").
+   - If selected aspect ratio is "1:1": Instruct to keep the borders or bottom third clear ("generous spacious negative space for square title overlay").
+10. **Quality Enhancement Keywords (⑪ 品質指定)**: Include keywords such as "highly detailed", "masterpiece premium illustration", "professional graphic composition", "cinematic soft focus".
 
-Output ONLY the final raw English prompt text. Do not include any quotes, introductions, markdown formatting, or conversational text.`;
+Output ONLY the final raw English prompt text. Do not include any quotes, introductions, markdown formatting, or conversational text.
+Do NOT write "--ar" or "--stylize" inside your text response, as they will be automatically appended by the program at the end.`;
           
-          const textPrompt = `Topic/Subject: "${targetTopic}"\nArt Style Keywords: "${style.prompt}"\nDesired Aspect Ratio: "${aspectRatio}"\nCreate a highly detailed image generation prompt.`;
+          const textPrompt = `Generate a detailed thumbnail prompt based on this context:
+${JSON.stringify(contextPayload)}
+
+Base Art Style Keywords to integrate: "${style.prompt}"`;
           
           const imgPrompt = await callGeminiAPI(textPrompt, systemPrompt, false);
+          
+          // Midjourneyパラメータマッピング (⑫アスペクト比 ＆ ⑬Stylizeの設定)
+          let arParam = "--ar 128:67"; // デフォルト
+          if (aspectRatio === "16:9") arParam = "--ar 16:9";
+          if (aspectRatio === "9:16") arParam = "--ar 9:16";
+          if (aspectRatio === "1:1") arParam = "--ar 1:1";
+          
+          const midjourneyParams = ` ${arParam} --stylize 250`;
           
           // 選択されたスタイルIDに応じて、Midjourney参照URL（シード画像）をプロンプトの最先頭にインジェクションしてImagen 4に指示します
           let finalPrompt = imgPrompt;
@@ -663,6 +700,9 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
             // プレミアム日本イラスト風のURLを先頭にシードとして自動ブレンドします
             finalPrompt = "https://cdn.midjourney.com/acb14bb9-7279-47c3-a98f-5d22730251da/0_3.png " + imgPrompt;
           }
+
+          // 最末尾に Midjourney 用パラメータをガチ連結！
+          finalPrompt = finalPrompt.trim() + midjourneyParams;
 
           setGeneratedImagePrompt(finalPrompt);
 
@@ -1104,7 +1144,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                           </div>
 
                           <div className="space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
-                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-900">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-950">
                               <input
                                 type="checkbox"
                                 checked={hasLineBonus}
@@ -1268,7 +1308,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                     placeholder="例: https://line.me/R/ti/p/..."
                                     className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                                   />
-                                  <p className="text-[11px] text-slate-500">※ noteの無料記事の最後（ハッシュタグの直前）にURLが自然に配置されます。</p>
+                                  <p className="text-[11px] text-slate-500">※ noteの無料記事の最後（ハッシュタグ of 直前）にURLが自然に配置されます。</p>
                                 </div>
 
                                 <div className="space-y-2">
@@ -1280,7 +1320,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                     value={redirectPurpose}
                                     onChange={(e) => setRedirectPurpose(e.target.value)}
                                     placeholder="例: 公式LINE追加で『コンビニ痩せ即効メニューリストPDF』を無料配布中！"
-                                    className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                    className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                                   />
                                   <p className="text-[11px] text-slate-500">※ クリックしたくなるような強力な特典や誘導理由を入れてください。</p>
                                 </div>
@@ -1294,7 +1334,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                   value={benefit}
                                   onChange={(e) => setBenefit(e.target.value)}
                                   placeholder="例：お金をかけずに今すぐスーパーやコンビニで実践できる、お腹いっぱい食べても太らない魔法の食事ルール解説"
-                                  className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                  className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                                   rows={2}
                                 />
                               </div>
@@ -1335,7 +1375,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
 
                               {/* 2. LINE登録特典（公式LINE追加プレゼント） */}
                               <div className="space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
-                                <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-900">
+                                <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-950">
                                   <input
                                     type="checkbox"
                                     checked={hasLineBonus}
@@ -1357,7 +1397,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                                       type="url"
                                       value={lineUrl}
                                       onChange={(e) => setLineUrl(e.target.value)}
-                                      placeholder="LINE公式アカウントの追加URL"
+                                      placeholder="LINE公式アカウント of 追加URL"
                                       className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                                     />
                                     <p className="text-[10px] text-slate-500">※ 本文の結びに「LINE登録で〇〇をプレゼント」という最強の顧客リスト収集導線を引きます。</p>
@@ -1818,7 +1858,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     <Sparkles className="text-indigo-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-slate-700 space-y-1">
                       <p className="font-semibold text-indigo-900">✨ Gemini 2.5 Pro &amp; Imagen 4 プレミアム最適化モード稼働中</p>
-                      <p>文字入れ前提の洗練された比率、商業アワード級の空気感、そしてテキストスペースを完璧に確保した高級感溢れるプロンプトを自動生成します。</p>
+                      <p>文字入れ前提の洗練された比率、商業アワード級の空気感、そして「クリックされる13の極意（主役・行動・未来・アイコン等の詳細構成）」が自動的にプロンプトへ組み込まれます。</p>
                     </div>
                   </div>
 
@@ -1826,7 +1866,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                   <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-200 animate-fade-in">
                     <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
                       <span className="bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">1</span>
-                      アスペクト比を選択してください
+                      アスペクト比を選択してください（Midjourney比率パラメータが末尾に自動アタッチされます）
                     </h3>
                     <div className="grid grid-cols-3 gap-2">
                       {[
@@ -1886,7 +1926,7 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                     {isGeneratingImage ? (
                       <><Loader2 className="w-5 h-5 animate-spin" /> Gemini Engineがプロンプトとデザインを極限調整中...（約10〜20秒）</>
                     ) : (
-                      <><Sparkles className="w-5 h-5 text-indigo-200" /> プレミアム仕様でサムネイル画像を自動生成する</>
+                      <><Sparkles className="w-5 h-5 text-indigo-200" /> 13の極意プレミアム仕様でサムネイル画像を生成する</>
                     )}
                   </button>
 
@@ -1947,6 +1987,9 @@ Output ONLY the final raw English prompt text. Do not include any quotes, introd
                           <div className="bg-white border border-slate-150 p-4 rounded-lg">
                             <p className="text-xs font-mono text-slate-600 break-words leading-relaxed select-all">{generatedImagePrompt}</p>
                           </div>
+                          <p className="text-[10px] text-slate-400 italic">
+                            ※末尾にMidjourney用の比率パラメータ（--ar {aspectRatio}）と表現力パラメータ（--stylize 250）をガチ連結しています。そのままMidjourneyにコピペしても完璧に動作します。
+                          </p>
                         </div>
                       )}
                     </div>
