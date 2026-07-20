@@ -132,7 +132,7 @@
       }
     };
 
-    // サムネイルスタイル (ユーザー指定スタイル1〜5にMidjourney、スタイル6〜10にNanobananaの表記を明記)
+    // サムネイルスタイル (スタイル1〜5にMidjourney、スタイル6〜10にNanobananaの表記を明記)
     const THUMBNAIL_STYLES = [
       { id: 1, name: "[Midjourney] ① プレミアム日本イラスト風（本気推奨）", desc: "やさしい水彩タッチと上品な線画。みっけシリーズ等どんなジャンルにも親しまれる傑作トーン", prompt: "premium Japanese illustration, hand-painted illustration, storybook illustration, soft watercolor texture, elegant line art, clean outlines, subtle brush strokes, warm earthy color palette, friendly corporate mascot style, non-photorealistic, slightly stylized proportions" },
       { id: 2, name: "[Midjourney] ② スタジオジブリ風ファンタジーイラスト", desc: "温かく優しい感情がダイレクトに伝わる、SNS映え間違いなしのスタジオアニメ風", prompt: "Japanese animated fantasy illustration, whimsical atmosphere, lush natural colors, soft painterly texture, expressive characters, cozy lighting, magical storytelling feeling, hand-painted animation style" },
@@ -178,6 +178,7 @@
       const [isPaid, setIsPaid] = useState(true);
       const [price, setPrice] = useState("980");
       const [benefit, setBenefit] = useState("");
+      const [isSuggestingBenefit, setIsSuggestingBenefit] = useState(false); // 提供価値の自動提案ローディング
       
       // 特典設定
       const [hasBonus, setHasBonus] = useState(false);
@@ -242,6 +243,7 @@
         setIsPaid(true);
         setPrice("980");
         setBenefit("");
+        setIsSuggestingBenefit(false);
         setHasBonus(false);
         setBonusContent("");
         setHasLineBonus(false);
@@ -309,6 +311,67 @@
         }
       };
 
+      // 1-2. テーマ選択時に「提供価値」「限定特典」「LINE登録特典」のアイデアを一度に自動提案・自動入力する最強関数 (アップデート！)
+      const suggestBenefitAndBonuses = async (theme) => {
+        if (!theme) return;
+        setIsSuggestingBenefit(true);
+        setHasBonus(false);
+        setHasLineBonus(false);
+        setBonusContent("");
+        setLineBonusContent("");
+        
+        try {
+          const systemPrompt = `あなたは優秀なコピーライターであり、マーケターです。
+          提示された有料noteまたはツール紹介のテーマ（タイトル）から、以下の3つを分析し提案してください。
+          
+          1. benefit: 読者がそれを手に入れることで『解決できる悩み』と『購入後に得られるポジティブな未来（提供価値・ベネフィット）』を、読者目線で強烈に惹かれる具体的な1〜2文（80文字〜150文字程度）の文章。
+          2. suggested_bonus: note購入者に渡すのに最も最適な「コピペ用プロンプト」や「穴埋めワークシート」など、すぐに実践できる具体的な限定プレゼント特典の内容案（例：そのまま使える穴埋め式30日間ダイエット実践シート）。
+          3. suggested_line_bonus: 公式LINEへの登録（リスト収集）の成約率を最大化させるための、登録時にもらえる魅力的な「無料プレゼント特典」の内容案（例：食べるだけでみるみる痩せるコンビニ食事チェックリストPDF）。
+          
+          【作成上の絶対ルール】
+          - 日本語で自然な書き言葉、読みやすさを最優先してください。
+          - 具体的で魅力的な表現やキーワードを含めてください。`;
+          
+          const prompt = `テーマ（タイトル）: 「${theme}」
+          このnoteをテーマに最適な「提供価値」「限定プレゼント特典」「公式LINE登録特典」のアイデアを1回のJSONコールで提案してください。`;
+          
+          const schema = {
+            type: "OBJECT",
+            properties: {
+              benefit: { type: "STRING" },
+              suggested_bonus: { type: "STRING" },
+              suggested_line_bonus: { type: "STRING" }
+            },
+            required: ["benefit", "suggested_bonus", "suggested_line_bonus"]
+          };
+          
+          const result = await callGeminiAPI(prompt, systemPrompt, true, schema);
+          
+          if (result) {
+            setBenefit(result.benefit || "");
+            if (result.suggested_bonus) {
+              setBonusContent(result.suggested_bonus);
+              setHasBonus(true); // 自動的にチェックボックスをONにして提案内容を表示
+            }
+            if (result.suggested_line_bonus) {
+              setLineBonusContent(result.suggested_line_bonus);
+              setHasLineBonus(true); // 自動的にチェックボックスをONにして提案内容を表示
+            }
+          }
+        } catch (err) {
+          console.error("トリプル自動提案エラー:", err);
+          setBenefit("");
+        } finally {
+          setIsSuggestingBenefit(false);
+        }
+      };
+
+      // テーマ選択のハンドラ (新トリプル自動提案トリガー)
+      const handleThemeChange = (theme) => {
+        setSelectedTheme(theme);
+        suggestBenefitAndBonuses(theme);
+      };
+
       // 2. 目次案の生成
       const generateToc = async () => {
         if (!selectedTheme) { setError("テーマを選択してください"); return; }
@@ -321,7 +384,7 @@
             targetAppInfo = `【アプリデータ】:
             - アプリ名: ${appName}
             ${appUrl ? `- アプリURL: ${appUrl}` : ''}
-            - 開発のきっかけ: ${appTrigger}
+            - 開発 of きっかけ: ${appTrigger}
             - 解決できる価値: ${appValue}\n`;
           }
 
@@ -456,7 +519,7 @@
                - 2段目（チラ見せ）：note記事（タイトル: ${noteTitle}）の中身や価値を少しだけチラ見せして「もっと読みたい」欲求を引き出します。
                - 3段目（CTA導線）：結論と、詳細を知りたくなるnote（URL: ${noteUrl}）への誘導リンク。LINE登録特典（${lineBonusContent}）があればそれも訴求.
             3. **Facebook 投稿案**:
-               - note의 タイトル（${noteTitle}）とURL（${noteUrl}）を含め、ストーリーを交えた温かみのあるトーンの長文を作成。
+               - noteのタイトル（${noteTitle}）とURL（${noteUrl}）を含め、ストーリーを交えた温かみのあるトーンの長文を作成。
                - 記事を書いた背景、誰を救いたいかを語り、文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。
             4. **Instagram キャプション投稿案**:
                - フィードやリール画像の投稿キャプションとして使えるコピペ用文章。
@@ -530,7 +593,7 @@
               monetizationStrategy = `【有料note販売】
                  - 販売予定価格: ${price}円
                  ${hasLimitedSale ? `- マーケ戦略: 数量限定販売（売り切れ次第値上げする希少性をアピールしてください）` : ''}
-                 SNS投稿（X, Threads, Facebook, Instagram）では、この価格の「お得感」「今すぐ買うべき理由（限定性・希少性）」を訴求してください。
+                 SNS投稿（X, Threads, Facebook, Instagram）では、この価格 of 「お得感」「今すぐ買うべき理由（限定性・希少性）」を訴求してください。
                  
                  【SNS告知アルゴリズム重要ルール】
                  - 各投稿、文末等に必ず【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。`;
@@ -1098,7 +1161,7 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                         <textarea
                           value={appSummary}
                           onChange={(e) => setAppSummary(e.target.value)}
-                          placeholder="例: 性別×年代で8パターンの専用プランを用意。写真・音声・バーコード・手入力の4通りで記録でき、80〜90代は「痩せる」ではなく「しっかり食べる」方向へ発想転換してフレイル予防もサポート。ストリークやバッジで自然と続けたくなる仕組みもあります。"
+                          placeholder="例: 性別×年代で8パターンの専用プランを用意。写真・音声・バーコード・手入力 of 4通りで記録でき、80〜90代は「痩せる」ではなく「しっかり食べる」方向へ発想転換してフレイル予防もサポート。ストリークやバッジで自然と続けたくなる仕組みもあります。"
                           className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                           rows={2}
                         />
@@ -1200,7 +1263,7 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                                 name="theme"
                                 value={theme}
                                 checked={selectedTheme === theme}
-                                onChange={(e) => setSelectedTheme(e.target.value)}
+                                onChange={(e) => handleThemeChange(e.target.value)}
                                 className="mt-1 text-indigo-600 focus:ring-indigo-500"
                               />
                               <span className="text-slate-700 text-sm font-medium">{theme}</span>
@@ -1242,8 +1305,9 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                                 <textarea
                                   value={benefit}
                                   onChange={(e) => setBenefit(e.target.value)}
-                                  placeholder="例：毎日のコンビニ飯選びに迷わなくなり、ストレスフリーで1ヶ月後に自然と体重を落とせる具体的なメニュー選択術と実践スケジュール"
-                                  className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                  disabled={isSuggestingBenefit}
+                                  placeholder={isSuggestingBenefit ? "💡AIがこのテーマに最適な提供価値を自動提案しています..." : "例：毎日のコンビニ飯選びに迷わなくなり、ストレスフリーで1ヶ月後に自然と体重を落とせる具体的なメニュー選択術と実践スケジュール"}
+                                  className={`w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-all duration-200 ${isSuggestingBenefit ? "opacity-60 bg-slate-50 cursor-not-allowed font-medium text-slate-500 animate-pulse" : ""}`}
                                   rows={2}
                                 />
                               </div>
@@ -1333,8 +1397,9 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                                 <textarea
                                   value={benefit}
                                   onChange={(e) => setBenefit(e.target.value)}
-                                  placeholder="例：お金をかけずに今すぐスーパーやコンビニで実践できる、お腹いっぱい食べても太らない魔法の食事ルール解説"
-                                  className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                  disabled={isSuggestingBenefit}
+                                  placeholder={isSuggestingBenefit ? "💡AIがこのテーマに最適な提供価値を自動提案しています..." : "例：お金をかけずに今すぐスーパーやコンビニで実践できる、お腹いっぱい食べても太らない魔法の食事ルール解説"}
+                                  className={`w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-all duration-200 ${isSuggestingBenefit ? "opacity-60 bg-slate-50 cursor-not-allowed font-medium text-slate-500 animate-pulse" : ""}`}
                                   rows={2}
                                 />
                               </div>
@@ -1347,12 +1412,13 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {/* 1. 購入者/読者限定プレゼント特典 */}
-                              <div className="space-y-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col justify-between">
+                              <div className={`space-y-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col justify-between transition-all duration-200 ${isSuggestingBenefit ? "opacity-60 animate-pulse" : ""}`}>
                                 <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-indigo-900">
                                   <input
                                     type="checkbox"
                                     checked={hasBonus}
                                     onChange={(e) => setHasBonus(e.target.checked)}
+                                    disabled={isSuggestingBenefit}
                                     className="rounded text-indigo-600 focus:ring-indigo-500"
                                   />
                                   <span>🎁 限定プレゼント特典を付ける</span>
@@ -1363,7 +1429,8 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                                       type="text"
                                       value={bonusContent}
                                       onChange={(e) => setBonusContent(e.target.value)}
-                                      placeholder="特典の内容（例：30日間書き込み式コンビニダイエット手帳）"
+                                      disabled={isSuggestingBenefit}
+                                      placeholder={isSuggestingBenefit ? "💡AIが最適な特典を提案中..." : "特典の内容（例：30日間書き込み式コンビニダイエット手帳）"}
                                       className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                                     />
                                     <p className="text-[10px] text-slate-500">※ note記事に直接添付するか、購入者だけが見られるエリアに用意するプレゼント情報です。</p>
@@ -1374,12 +1441,13 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                               </div>
 
                               {/* 2. LINE登録特典（公式LINE追加プレゼント） */}
-                              <div className="space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
-                                <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-950">
+                              <div className={`space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between transition-all duration-200 ${isSuggestingBenefit ? "opacity-60 animate-pulse" : ""}`}>
+                                <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-900">
                                   <input
                                     type="checkbox"
                                     checked={hasLineBonus}
                                     onChange={(e) => setHasLineBonus(e.target.checked)}
+                                    disabled={isSuggestingBenefit}
                                     className="rounded text-emerald-600 focus:ring-emerald-500"
                                   />
                                   <span>💬 公式LINE登録特典を付ける</span>
@@ -1390,13 +1458,15 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                                       type="text"
                                       value={lineBonusContent}
                                       onChange={(e) => setLineBonusContent(e.target.value)}
-                                      placeholder="特典の内容（例：おすすめコンビニ痩せ商品チェックリストPDF）"
+                                      disabled={isSuggestingBenefit}
+                                      placeholder={isSuggestingBenefit ? "💡AIが最適なLINE特典を提案中..." : "特典の内容（例：おすすめコンビニ痩せ商品チェックリストPDF）"}
                                       className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                                     />
                                     <input
                                       type="url"
                                       value={lineUrl}
                                       onChange={(e) => setLineUrl(e.target.value)}
+                                      disabled={isSuggestingBenefit}
                                       placeholder="LINE公式アカウント of 追加URL"
                                       className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                                     />
@@ -1412,7 +1482,7 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                           <div className="pt-4 flex justify-end">
                             <button
                               onClick={generateToc}
-                              disabled={loading}
+                              disabled={loading || isSuggestingBenefit}
                               className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
                             >
                               {loading ? <Loader2 /> : <ChevronRight />}
