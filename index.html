@@ -1,767 +1,1967 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI検索みっけ｜サイトの宝を掘り起こす</title>
-<link rel="icon" type="image/png" href="https://spc-jp.github.io/ai-kensaku-mikke/favicon.png">
-<link rel="apple-touch-icon" href="https://spc-jp.github.io/ai-kensaku-mikke/favicon.png">
-<style>
-  :root{
-    --navy:#223670;
-    --gold:#D0A900;
-    --bg:#f5f6fa;
-    --line:#e2e5ee;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    font-family:"Hiragino Kaku Gothic ProN","Meiryo",sans-serif;
-    background:var(--bg);
-    color:#2a2f3a;
-    line-height:1.7;
-  }
-  header{
-    background:var(--navy);
-    color:#fff;
-    padding:22px 16px;
-    text-align:center;
-    position:relative;
-  }
-  header h1{margin:0;font-size:22px;letter-spacing:1px;}
-  header p{margin:6px 0 0;font-size:13px;color:#cfd6ea;}
-  .head-btns{position:absolute;top:16px;right:16px;display:flex;gap:8px;align-items:center;}
-  .help-btn,.gear-btn{
-    background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.5);
-    color:#fff;border-radius:20px;font-size:13px;
-    cursor:pointer;font-family:inherit;font-weight:bold;transition:.2s;
-  }
-  .help-btn{padding:7px 14px;}
-  .gear-btn{padding:7px 12px;font-size:15px;line-height:1;}
-  .help-btn:hover,.gear-btn:hover{background:rgba(255,255,255,.28);}
-  .gear-wrap{position:relative;}
-  .gear-menu{
-    display:none;position:absolute;right:0;top:44px;background:#fff;
-    border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);
-    overflow:hidden;min-width:180px;z-index:40;
-  }
-  .gear-menu.show{display:block;}
-  .gear-menu button{
-    display:block;width:100%;text-align:left;background:#fff;border:none;
-    padding:13px 16px;font-size:14px;font-family:inherit;cursor:pointer;color:#2a2f3a;
-    border-bottom:1px solid var(--line);
-  }
-  .gear-menu button:last-child{border-bottom:none;}
-  .gear-menu button:hover{background:#f5f6fa;}
-  .gear-menu .clear{color:#c0392b;}
-  .wrap{max-width:820px;margin:0 auto;padding:20px 16px 60px;}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>売れるnote＆集客メーカー</title>
+  
+  <!-- Favicon表示設定 -->
+  <link rel="icon" href="https://spc-jp.github.io/note-syukyaku/favicon.png" type="image/png">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel (ブラウザ内でJSXをコンパイルするため) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  /* 入力画面 */
-  .card{
-    background:#fff;border:1px solid var(--line);border-radius:14px;
-    padding:22px;margin-bottom:18px;box-shadow:0 2px 8px rgba(34,54,112,.05);
-  }
-  .field{margin-bottom:16px;}
-  .field label{display:block;font-weight:bold;font-size:14px;margin-bottom:6px;color:var(--navy);}
-  .field input,.field select{
-    width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;
-    font-size:15px;font-family:inherit;
-  }
-  .btn{
-    display:inline-block;background:var(--gold);color:#fff;border:none;
-    padding:14px 26px;border-radius:30px;font-size:16px;font-weight:bold;
-    cursor:pointer;font-family:inherit;transition:.2s;
-  }
-  .btn:hover{opacity:.9;}
-  .btn-block{width:100%;}
-  .btn-navy{background:var(--navy);}
-
-  /* タブ */
-  .company-bar{
-    background:#fff;border:1px solid var(--line);border-radius:12px;
-    padding:14px 18px;margin-bottom:16px;font-size:14px;
-  }
-  .company-bar b{color:var(--navy);font-size:16px;}
-  .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
-  .tab{
-    flex:1;min-width:120px;padding:12px 8px;border:1px solid var(--line);
-    background:#fff;border-radius:10px;text-align:center;cursor:pointer;
-    font-weight:bold;font-size:14px;color:#7a8299;transition:.2s;
-  }
-  .tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
-  .panel{display:none;}
-  .panel.active{display:block;}
-
-  .item{
-    background:#fff;border:1px solid var(--line);border-radius:12px;
-    padding:14px 16px;margin-bottom:12px;
-  }
-  .item .row{display:flex;align-items:flex-start;gap:10px;}
-  .item input[type=checkbox]{width:20px;height:20px;margin-top:4px;flex-shrink:0;accent-color:var(--navy);}
-  .item .body{flex:1;}
-  .item .body input,.item .body textarea{
-    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
-    font-size:14px;font-family:inherit;margin-bottom:6px;
-  }
-  .item .body textarea{resize:vertical;min-height:44px;}
-  .lbl{font-size:12px;color:var(--gold);font-weight:bold;margin-bottom:3px;}
-  .note{font-size:13px;color:#7a8299;margin:0 0 14px;}
-
-  /* 書き出し */
-  .output-area{margin-top:24px;}
-  .out-tabs{display:flex;gap:8px;margin-bottom:10px;}
-  .out-tab{
-    flex:1;padding:10px;border:1px solid var(--line);background:#fff;
-    border-radius:10px;text-align:center;cursor:pointer;font-weight:bold;
-    font-size:14px;color:#7a8299;transition:.2s;
-  }
-  .out-tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
-  #outputBox{
-    width:100%;min-height:260px;padding:14px;border:1px solid var(--line);
-    border-radius:10px;font-size:12px;font-family:monospace;background:#fbfcff;
-  }
-  #previewFrame{
-    width:100%;height:420px;border:1px solid var(--line);border-radius:10px;background:#fff;
-  }
-  .out-view{display:none;}
-  .out-view.active{display:block;}
-  .prep{background:#fff8e1;border:1px solid var(--gold);border-radius:12px;padding:20px;text-align:center;}
-  .hide{display:none;}
-
-  /* 使い方モーダル */
-  .modal-bg{
-    position:fixed;inset:0;background:rgba(20,28,55,.55);
-    display:none;align-items:center;justify-content:center;padding:18px;z-index:50;
-  }
-  .modal-bg.show{display:flex;}
-  .modal{
-    background:#fff;border-radius:16px;max-width:520px;width:100%;
-    padding:26px 24px;max-height:88vh;overflow-y:auto;
-    box-shadow:0 12px 40px rgba(0,0,0,.25);
-  }
-  .modal h2{margin:0 0 4px;color:var(--navy);font-size:20px;}
-  .modal .sub{margin:0 0 18px;font-size:13px;color:#7a8299;}
-  .modal h3{
-    color:var(--navy);font-size:15px;margin:20px 0 8px;
-    border-left:5px solid var(--gold);padding-left:10px;
-  }
-  .modal ul{padding-left:20px;margin:0;}
-  .modal li{margin:7px 0;font-size:14px;}
-  .modal .step{
-    background:#f5f6fa;border-radius:10px;padding:12px 14px;margin:8px 0;font-size:14px;
-  }
-  .modal .step b{color:var(--gold);}
-  .modal .why{
-    background:#fff8e1;border:1px solid var(--gold);border-radius:10px;
-    padding:12px 14px;margin:8px 0;font-size:14px;
-  }
-  .modal .why b{color:var(--navy);}
-  .modal-close{
-    display:block;width:100%;margin-top:22px;background:var(--navy);color:#fff;
-    border:none;padding:13px;border-radius:30px;font-size:15px;font-weight:bold;
-    cursor:pointer;font-family:inherit;
-  }
-
-  /* ===== 宝探し演出（オーバーレイ） ===== */
-  #searchFx{
-    position:fixed;inset:0;z-index:100;display:none;
-    align-items:center;justify-content:center;flex-direction:column;
-    background:radial-gradient(circle at center, #2c447f 0%, #1a2a55 70%, #141f42 100%);
-    overflow:hidden;
-  }
-  #searchFx.show{display:flex;}
-  .fx-spark{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:0;}
-  .fx-glass{
-    font-size:74px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));
-    animation:glassSearch 2.0s ease-in-out forwards;
-  }
-  @keyframes glassSearch{
-    0%   {transform:translateX(-70px) rotate(-12deg) scale(.7);opacity:0;}
-    18%  {opacity:1;}
-    35%  {transform:translateX(60px) rotate(10deg) scale(1);}
-    55%  {transform:translateX(-40px) rotate(-8deg) scale(1);}
-    72%  {transform:translateX(0) rotate(0deg) scale(1.15);}
-    82%  {transform:translateX(0) rotate(0deg) scale(1.4);filter:drop-shadow(0 0 26px rgba(255,235,150,.9));}
-    100% {transform:translateX(0) rotate(0deg) scale(1.15);}
-  }
-  .fx-gems{display:flex;gap:26px;margin-top:26px;}
-  .fx-gem{font-size:34px;opacity:.25;transform:scale(.8);}
-  .fx-gem.lit{animation:gemPop .5s ease forwards;}
-  @keyframes gemPop{
-    0%{opacity:.25;transform:scale(.8);}
-    50%{opacity:1;transform:scale(1.35);filter:drop-shadow(0 0 12px rgba(255,235,150,.9));}
-    100%{opacity:1;transform:scale(1);}
-  }
-  .fx-word{
-    margin-top:30px;color:#fff;font-size:30px;font-weight:bold;letter-spacing:3px;
-    opacity:0;text-shadow:0 2px 10px rgba(0,0,0,.3);
-  }
-  .fx-word.show{animation:wordIn .6s ease forwards;}
-  @keyframes wordIn{
-    0%{opacity:0;transform:translateY(12px) scale(.9);}
-    60%{opacity:1;transform:translateY(0) scale(1.1);}
-    100%{opacity:1;transform:scale(1);}
-  }
-  .fx-word small{display:block;font-size:13px;font-weight:normal;letter-spacing:1px;color:#cfd6ea;margin-top:6px;}
-  .fx-flash{position:absolute;width:10px;height:10px;border-radius:50%;background:#fff;opacity:0;}
-  .fx-flash.go{animation:flashBurst .7s ease-out forwards;}
-  @keyframes flashBurst{
-    0%{opacity:.9;transform:scale(1);}
-    100%{opacity:0;transform:scale(40);}
-  }
-  @keyframes sparkFloat{
-    0%{opacity:0;transform:translateY(0) scale(.5);}
-    30%{opacity:1;}
-    100%{opacity:0;transform:translateY(-60px) scale(1.1);}
-  }
-</style>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+  </style>
 </head>
-<body>
-<header>
-  <div class="head-btns">
-    <button class="help-btn" onclick="openHelp()">❓ 使い方</button>
-    <div class="gear-wrap">
-      <button class="gear-btn" onclick="toggleGear(event)">⚙️</button>
-      <div class="gear-menu" id="gearMenu">
-        <button onclick="loadDemo()">✨ デモデータを入れる</button>
-        <button class="clear" onclick="clearDemo()">🗑 デモデータをクリア</button>
-      </div>
-    </div>
-  </div>
-  <h1>🔍 AI検索みっけ</h1>
-  <p>AI検索に見つけてもらえるサイトへ　～お店の宝を、一緒に掘り起こす～</p>
-</header>
+<body class="bg-slate-50 text-slate-800 font-sans pb-20 min-h-screen">
+  <div id="root"></div>
 
-<!-- 宝探し演出 -->
-<div id="searchFx">
-  <div class="fx-flash" id="fxFlash"></div>
-  <div class="fx-glass">🔍</div>
-  <div class="fx-gems">
-    <div class="fx-gem" id="gem0">😟</div>
-    <div class="fx-gem" id="gem1">🔍</div>
-    <div class="fx-gem" id="gem2">💬</div>
-  </div>
-  <div class="fx-word" id="fxWord">みっけ！<small>あなたの会社の宝、見つけました 💎</small></div>
-</div>
+  <script type="text/babel">
+    const { useState } = React;
 
-<!-- 使い方モーダル -->
-<div class="modal-bg" id="helpModal" onclick="bgClose(event)">
-  <div class="modal">
-    <h2>🔍 AI検索みっけとは？</h2>
-    <p class="sub">お店やサイトの「宝」を掘り起こすお手伝いをします</p>
+    // Cloudflare Workers の本番用URL
+    const WORKER_URL = "https://note-syukyaku.yymmatsu.workers.dev";
 
-    <h3>🎯 このアプリの目的</h3>
-    <ul>
-      <li>いまはお客様が、ChatGPTなどのAIに聞いて会社を探す時代です</li>
-      <li>AIに見つけてもらうには「悩み・事例・Q&A」がサイトにあることが大切です</li>
-      <li>でも、その言葉を自分でゼロから書くのは大変です</li>
-      <li>このアプリが、業種に合わせて「たたき台」を用意します</li>
-      <li>あなたは選んで直すだけ。サイトに貼れる形で書き出せます</li>
-    </ul>
+    // --- アイコンコンポーネント ---
+    const Icon = ({ children, className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        {children}
+      </svg>
+    );
+    const Sparkles = ({className=""}) => <Icon className={`w-6 h-6 ${className}`}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></Icon>;
+    const Copy = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></Icon>;
+    const Check = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M20 6 9 17l-5-5"/></Icon>;
+    const ChevronRight = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="m9 18 6-6-6-6"/></Icon>;
+    const FileText = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></Icon>;
+    const Share2 = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></Icon>;
+    const Lightbulb = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></Icon>;
+    const PenTool = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/></Icon>;
+    const AlertCircle = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></Icon>;
+    const Loader2 = ({className=""}) => <Icon className={`w-4 h-4 animate-spin ${className}`}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></Icon>;
+    const ImageIcon = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></Icon>;
+    const Download = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></Icon>;
 
-    <h3>🤔 なぜ「悩み・事例・Q&A」がAI検索に効くの？</h3>
-    <p style="font-size:14px;margin:0 0 10px;">昔の検索は「単語」で探す時代。いまのAIは「お悩み」で探す時代です。だから、その答えがサイトにあるかどうかで、見つけてもらえるかが決まります👇</p>
-    <div class="why"><b>😟 悩み</b>　お客様は「1個でも作れる？」など"悩みの言葉"で検索します。同じ言葉がサイトにあると、AIが「この質問の答えはこの会社だ」と結びつけます</div>
-    <div class="why"><b>🔍 事例</b>　AIは「できます」より「実際にこうした」という証拠がある会社を信頼し、優先して紹介します</div>
-    <div class="why"><b>💬 Q&A</b>　お客様の検索は「質問」、Q&Aも「質問と答え」。形がそっくりなので、AIが一番読み取りやすく拾いやすい形です</div>
+    // --- Gemini API 呼び出し共通関数 (Cloudflare Workers経由) ---
+    const callGeminiAPI = async (prompt, systemInstruction = "", isJson = false, schema = null) => {
+      const url = `${WORKER_URL}/generate-text`;
 
-    <h3>📝 使い方（3ステップ）</h3>
-    <div class="step"><b>STEP 1</b>　企業名・URL・業種を入れて「宝探しスタート」を押します</div>
-    <div class="step"><b>STEP 2</b>　3つのタブ（悩み・事例・Q&A）を見て、使うものにチェック。文章はその場で自由に直せます</div>
-    <div class="step"><b>STEP 3</b>　「サイト用HTMLを書き出す」を押し、出てきたコードをコピーしてサイトに貼り付けます</div>
+      const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        generationConfig: {}
+      };
 
-    <h3>💡 ワンポイント</h3>
-    <ul>
-      <li>悩みとQ&Aは、数が多いほどAI検索に強くなります</li>
-      <li>事例は、埋められる分だけでOK。無理に全部埋めなくて大丈夫です</li>
-      <li>はじめての方は、右上の⚙️から「デモデータを入れる」でお試しできます</li>
-    </ul>
-
-    <button class="modal-close" onclick="closeHelp()">とじる</button>
-  </div>
-</div>
-
-<div class="wrap">
-
-  <!-- ① 入力画面 -->
-  <div id="inputScreen">
-    <div class="card">
-      <div class="field">
-        <label>企業名</label>
-        <input type="text" id="companyName" placeholder="例）みっけ精密工業">
-      </div>
-      <div class="field">
-        <label>サイトURL（任意）</label>
-        <input type="text" id="companyUrl" placeholder="例）https://example.co.jp">
-      </div>
-      <div class="field">
-        <label>業種</label>
-        <select id="industry">
-          <option value="">選んでください</option>
-          <option value="製造業">製造業</option>
-          <option value="税理士事務所">税理士事務所</option>
-          <option value="士業">士業（弁護士・行政書士など）</option>
-          <option value="リフォーム">リフォーム</option>
-          <option value="美容業">美容業</option>
-        </select>
-      </div>
-      <button class="btn btn-block" onclick="startApp()">宝探しスタート 🔍</button>
-    </div>
-  </div>
-
-  <!-- ② アプリ画面 -->
-  <div id="appScreen" class="hide">
-    <div class="company-bar">
-      <b id="barCompany"></b>　の宝を掘り起こします 💎
-      <div id="barUrl" style="font-size:12px;color:#7a8299;margin-top:2px;"></div>
-    </div>
-
-    <div class="tabs">
-      <div class="tab active" data-tab="nayami" onclick="switchTab('nayami')">😟 悩みみっけ</div>
-      <div class="tab" data-tab="jirei" onclick="switchTab('jirei')">🔍 事例みっけ</div>
-      <div class="tab" data-tab="qa" onclick="switchTab('qa')">💬 Q&Aみっけ</div>
-    </div>
-
-    <div id="panel-nayami" class="panel active">
-      <p class="note">サイトに来る人が、口には出さないけど抱えている困りごとです。使うものにチェック、文章は自由に直せます 👇</p>
-      <div id="listNayami"></div>
-    </div>
-
-    <div id="panel-jirei" class="panel">
-      <p class="note">お悩みに「実績」で答える事例カードです。埋められる分だけでOK。空欄の枠はチェックを外せば出力されません 👇</p>
-      <div id="listJirei"></div>
-    </div>
-
-    <div id="panel-qa" class="panel">
-      <p class="note">契約前の不安に、先回りで安心を渡すQ&Aです。数が多いほどAI検索に強くなります 👇</p>
-      <div id="listQa"></div>
-    </div>
-
-    <div class="output-area">
-      <button class="btn btn-navy btn-block" onclick="buildHTML()">📋 サイト用HTMLを書き出す</button>
-
-      <div id="outputWrap" class="hide" style="margin-top:16px;">
-        <div class="out-tabs">
-          <div class="out-tab active" id="tabSource" onclick="switchOut('source')">📄 ソース</div>
-          <div class="out-tab" id="tabPreview" onclick="switchOut('preview')">👁 プレビュー</div>
-        </div>
-
-        <div id="view-source" class="out-view active">
-          <textarea id="outputBox" readonly></textarea>
-          <button class="btn btn-block" style="margin-top:10px;" onclick="copyOutput()">この内容をコピーする 📎</button>
-        </div>
-
-        <div id="view-preview" class="out-view">
-          <iframe id="previewFrame"></iframe>
-          <p style="font-size:12px;color:#7a8299;margin:8px 2px 0;">※ 実際にサイトへ貼ったときの見た目です</p>
-        </div>
-      </div>
-
-      <p style="text-align:center;margin-top:20px;">
-        <button class="btn" style="background:#7a8299;" onclick="backHome()">← 入口にもどる</button>
-      </p>
-    </div>
-  </div>
-
-  <!-- 準備中 -->
-  <div id="prepScreen" class="hide">
-    <div class="prep">
-      <p style="font-size:16px;font-weight:bold;color:var(--navy);">🚧 この業種は準備中です</p>
-      <p>順次ふやしていきます 😊</p>
-      <button class="btn" onclick="backHome()">← 入口にもどる</button>
-    </div>
-  </div>
-
-</div>
-
-<script>
-/* ===== 業種ごとの中身（CONFIG）ここを増やせば業種追加できます ===== */
-const CONFIG = {
-  "製造業": {
-    ready: true,
-    nayami: [
-      "小ロット（1個や少数）でも対応してくれるのかな",
-      "短納期だけど、間に合わせてくれるかな",
-      "図面がまだないけど、相談だけでも大丈夫かな",
-      "他社で「できない」と断られた加工なんだけど…",
-      "試作だけお願いすることって、できるのかな",
-      "試作から量産まで、一貫でお願いできるのかな",
-      "大事な図面やデータ、ちゃんと守ってもらえるのかな"
-    ],
-    jirei: [
-      {before:"他社で断られた薄肉パーツの加工", after:"独自の治具で実現し、量産まで対応", voice:"あきらめかけていたので助かりました"},
-      {before:"試作に2週間かかると言われていた", after:"3日で試作品を提出、開発が前倒しに", voice:"スピードに驚きました"},
-      {before:"図面がなく、相談先が見つからなかった", after:"現物とスケッチから図面化し、製作まで一貫対応", voice:"丸ごとお任せできて安心でした"},
-      {before:"1個だけの特注品で断られ続けていた", after:"1個から製作、追加発注にも柔軟に対応", voice:"小回りが効いて本当に助かります"},
-      {before:"材料選びで迷い、コストが読めなかった", after:"用途に合う材料を提案し、コストも最適化", voice:"プロの視点で選んでもらえて安心"}
-    ],
-    qa: [
-      {q:"1個だけでも作ってもらえますか？", a:"はい、試作1個からお受けしています。当社は小ロットや単品での加工を得意としており、量産前の試作品づくりから、1個だけの特注品まで対応しています。まずは図面やお手元のイメージをお送りください。内容をうかがってお見積りいたします😊"},
-      {q:"図面がないのですが、依頼できますか？", a:"大丈夫です。手描きのスケッチや現物、写真からでも形にできます。これまでも図面のないご相談を数多くお受けし、こちらで図面化してから製作しています。まずは作りたいものをそのままお聞かせください。一緒に形にしていきましょう😊"},
-      {q:"他社で断られた加工でも相談できますか？", a:"ぜひお聞かせください。薄い材料や複雑な形状など、他社さんで難しいと言われた加工も、独自の治具や工夫で実現できた例が多くあります。できるかどうかも含めて正直にお答えしますので、あきらめる前に一度ご相談ください😊"},
-      {q:"短納期でもお願いできますか？", a:"可能な限り対応します。お急ぎの試作や、納期の迫ったご依頼にも、これまで数多くお応えしてきました。まずは希望の納期をお知らせください。難しい場合も、いつまでなら間に合うかを正直にお伝えします😊"},
-      {q:"見積もりは無料ですか？", a:"はい、お見積り・ご相談はすべて無料です。図面がなくても、ざっくりしたご相談の段階からお気軽にどうぞ。しつこい営業などは一切ありませんので、まずは費用感を知りたいという方も安心してお問い合わせください😊"},
-      {q:"試作から量産まで一貫でお願いできますか？", a:"はい、試作から量産まで一貫して対応いたします。試作でしっかり形と品質を確かめてから量産に進めるので、途中で業者が変わる心配がありません。開発から製品化までを、同じ担当が責任を持って伴走します😊"},
-      {q:"図面や技術情報の秘密は守られますか？", a:"はい、秘密保持を徹底しています。お預かりした図面や技術情報を外部に出すことは一切ありません。ご希望があれば秘密保持契約（NDA）の締結にも対応いたしますので、大切な情報も安心してお任せください😊"}
-    ]
-  },
-  "税理士事務所": {
-    ready: true,
-    nayami: [
-      "顧問料がいくらかかるのか、正直不安…",
-      "今の税理士さん、あまり相談に乗ってくれないな",
-      "創業したばかりで、何から相談すればいいか分からない",
-      "うちはちゃんと節税できているのだろうか",
-      "こんな初歩的なこと、聞いても大丈夫かな",
-      "連絡してもレスポンスが遅くて困っている",
-      "税務調査が来たら、ちゃんと対応してもらえるのかな"
-    ],
-    jirei: [
-      {before:"顧問料が高いのか安いのか分からず不安だった", after:"料金の内訳を明確に提示し、納得して契約", voice:"はじめて料金に納得できました"},
-      {before:"前の税理士に相談しづらく、放置していた", after:"気軽に質問できる関係になり、経営判断が速く", voice:"聞きたいことをすぐ聞けて助かります"},
-      {before:"創業直後で、何をすればいいか分からなかった", after:"開業手続きから資金繰りまで一緒に伴走", voice:"右も左も分からない中、心強かったです"},
-      {before:"節税できているか不安なまま申告していた", after:"使える制度を提案し、税負担を大きく軽減", voice:"もっと早く相談すればよかったです"},
-      {before:"税務調査の連絡が来て、頭が真っ白になった", after:"立ち会いから対応まで代行し、無事に完了", voice:"一人じゃなかったことに救われました"}
-    ],
-    qa: [
-      {q:"顧問料はいくらくらいかかりますか？", a:"ご事業の規模やご依頼内容によって変わりますが、最初にお見積りを明確にお出しし、ご納得いただいてから契約します。あとから追加料金が発生することもありません。まずは費用感だけでもお気軽にお尋ねください😊"},
-      {q:"今の税理士から変更することはできますか？", a:"はい、途中からの変更も可能です。引き継ぎのやり取りや必要書類のご案内までこちらでサポートしますので、手間はほとんどかかりません。今の対応にご不満があれば、遠慮なくご相談ください😊"},
-      {q:"創業したばかりですが、相談できますか？", a:"もちろんです。開業の手続きから、帳簿のつけ方、資金繰りまで、最初の一歩から一緒に進めます。分からないことだらけで当たり前ですので、どうか安心してお任せください😊"},
-      {q:"こんな初歩的なことを聞いても大丈夫ですか？", a:"大歓迎です。どんな小さな疑問でも、丁寧にお答えするのが私たちの役目です。『こんなこと聞いていいのかな』と遠慮される方ほど、実は大事なポイントを見逃していることも。何でも遠慮なくお聞きください😊"},
-      {q:"節税の相談にも乗ってもらえますか？", a:"はい、事業の状況をうかがい、使える制度や経費の見直しなど、無理のない範囲で節税をご提案します。ただ税金を減らすだけでなく、将来の資金繰りまで見据えてアドバイスします。ぜひ一度ご相談ください😊"},
-      {q:"質問への返事は早くもらえますか？", a:"はい、スピードを大切にしています。お問い合わせにはできる限り早くお返事し、判断に迷う場面をお待たせしません。連絡の取りやすさこそ税理士選びの要だと考えていますので、安心してお任せください😊"},
-      {q:"税務調査になったら対応してもらえますか？", a:"はい、調査の立ち会いから当日の対応まで、責任を持ってサポートします。事前の準備もお手伝いしますので、慌てる必要はありません。いざという時に一人にしないのが、私たちの役割です😊"}
-    ]
-  },
-  "士業": {
-    ready: true,
-    nayami: [
-      "こんなこと、相談してもいいことなのかな…",
-      "弁護士さんって、費用が高そうで怖い",
-      "敷居が高くて、なんだか相談しづらい",
-      "相談した内容、周りに知られたりしないかな",
-      "まず話を聞いてもらうだけ、ってできるのかな",
-      "専門用語ばかりで、話についていけるか不安",
-      "こちらの気持ちを、ちゃんと汲んでくれるのかな"
-    ],
-    jirei: [
-      {before:"相談していい内容か分からず、一人で抱えていた", after:"まず話を聞き、進むべき道筋を一緒に整理", voice:"相談してよかったと心から思いました"},
-      {before:"費用が不安で、なかなか踏み出せなかった", after:"最初に費用を明示し、見通しを持って依頼", voice:"金額がはっきりして安心できました"},
-      {before:"どこに相談すればいいか分からず放置していた", after:"必要な手続きを整理し、期限内にすべて完了", voice:"もっと早く来ればよかったです"},
-      {before:"人に言えない悩みで、相談をためらっていた", after:"秘密を厳守し、落ち着いて話せる場を用意", voice:"安心して打ち明けられました"},
-      {before:"専門用語が難しく、話が理解できるか不安だった", after:"かみ砕いた言葉で説明し、納得して手続き", voice:"はじめて内容がよく分かりました"}
-    ],
-    qa: [
-      {q:"こんなことを相談してもいいのでしょうか？", a:"はい、どうぞ遠慮なくお話しください。『相談していい内容か分からない』という段階こそ、私たちの出番です。まずお話をうかがい、そもそも問題になるのか、どう進めればいいのかを一緒に整理します。ひとりで抱え込まないでくださいね😊"},
-      {q:"相談や依頼の費用はどれくらいかかりますか？", a:"ご相談内容によって変わりますが、最初に費用の見通しを明確にお伝えし、ご納得いただいてから進めます。あとから想定外の請求をすることはありません。まずは費用のことだけでも、お気軽にお尋ねください😊"},
-      {q:"まず話を聞いてもらうだけでも大丈夫ですか？", a:"もちろんです。いきなり依頼を決めていただく必要はありません。まずは状況をお聞かせいただき、選べる方法をご説明します。話すうちに気持ちが整理できた、という方も多いので、どうぞ気楽にお越しください😊"},
-      {q:"相談した内容が外に漏れることはありませんか？", a:"ご安心ください。私たちには法律で定められた守秘義務があり、お話しいただいた内容を外部に漏らすことは一切ありません。ご家族にも知られたくないといったご事情にも配慮しますので、安心してお話しください😊"},
-      {q:"専門用語が難しそうで、ついていけるか不安です。", a:"難しい言葉はできる限り使わず、日常の言葉でご説明します。分かりにくいところは何度でもお尋ねください。『理解して納得したうえで進める』ことを大切にしていますので、置いていくようなことはありません😊"},
-      {q:"初めてなのですが、何を準備すればいいですか？", a:"特別な準備は要りません。手ぶらでお越しいただいて大丈夫です。関係しそうな書類があればお持ちいただくとスムーズですが、なくても構いません。まずは今の状況をそのままお話しいただくことから始めましょう😊"},
-      {q:"親身に話を聞いてもらえるのか心配です。", a:"はい、まずはあなたのお気持ちやご事情をしっかりうかがうことから始めます。手続きや法律の話の前に、何にお困りなのかを丁寧に受け止めます。安心してお任せいただけるよう、寄り添う姿勢を何より大切にしています😊"}
-    ]
-  },
-  "リフォーム": {
-    ready: true,
-    nayami: [
-      "だいたいの費用が分からなくて、不安…",
-      "しつこく営業されたり、高く売りつけられないかな",
-      "見積もりだけお願いする、って気が引けるな",
-      "あとから追加料金がどんどん増えたら怖い",
-      "仕上がりが、イメージ通りになるか心配",
-      "ちょっとした工事でも、お願いしていいのかな",
-      "工事のあと、不具合が出たら見てもらえるのかな"
-    ],
-    jirei: [
-      {before:"相場が分からず、依頼をためらっていた", after:"費用の内訳を明確に提示し、納得して着工", voice:"何にいくらか分かって安心でした"},
-      {before:"他社の強引な営業で不信感を持っていた", after:"必要な工事だけを提案し、押し売りなし", voice:"無理な勧誘がなくて信頼できました"},
-      {before:"追加費用が心配で踏み切れなかった", after:"想定される費用を事前に共有し、予算内で完了", voice:"最後まで予算どおりで助かりました"},
-      {before:"仕上がりが想像できず不安だった", after:"完成イメージを図や写真で共有し、期待どおりに", voice:"イメージそのままで感動しました"},
-      {before:"小さな工事で、頼める業者が見つからなかった", after:"小規模な工事も快く対応し、その日のうちに完了", voice:"小さなお願いも嫌な顔せず助かります"}
-    ],
-    qa: [
-      {q:"だいたいの費用感を教えてもらえますか？", a:"はい、お住まいの状況やご希望をうかがったうえで、費用の目安を最初に明確にお伝えします。何にいくらかかるのか内訳もお見せしますので、ご予算に合わせて進められます。まずは費用感だけでもお気軽にお尋ねください😊"},
-      {q:"しつこい営業や、高額な押し売りはありませんか？", a:"ご安心ください。必要な工事だけをご提案し、無理におすすめすることは一切ありません。ご予算やご希望を第一に考えますので、断りづらいと感じることもないはずです。まずはお話を聞かせていただくところからで大丈夫です😊"},
-      {q:"見積もりだけのご相談でも大丈夫ですか？", a:"もちろんです。お見積り・ご相談は無料で、その場でご契約いただく必要はまったくありません。他社さんと比べていただいて構いませんので、まずは気軽にお見積りだけでもお申しつけください😊"},
-      {q:"あとから追加料金が発生しませんか？", a:"事前にしっかり現地を確認し、想定される費用まで含めてお見積りします。追加が必要になりそうな場合も、必ず事前にご説明し、ご了承をいただいてから進めます。勝手に費用が増えることはありませんのでご安心ください😊"},
-      {q:"仕上がりのイメージを事前に確認できますか？", a:"はい、図面や施工事例の写真、必要に応じて完成イメージをお見せしながらご説明します。『思っていたのと違った』を防ぐため、着工前にしっかりイメージを共有します。気になる点は遠慮なくお伝えください😊"},
-      {q:"小さな工事でもお願いできますか？", a:"はい、ちょっとした修繕や一か所だけの工事も、喜んでお受けします。『こんな小さなことで頼んでいいのかな』という内容こそ、お気軽にご相談ください。小回りの利く対応を大切にしています😊"},
-      {q:"工事のあとのアフターフォローはありますか？", a:"はい、工事後も安心してお過ごしいただけるよう、保証とアフターフォローをご用意しています。万一不具合があれば、責任を持って対応します。工事して終わりではなく、その後も末永くお付き合いください😊"}
-    ]
-  },
-  "美容業": {
-    ready: true,
-    nayami: [
-      "自分に似合う髪型（メニュー）が分からない…",
-      "しつこく商品やコースを勧められないかな",
-      "予約って、取りやすいのかな",
-      "私の悩みに合うメニューがあるのか分からない",
-      "はじめてのお店って、緊張するな…",
-      "なりたいイメージ、うまく伝えられるか不安",
-      "仕上がりが希望と違ったら、どうしよう"
-    ],
-    jirei: [
-      {before:"自分に似合う髪型が分からず迷っていた", after:"骨格や雰囲気に合わせて提案し、印象が明るく", voice:"自分に似合う髪型が見つかりました"},
-      {before:"以前のお店でしつこい勧誘が苦手だった", after:"無理な勧誘は一切なく、ゆっくり過ごせる時間に", voice:"勧誘がなくて安心して通えます"},
-      {before:"長年の髪の悩みを相談できずにいた", after:"悩みに合うケアを提案し、扱いやすい髪に", voice:"悩みが軽くなって毎朝が楽です"},
-      {before:"初めてのお店で緊張し、要望を言えなかった", after:"丁寧なカウンセリングで、希望どおりの仕上がりに", voice:"話しやすくて緊張がほぐれました"},
-      {before:"なりたいイメージが伝わるか不安だった", after:"写真を見ながらすり合わせ、イメージどおりに", voice:"思い描いたとおりで嬉しかったです"}
-    ],
-    qa: [
-      {q:"自分に似合うメニューが分からないのですが？", a:"ぜひご相談ください。お顔立ちや骨格、髪質、ふだんの雰囲気やお手入れのしやすさまでうかがって、あなたに似合うスタイルをご提案します。『おまかせしたい』という方も大歓迎です。一緒にぴったりの仕上がりを見つけましょう😊"},
-      {q:"商品やコースを、しつこく勧められませんか？", a:"ご安心ください。無理な勧誘は一切いたしません。おすすめしたいケアがある場合もご提案までで、決めるのはお客様です。断りづらいと感じることのないよう、心地よく過ごしていただくことを一番大切にしています😊"},
-      {q:"予約は取りやすいですか？", a:"はい、できるだけご希望に沿えるよう努めています。お電話のほか、24時間いつでも受け付けられるネット予約もご用意しています。急なご予約もまずはご相談ください。通いやすさも大事にしています😊"},
-      {q:"私の悩みに合うメニューはありますか？", a:"はい、髪や肌のお悩みをうかがい、一人ひとりに合わせたメニューをご提案します。同じ悩みでも原因は人それぞれですので、まずはじっくりお話を聞かせてください。あなたに合う方法を一緒に見つけていきます😊"},
-      {q:"初めてで緊張するのですが、大丈夫でしょうか？", a:"どうぞ気楽にお越しください。初めての方こそ緊張されて当然ですので、リラックスして過ごしていただけるよう心がけています。分からないことは何でもお尋ねください。心地よい時間になるようお迎えします😊"},
-      {q:"なりたいイメージがうまく伝えられるか不安です。", a:"言葉でうまく言えなくて大丈夫です。写真や画像を見せていただければ、それをもとに一緒にイメージをすり合わせていきます。『なんとなくこんな感じ』からで構いません。ご希望を形にするお手伝いをします😊"},
-      {q:"仕上がりが希望と違ったら、どうなりますか？", a:"仕上がりのイメージは施術前にしっかり確認し、途中でもこまめにお声がけしながら進めます。気になる点があればその場で遠慮なくお伝えください。ご満足いただけるまで丁寧に仕上げますので、安心してお任せください😊"}
-    ]
-  }
-};
-
-let current = null;
-
-/* 使い方モーダル */
-function openHelp(){ document.getElementById('helpModal').classList.add('show'); }
-function closeHelp(){ document.getElementById('helpModal').classList.remove('show'); }
-function bgClose(e){ if(e.target.id==='helpModal'){ closeHelp(); } }
-
-/* 設定（歯車）メニュー */
-function toggleGear(e){
-  e.stopPropagation();
-  document.getElementById('gearMenu').classList.toggle('show');
-}
-document.addEventListener('click', function(){
-  document.getElementById('gearMenu').classList.remove('show');
-});
-
-/* デモデータを入れる */
-function loadDemo(){
-  document.getElementById('companyName').value = "みっけ精密工業";
-  document.getElementById('companyUrl').value  = "https://example.co.jp";
-  document.getElementById('industry').value    = "製造業";
-  document.getElementById('gearMenu').classList.remove('show');
-  startApp();
-}
-
-/* デモデータをクリア */
-function clearDemo(){
-  document.getElementById('companyName').value = "";
-  document.getElementById('companyUrl').value  = "";
-  document.getElementById('industry').value    = "";
-  document.getElementById('listNayami').innerHTML = "";
-  document.getElementById('listJirei').innerHTML  = "";
-  document.getElementById('listQa').innerHTML     = "";
-  document.getElementById('outputBox').value = "";
-  document.getElementById('gearMenu').classList.remove('show');
-  backHome();
-  alert('入力内容をすべてクリアしました 😊');
-}
-
-/* ===== 宝探し演出 ===== */
-function playSearchFx(callback){
-  const fx=document.getElementById('searchFx');
-  fx.classList.add('show');
-
-  for(let i=0;i<14;i++){
-    const s=document.createElement('div');
-    s.className='fx-spark';
-    s.style.left=(10+Math.random()*80)+'%';
-    s.style.top=(20+Math.random()*60)+'%';
-    s.style.animation=`sparkFloat ${1+Math.random()}s ease ${Math.random()*1.2}s forwards`;
-    fx.appendChild(s);
-    setTimeout(()=>s.remove(),2400);
-  }
-
-  setTimeout(()=>document.getElementById('gem0').classList.add('lit'),700);
-  setTimeout(()=>document.getElementById('gem1').classList.add('lit'),1000);
-  setTimeout(()=>document.getElementById('gem2').classList.add('lit'),1300);
-
-  setTimeout(()=>document.getElementById('fxFlash').classList.add('go'),1600);
-  setTimeout(()=>document.getElementById('fxWord').classList.add('show'),1650);
-
-  setTimeout(()=>{
-    fx.classList.remove('show');
-    document.getElementById('gem0').classList.remove('lit');
-    document.getElementById('gem1').classList.remove('lit');
-    document.getElementById('gem2').classList.remove('lit');
-    document.getElementById('fxFlash').classList.remove('go');
-    document.getElementById('fxWord').classList.remove('show');
-    callback();
-  },2500);
-}
-
-function startApp(){
-  const name = document.getElementById('companyName').value.trim();
-  const ind  = document.getElementById('industry').value;
-  if(!name){ alert('企業名を入力してください'); return; }
-  if(!ind){ alert('業種を選んでください'); return; }
-
-  const conf = CONFIG[ind];
-
-  playSearchFx(function(){
-    document.getElementById('inputScreen').classList.add('hide');
-
-    if(!conf || !conf.ready){
-      document.getElementById('prepScreen').classList.remove('hide');
-      return;
-    }
-
-    current = conf;
-    document.getElementById('barCompany').textContent = name;
-    const url = document.getElementById('companyUrl').value.trim();
-    document.getElementById('barUrl').textContent = url ? url : '';
-    renderAll(conf);
-    document.getElementById('appScreen').classList.remove('hide');
-    window.scrollTo(0,0);
-  });
-}
-
-function renderAll(conf){
-  let h='';
-  conf.nayami.forEach((t,i)=>{
-    h+=`<div class="item"><div class="row">
-      <input type="checkbox" checked data-nayami="${i}">
-      <div class="body"><input type="text" value="${esc(t)}"></div>
-    </div></div>`;
-  });
-  document.getElementById('listNayami').innerHTML=h;
-
-  h='';
-  conf.jirei.forEach((j,i)=>{
-    const checked = i<3 ? 'checked' : '';
-    h+=`<div class="item"><div class="row">
-      <input type="checkbox" ${checked} data-jirei="${i}">
-      <div class="body">
-        <div class="lbl">ビフォー</div><input type="text" value="${esc(j.before)}">
-        <div class="lbl">アフター</div><input type="text" value="${esc(j.after)}">
-        <div class="lbl">お客様の声</div><input type="text" value="${esc(j.voice)}">
-      </div>
-    </div></div>`;
-  });
-  document.getElementById('listJirei').innerHTML=h;
-
-  h='';
-  conf.qa.forEach((q,i)=>{
-    h+=`<div class="item"><div class="row">
-      <input type="checkbox" checked data-qa="${i}">
-      <div class="body">
-        <div class="lbl">Q（質問）</div><input type="text" value="${esc(q.q)}">
-        <div class="lbl">A（回答）</div><textarea rows="3">${esc(q.a)}</textarea>
-      </div>
-    </div></div>`;
-  });
-  document.getElementById('listQa').innerHTML=h;
-}
-
-function switchTab(name){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+name).classList.add('active');
-}
-
-function switchOut(which){
-  const isSrc = which==='source';
-  document.getElementById('tabSource').classList.toggle('active',isSrc);
-  document.getElementById('tabPreview').classList.toggle('active',!isSrc);
-  document.getElementById('view-source').classList.toggle('active',isSrc);
-  document.getElementById('view-preview').classList.toggle('active',!isSrc);
-}
-
-function buildHTML(){
-  const company = document.getElementById('companyName').value.trim();
-
-  let nayami=[];
-  document.querySelectorAll('[data-nayami]').forEach(cb=>{
-    if(cb.checked){ nayami.push(cb.closest('.item').querySelector('input[type=text]').value.trim()); }
-  });
-
-  let jirei=[];
-  document.querySelectorAll('[data-jirei]').forEach(cb=>{
-    if(cb.checked){
-      const f=cb.closest('.item').querySelectorAll('.body input');
-      if(f[0].value.trim() || f[1].value.trim()){
-        jirei.push({before:f[0].value.trim(),after:f[1].value.trim(),voice:f[2].value.trim()});
+      if (isJson) {
+        payload.generationConfig.responseMimeType = "application/json";
+        if (schema) {
+          payload.generationConfig.responseSchema = schema;
+        }
       }
+
+      const maxRetries = 5;
+      const baseDelay = 1000;
+
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || `API error: ${response.status}`);
+          }
+
+          const data = await response.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          
+          if (!text) throw new Error("No text in response");
+
+          return isJson ? JSON.parse(text) : text;
+        } catch (error) {
+          if (attempt === maxRetries - 1) {
+            throw new Error(`APIの呼び出しに失敗しました。詳細: ${error.message}`);
+          }
+          await new Promise(resolve => setTimeout(resolve, baseDelay * Math.pow(2, attempt)));
+        }
+      }
+    };
+
+    // --- 画像生成API呼び出し関数 (Imagen 4 - Cloudflare Workers経由) ---
+    const generateImageAPI = async (prompt) => {
+      const url = `${WORKER_URL}/generate-image`;
+      
+      const payload = {
+        instances: { prompt: prompt },
+        parameters: { sampleCount: 1 }
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `画像生成APIエラー: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
+        return `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
+      } else {
+        throw new Error("画像の生成に失敗しました。");
+      }
+    };
+
+    // サムネイルスタイル (スタイル1〜5にMidjourney、スタイル6〜10にNanobananaの表記を明記)
+    const THUMBNAIL_STYLES = [
+      { id: 1, name: "[Midjourney] ① プレミアム日本イラスト風（本気推奨）", desc: "やさしい水彩タッチと上品な線画。みっけシリーズ等どんなジャンルにも親しまれる傑作トーン", prompt: "premium Japanese illustration, hand-painted illustration, storybook illustration, soft watercolor texture, elegant line art, clean outlines, subtle brush strokes, warm earthy color palette, friendly corporate mascot style, non-photorealistic, slightly stylized proportions" },
+      { id: 2, name: "[Midjourney] ② スタジオジブリ風ファンタジーイラスト", desc: "温かく優しい感情がダイレクトに伝わる、SNS映え間違いなしのスタジオアニメ風", prompt: "Japanese animated fantasy illustration, whimsical atmosphere, lush natural colors, soft painterly texture, expressive characters, cozy lighting, magical storytelling feeling, hand-painted animation style" },
+      { id: 3, name: "[Midjourney] ③ ピクサー風3Dイラスト", desc: "表情がとても豊かでキャラクター性が強い、YouTubeの動画告知や目に留まるバナー向け", prompt: "stylized 3D animated character, expressive face, cinematic lighting, colorful environment, smooth rendering, playful proportions, premium animated illustration" },
+      { id: 4, name: "[Midjourney] ④ 北欧フラットデザイン風", desc: "アプリの解説やマニュアル紹介に最適。シンプルでおしゃれなミニマルジオメトリック", prompt: "modern Scandinavian illustration, flat design, minimalistic shapes, clean composition, soft pastel colors, friendly business illustration, geometric style" },
+      { id: 5, name: "[Midjourney] ⑤ Apple広告・Airbnb風プレミアムイラスト", desc: "圧倒的な高級感とスタートアップらしい信頼感。洗練されたミニマリズムと上品なカラー", prompt: "premium editorial illustration, Apple-inspired minimalism, clean white background, modern business illustration, elegant composition, soft gradients, sophisticated color palette, premium startup branding" },
+      { id: 6, name: "[Nanobanana] ⑥ シネマティック・ファンタジーイラスト", desc: "深みのある映画調のライティング。1枚目の中世風幻想的アートトーンをシード化", prompt: "Masterpiece high-fidelity digital concept art, beautiful cinematic fantasy scene, atmospheric studio volumetric lighting, deep dual-tone color grading, rich hand-painted details, highly aesthetic fantasy and epic storytelling mood" },
+      { id: 7, name: "[Nanobanana] ⑦ 3Dクレイ＆ミニマリズム", desc: "クリーンで愛らしい粘土フィギュア調。2枚目の温かいトイテイストを完全学習", prompt: "Masterpiece cute 3D claymation style, soft clay model texture, minimalist clean pastel-colored miniature landscape, smooth lighting, adorable toy design, high-contrast octane render, heartwarming clean visual aesthetic" },
+      { id: 8, name: "[Nanobanana] ⑧ YouTubeサムネイル・超目立つネオンポップ", desc: "文字を乗せたときに最もクリックを誘発する、視認性とコントラストを極めた王道ポップ", prompt: "Ultra-high-impact professional YouTube thumbnail style, dramatic high-contrast studio scene, bold glowing outline around a high-fidelity 3D rendered key focal object on the right side, premium dark-to-bright colored textured background, perfect left-side empty space meticulously designed for large title overlay" },
+      { id: 9, name: "[Nanobanana] ⑨ サイバーパンク・フューチャーテック", desc: "ダークトーンの背景に走るネオン。SF、AI、Web3、テック系などで抜群のバズを誘発", prompt: "Stunning cyberpunk digital cityscape, ultra-detailed futuristic tech UI overlay, dark glossy background with glowing neon violet and laser green lights, high-tech holographic interface, octane render, cinematic synthwave vibe" },
+      { id: 10, name: "[Nanobanana] ⑩ 実写・ビジネスインフルエンサー風", desc: "1億画素のプロ機材で撮られたような、高級なオフィス空気感と信頼感を纏う実写クオリティ", prompt: "Premium editorial business portrait photography, shot on Hasselblad 100MP, luxurious modern office workspace background with stunning golden sunlight and soft cinematic f/1.4 lens bokeh, ultra-realistic skin and fabric textures, sophisticated and trustworthy professional atmosphere, minimalist composition with professional empty space" }
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState(1);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState("");
+
+      // 作成モード切り替え 
+      // "normal" = 通常テーマ, "app" = 自作アプリ紹介テーマ, "written_note" = note書きました告知, "short_video" = ショート動画集客
+      const [creationMode, setCreationMode] = useState("normal");
+
+      // Step 1 - 通常テーマ用
+      const [genre, setGenre] = useState("");
+      const [themes, setThemes] = useState([]);
+      const [selectedTheme, setSelectedTheme] = useState("");
+
+      // Step 1 - アプリ紹介テーマ用 / ショート動画用共通
+      const [appName, setAppName] = useState("");
+      const [appUrl, setAppUrl] = useState("");
+      const [appTrigger, setAppTrigger] = useState("");
+      const [appValue, setAppValue] = useState("");
+
+      // Step 1 - ショート動画集客用専用 (アプリ概要)
+      const [appSummary, setAppSummary] = useState("");
+
+      // Step 1 - note書きました告知用
+      const [noteTitle, setNoteTitle] = useState("");
+      const [noteUrl, setNoteUrl] = useState("");
+      const [noteSummary, setNoteSummary] = useState("");
+      
+      // 有料/無料設定
+      const [isPaid, setIsPaid] = useState(true);
+      const [price, setPrice] = useState("980");
+      const [benefit, setBenefit] = useState("");
+      
+      // 特典設定
+      const [hasBonus, setHasBonus] = useState(false);
+      const [bonusContent, setBonusContent] = useState("");
+      const [hasLineBonus, setHasLineBonus] = useState(false);
+      const [lineBonusContent, setLineBonusContent] = useState("");
+      const [lineUrl, setLineUrl] = useState("");
+
+      const [hasLimitedSale, setHasLimitedSale] = useState(false);
+      
+      // 無料時の追加フィールド
+      const [redirectUrl, setRedirectUrl] = useState("");
+      const [redirectPurpose, setRedirectPurpose] = useState("");
+      
+      const [toc, setToc] = useState("");
+
+      // Step 2
+      const [articleBody, setArticleBody] = useState("");
+
+      // Step 3
+      const [marketingData, setMarketingData] = useState(null);
+
+      // Step 4 - サムネイル用の状態 (アスペクト比ステート)
+      const [selectedStyleId, setSelectedStyleId] = useState(1); // スタイル①を初期選択に
+      const [aspectRatio, setAspectRatio] = useState("16:9"); // "16:9", "9:16", "1:1"
+      const [generatedImagePrompt, setGeneratedImagePrompt] = useState("");
+      const [generatedImageUrl, setGeneratedImageUrl] = useState("");
+      const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+      const [copiedStates, setCopiedStates] = useState({});
+
+      const handleCopy = (text, id) => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          setCopiedStates(prev => ({ ...prev, [id]: true }));
+          setTimeout(() => setCopiedStates(prev => ({ ...prev, [id]: false })), 2000);
+        } catch (err) {
+          console.error('Copy failed', err);
+        }
+        document.body.removeChild(textArea);
+      };
+
+      // 【初期画面に戻すリセット関数】
+      const handleReset = () => {
+        setActiveTab(1);
+        setCreationMode("normal");
+        setGenre("");
+        setThemes([]);
+        setSelectedTheme("");
+        setAppName("");
+        setAppUrl("");
+        setAppTrigger("");
+        setAppValue("");
+        setAppSummary("");
+        setNoteTitle("");
+        setNoteUrl("");
+        setNoteSummary("");
+        setIsPaid(true);
+        setPrice("980");
+        setBenefit("");
+        setHasBonus(false);
+        setBonusContent("");
+        setHasLineBonus(false);
+        setLineBonusContent("");
+        setLineUrl("");
+        setHasLimitedSale(false);
+        setRedirectUrl("");
+        setRedirectPurpose("");
+        setToc("");
+        setArticleBody("");
+        setMarketingData(null);
+        setSelectedStyleId(1); // リセット時も①推奨
+        setAspectRatio("16:9");
+        setGeneratedImagePrompt("");
+        setGeneratedImageUrl("");
+        setError("");
+      };
+
+      // 1. テーマ案の生成
+      const generateThemes = async () => {
+        setLoading(true); setError("");
+        try {
+          let systemPrompt = "";
+          let prompt = "";
+
+          if (creationMode === "normal") {
+            if (!genre) { setError("ジャンルを入力してください（例：ダイエット、副業、人間関係など）"); setLoading(false); return; }
+            systemPrompt = `あなたは優秀なコンテンツマーケターです。
+            HARMの法則（Health, Ambition, Relation, Money）を意識し、悩み解決につながるnoteの「HowTo系テーマ案（〜の方法、〜の手順など）」を提案してください。
+            出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
+            prompt = `ジャンル「${genre}」で、ターゲット層が思わず買いたくなる有料または優良フリーのnoteのテーマ案（タイトル）を5つ作成してください。`;
+          } else if (creationMode === "app") {
+            if (!appName) { setError("アプリ名を入力してください"); setLoading(false); return; }
+            if (!appTrigger) { setError("開発のきっかけを入力してください"); setLoading(false); return; }
+            if (!appValue) { setError("解決できる悩み・価値を入力してください"); setLoading(false); return; }
+            
+            systemPrompt = `あなたは優秀なコンテンツマーケターおよびソフトウェアエヴァンジェリストです。
+            自作アプリや自作ツールをnote記事で販売・紹介し、読者を集客するための感情を揺さぶる「開発ストーリー型・悩み解決系テーマ案（タイトル案）」を提案してください。
+            単なる機能紹介や説明書（マニュアル）的な退屈なタイトルではなく、読者が抱える生々しい「悩み」や「相談ストーリー」にフォーカスし、その解決策として自作アプリが登場するドラマチックで魅力的なタイトルにしてください。
+            出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
+            
+            prompt = `以下のアプリ情報に基づき、購入意欲を高める魅力的なnote記事のタイトル案（テーマ案）を5つ作成してください。
+            
+            ■ アプリ名: ${appName}
+            ■ 開発のきっかけ（悩み・相談等）: ${appTrigger}
+            ■ 解決できる悩み・価値: ${appValue}
+            ${appUrl ? `■ アプリURL: ${appUrl}` : ''}`;
+          }
+          
+          const schema = { type: "ARRAY", items: { type: "STRING" } };
+          const result = await callGeminiAPI(prompt, systemPrompt, true, schema);
+          
+          let parsedThemes = [];
+          if (Array.isArray(result)) {
+            parsedThemes = result.map(t => typeof t === 'string' ? t : (t.title || t.name || JSON.stringify(t)));
+          } else if (result && result.themes && Array.isArray(result.themes)) {
+            parsedThemes = result.themes.map(t => typeof t === 'string' ? t : (t.title || JSON.stringify(t)));
+          }
+          setThemes(parsedThemes);
+          setBenefit("");
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // 2. 目次案の生成
+      const generateToc = async () => {
+        if (!selectedTheme) { setError("テーマを選択してください"); return; }
+        setLoading(true); setError("");
+        try {
+          let monetizationStrategy = "";
+          let targetAppInfo = "";
+
+          if (creationMode === "app") {
+            targetAppInfo = `【アプリデータ】:
+            - アプリ名: ${appName}
+            ${appUrl ? `- アプリURL: ${appUrl}` : ''}
+            - 開発のきっかけ: ${appTrigger}
+            - 解決できる価値: ${appValue}\n`;
+          }
+
+          if (isPaid) {
+            monetizationStrategy = `【有料販売（無料・有料の分割設計）】: この商品は「予定価格：${price}円」で販売予定です。
+            ${creationMode === "app" 
+              ? `前半の無料公開エリアで「なぜこのアプリを作ることになったのか（ユーザーの悩み・葛藤・相談のストーリー）」を語り、アプリの基本メカニズムを解説。最も強力な「具体的な活用方法」「裏ワザ・秘密のテンプレート（はさみマークのペイウォールライン）」の手前で有料エリアへと移行する構成にしてください。`
+              : `前半の「無料公開エリア」で読者に強い共感を伝え、最高の解決策の手前（はさみマークのペイウォールライン）で有料へと移行する寸止め構成にしてください。`
+            }`;
+          } else {
+            monetizationStrategy = `【無料公開＋外部誘導】: この記事は無料で一般公開されますが、最終的に読者を外部サイトへ自然に誘導する目的があります。${redirectUrl || appUrl ? `誘導先URL: ${redirectUrl || appUrl}` : ''} ${redirectPurpose || appValue ? `誘導目的: ${redirectPurpose || appValue}` : ''}`;
+          }
+
+          const systemPrompt = `あなたは特定のジャンルおよびWebサービスの専門家です。読者の悩みを解決するnoteの目次を作成します。
+          大見出し（章タイトル等の大枠）のみを使って、シンプルで多すぎない論理的な構成にしてください。導入から具体的な解決策、まとめまでの流れを作ってください。
+          ${targetAppInfo}
+          ${monetizationStrategy}
+          ${benefit ? `【提供価値（得られる未来）】: ${benefit}` : ''}
+          ${hasBonus ? `【購入特典】: ${bonusContent || '限定特典・限定付録ワークシート等'}` : ''}
+          ${hasLineBonus ? `【公式LINE登録特典】: ${lineBonusContent} (LINE追加URL: ${lineUrl || '公式LINEリンク'})\n※記事の最後の結びの部分で、公式LINEへの登録とLINE登録特典の受け取りを促す案内セクションを目次に含めてください。` : ''}`;
+          
+          const prompt = `テーマ：「${selectedTheme}」\nこのテーマでnoteを書きます。目次を作成してください。`;
+          const result = await callGeminiAPI(prompt, systemPrompt, false);
+          setToc(result);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // 3. 本文の生成 (無料/有料寸止め境界線挿入を完全自動化)
+      const generateArticle = async () => {
+        if (!toc) { setError("目次を入力してください"); return; }
+        setLoading(true); setError("");
+        try {
+          let monetizationContext = "";
+          let appStoryPrompt = "";
+
+          if (creationMode === "app") {
+            appStoryPrompt = `【超重要：アプリ開発ストーリーテリング指示】
+            単なるアプリの使い方マニュアルにしないでください。
+            読者が「まさにかつての自分と同じ状況だ」と感動し、没頭するストーリーを描いてください。
+            1. 「こんな悩み・相談（${appTrigger}）をリアルに受けたことがきっかけでした」という開発の原体験を、生々しい相談の様子とともに熱く語ってください。
+            2. 既存のやり方では解決できなかった葛藤を提示します。
+            3. だから「私はこの問題を解決するための『${appName}』という専用の道具（アプリ）を作りました」という開発の瞬間をドラマチックに書いてください。
+            4. アプリによって「こんな成果（${appValue}）が一瞬で手に入るようになりました」という劇的変化を詳しく書いてください。
+            ${appUrl ? `5. アプリのアクセスURL（${appUrl}）を魅力的な文字付きリンクカードのようにアピールして本文中に必ず配置してください。` : ''}`;
+          }
+
+          if (isPaid) {
+            monetizationContext = `この記事は「価格：${price}円」の価値がある有料noteとして販売されます。
+               読者が最初の無料部分を読んだ時点で「この先を読まなければ損をする！」と強く感じ、購入後に「価格以上の価値がある！」と大満足するような二段階構成で執筆してください。
+
+               【有料販売のための分割執筆ルール】
+               1. 本文全体のボリュームの約 35〜45% を「無料部分（導入、ターゲットへの強い共感、悩みの根本原因の指摘、開発に至るエピソードストーリー等）」として執筆してください。
+               2. 無料部分の最後に、読者の購買意欲を最大限に刺激する【魅力的な寸止めセールスコピー】（この課題を克服する具体的な実践手順や、特別なノウハウ、アプリの最も効率的な裏ワザがこの先で手に入るという期待感の提示）を2段落ほどで熱を込めて書いてください。
+               3. 寸止めコピー of 直後に、noteの管理画面で有料ラインを設定するためのコピペ用ラインとして、必ず以下の区切り線を1行独立させて挿入してください。
+                  
+                  ✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー
+                  
+               4. 区切り線の後から、核心部分となる具体的な解決ノウハウ、今日からできる実践ステップ、極秘のテクニックを詳細に解説した「有料エリア」を執筆してください。
+               5. 有料部分の最後には、購入者への感謝 of メッセージと、読者限定プレゼント特典の情報（特典: ${bonusContent || "なし"}）を必ず添えてください。`;
+          } else {
+            monetizationContext = `この記事は「完全無料」のコンテンツとして公開されます。まずは読者に圧倒的な価値をプレゼントしてファンになってもらうことが目的です。
+               And, 本文の最後の章（まとめ、または結び）のなかで、外部誘導先（目的: ${redirectPurpose || (creationMode === "app" ? `${appName}の無料体験・アクセス` : "詳細サイト確認")}, URL: ${redirectUrl || appUrl || "サイトリンク"}）への案内文（クリックを促す魅力的な導線文章）を、自然かつ強力なCall To Actionとして必ず設置してください。`;
+          }
+
+          const systemPrompt = `あなたはプロのライターであり、かつ一流のプロダクトマーケターです。提供された目次を元に、noteの本文を執筆します。
+          【重要ルール】
+          - note의 目次가 너무 복잡해지는 것을 막기 위해, 見出し는「大見出し（## 章タイトル）」만 사용해주세요. 中見出し（###）나 小見出し（####）는 절대로 만들지 마세요.
+          - 상세 포인트나 중요한 해설은, 見出し를 새로 만들지 않고, 문장 내에서「**太字**」로 강조해 이해하기 쉽게 설명하세요.
+          - AIっぽい堅苦しい表現は避け、人間らしい自然な言葉遣いにすること。
+          - 読者がイメージしやすいように、具体的な例え話や、よくある失敗談などの「疑似体験談」を交えること。
+          - 読みやすさを重視し、適度に改行や空白行を入れること.
+          - 箇条書きや引用ブロックなどを効果的に使うこと。
+          
+          【特典導線ルール】
+          ${hasLineBonus ? `【重要：公式LINE追加特典CTAの自動設置】: 本文の最後の「大見出しの終わり、かつハッシュタグの直前」に、LINE公式アカウントの追加と特典プレゼントを強く呼びかける案内文を自然に挿入してください。
+            特典内容: ${lineBonusContent}
+            LINE追加用URL: ${lineUrl || 'https://line.me/R/ti/p/... (あなたのLINE公式リンク)'}
+            案内は魅力的で、今すぐクリックして受け取りたくなるようなコピーにしてください。` : ''}
+          
+          - 本文の「一番最後（すべての文字の最後）」には、この記事のテーマに関連する効果的なハッシュタグを、横並び（半角スペース区切り）で「ちょうど7つ」出力してください。（例：#タグ1 #タグ2 #タグ3 #タグ4 #タグ5 #タグ6 #タグ7）
+          
+          ${appStoryPrompt}
+          【販売戦略コンテキスト】
+          ${monetizationContext}
+          ${benefit ? `【期待される提供価値（購入/完読後に得られる成果）】: ${benefit}` : ''}`;
+          
+          const prompt = `以下のテーマと目次に従って、有料または無料note의 본문을 끝까지 작성해 주세요.\n\nテーマ：${selectedTheme}\n\n目次：\n${toc}`;
+          const result = await callGeminiAPI(prompt, systemPrompt, false);
+          setArticleBody(result);
+          setActiveTab(3);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // 4. タイトル案＆SNS投稿の生成 (有料/無料、自作note告知、さらに🎬ショート動画集客モードの分岐を搭載)
+      const generateMarketing = async () => {
+        setLoading(true); setError("");
+        try {
+          let monetizationStrategy = "";
+          let appMarketingPrompt = "";
+          let contentSourceText = "";
+
+          if (creationMode === "written_note") {
+            // note書きました告知モード
+            if (!noteTitle) { setError("noteのタイトルを入力してください"); setLoading(false); return; }
+            if (!noteUrl) { setError("noteのURLを入力してください"); setLoading(false); return; }
+            
+            contentSourceText = `【執筆済みnoteデータ】
+            - タイトル: ${noteTitle}
+            - URL: ${noteUrl}
+            - 記事の要約・熱い想い・読んでほしいターゲット層: ${noteSummary || "特になし"}
+            ${benefit ? `- 提供価値（得られる未来）: ${benefit}` : ''}
+            ${hasLineBonus ? `- 公式LINE登録特典: ${lineBonusContent} (LINE追加URL: ${lineUrl || '公式LINEリンク'})` : ''}
+            ${hasBonus ? `- 特典情報: ${bonusContent}` : ''}`;
+
+            monetizationStrategy = `【note書きました告知モード】
+            あなたはSNSマーケティングのプロです。ユーザーが既に書き上げて投稿した上記のnote記事について、認知拡散およびアクセス獲得のための最高に魅力的なSNSプロモーション投稿を生成してください。
+            
+            【SNS告知アルゴリズム重要ルール（※これらを厳格に遵守してください）】
+            1. **𝕏 (Twitter) 投稿案**:
+               - note記事のURL（${noteUrl}）を自然に文末またはフックの後に挿入。
+               - 思わずクリックしたくなる強いフック（ターゲットの悩みの言語化、得られるメリット）を書き、文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。140字以内。
+            2. **Threads 3段スレッド投稿案**:
+               - 1段目（問題提起）：ターゲットの悩みに寄り添い、強い興味を惹く「問題提起」と共感。
+               - 2段目（チラ見せ）：note記事（タイトル: ${noteTitle}）の中身や価値を少しだけチラ見せして「もっと読みたい」欲求を引き出します。
+               - 3段目（CTA導線）：結論と、詳細を知りたくなるnote（URL: ${noteUrl}）への誘導リンク。LINE登録特典（${lineBonusContent}）があればそれも訴求.
+            3. **Facebook 投稿案**:
+               - noteのタイトル（${noteTitle}）とURL（${noteUrl}）を含め、ストーリーを交えた温かみのあるトーンの長文を作成。
+               - 記事を書いた背景、誰を救いたいかを語り、文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。
+            4. **Instagram キャプション投稿案**:
+               - フィードやリール画像の投稿キャプションとして使えるコピペ用文章。
+               - ビジュアルイメージを想起させるフックから始まり、noteの内容の3つの見どころや学び、そして「プロフィールのリンク（またはコメント欄）からnoteへアクセス！」の誘導導線を作ります。
+               - 文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。`;
+          } else if (creationMode === "short_video") {
+            // ショート動画集客モードのデータ構築とプロンプト
+            if (!appName) { setError("アプリ名を入力してください"); setLoading(false); return; }
+            if (!appSummary) { setError("アプリの概要を入力してください"); setLoading(false); return; }
+            if (!appValue) { setError("解決できる悩み・提供できる具体的な価値を入力してください"); setLoading(false); return; }
+
+            contentSourceText = `【ショート動画告知用アプリデータ】
+            - アプリ名: ${appName}
+            - アプリのURL: ${appUrl}
+            - アプリの概要: ${appSummary}
+            - 解決できる悩み・価値: ${appValue}`;
+
+            monetizationStrategy = `【ショート動画集客（リール・TikTok）モード】
+            あなたはショート動画（リール、TikTok、YouTubeショート）での集客を熟知したトップマーケターです。
+            指定されたアプリの情報をベースに、最もクリックを誘発する動画用の「キャプション（3パターン）」および他SNSへの告知拡散文を作成してください。
+
+            【出力重要ルール（※これらを厳格に遵守してください。JSON内の各項目にそれぞれバリエーション等を詰め込んでください）】
+            
+            1. **video_captions (ショート動画用キャプション案 - 3パターン)**:
+               - 各パターンの末尾に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】を配置してください。
+               - 以下のテンプレート構造に従ってください。
+                 
+                 [フックとなる問いかけ（例：ダイエットアプリ、入れてみたものの気づけば開かなくなっていませんか？）]
+                 （1行空ける）
+                 [具体的な悩み・不満の提示（例：みんな同じアドバイスばかりで自分ごとに感じられない、記録が面倒で三日坊主、高齢の家族にどう勧めればいいかわからない…そんな悩みありませんか。）]
+                 （1行空ける）
+                 [アプリ名と独自の解決アプローチ、主要な機能の解説（3〜4行）]
+                 （1行空ける）
+                 [まとめ・理想的な未来（今日のやることが一目でわかるから、迷わず続けられます。のような魅力的な一文）]
+                 （1行空ける）
+                 ▶ \${appName}
+                 \${appUrl || "[アプリURL]"}
+                 （1行空ける）
+                 ▶ 他のAIツールをまとめて見るならこちら
+                 https://mikke-catalog.pages.dev/
+                 （1行空ける）
+                 [半角スペース区切りの横並びハッシュタグ5つ]
+
+               - JSONでは文字列の配列（3要素）として出力してください。
+
+            2. **x_posts (𝕏/Twitter投稿案 - 2回分)**:
+               - 140字以内。アプリを紹介する投稿コピーを切り口を変えて「2回分」作成してください。
+               - 各パターンの文末に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】設置してください。
+            
+            3. **threads_variations (Threads3段スレッド投稿案 - 3種類)**:
+               - スリーステップスレッド形式を「3パターン」作成してください。
+                 - 1段目：悩みへの共感。
+                 - 2段目：アプリ（\${appName}）によるメリット。
+                 - 3段目：URL（\${appUrl}）とカタログURL（https://mikke-catalog.pages.dev/）への誘導。
+
+            4. **facebook_posts (Facebook投稿案 - 2投稿分)**:
+               - Facebook用のストーリー性の豊かな投稿案を、切り口を変えて「2回分」作成してください。
+               - 各パターンの末尾に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】を配置してください。`;
+
+          } else {
+            // 通常＆アプリモード
+            contentSourceText = `【note本文データ】\n${articleBody.substring(0, 3000)}`;
+            
+            if (creationMode === "app") {
+              appMarketingPrompt = `【アプリ紹介モードのSNSアピール指示】:
+              単なるアプリ製品の機能告知をしないでください。
+              「フォロワーさんから相談を受けて作ったツールが神すぎる件」「〇〇の作業に苦しむ人を救いたい一心でアプリを作りました」といったストーリー形式や、悩みの提起を強力なフックとして使ってください。`;
+            }
+
+            if (isPaid) {
+              monetizationStrategy = `【有料note販売】
+                 - 販売予定価格: ${price}円
+                 ${hasLimitedSale ? `- マーケ戦略: 数量限定販売（売り切れ次第値上げする希少性をアピールしてください）` : ''}
+                 SNS投稿（X, Threads, Facebook, Instagram）では、この価格の「お得感」「今すぐ買うべき理由（限定性・希少性）」を訴求してください。
+                 
+                 【SNS告知アルゴリズム重要ルール】
+                 - 各投稿、文末等に必ず【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。`;
+            } else {
+              monetizationStrategy = `【完全無料note + 外部URL紹介】
+                 - 紹介誘導先: ${redirectUrl || appUrl || "記事内URL"}
+                 - 誘導目的: ${redirectPurpose || appValue || "サイトアクセス"}
+                 SNS投稿（X, Threads, Facebook, Instagram）では、「有料級の情報やツールが完全無料」という点とお得感を強く打ち出し、まずはnoteを読んでもらう構成にしてください。
+                 
+                 【SNS告知アルゴリズム重要ルール】
+                 - 各投稿、文末等に必ず【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。`;
+            }
+          }
+
+          const systemPrompt = `あなたはSNSマーケティングのプロフェッショナルです。入力された情報、および設定された「販売形式、価値、特典、LINE登録特典、告知形式」を元に、読者を惹きつけるタイトル案と、各SNS向けの集客用投稿文を作成してください。
+          各SNS投稿のハッシュタグ設定が厳格に「ちょうど5つ」で「横並び（半角スペース区切り）」になっていることを必ず確認してください。`;
+          
+          const prompt = `以下のソースデータを元に、指示されたSNS投稿案を作成してください。\n\n---ソースデータ---\n${contentSourceText}`;
+          
+          let schema = null;
+          if (creationMode === "short_video") {
+            schema = {
+              type: "OBJECT",
+              properties: {
+                video_captions: { type: "ARRAY", items: { type: "STRING" } },
+                x_posts: { type: "ARRAY", items: { type: "STRING" } },
+                threads_variations: {
+                  type: "ARRAY",
+                  items: {
+                    type: "ARRAY",
+                    items: { type: "STRING" }
+                  }
+                },
+                facebook_posts: { type: "ARRAY", items: { type: "STRING" } }
+              },
+              required: ["video_captions", "x_posts", "threads_variations", "facebook_posts"]
+            };
+          } else {
+            schema = {
+              type: "OBJECT",
+              properties: {
+                titles: { type: "ARRAY", items: { type: "STRING" } },
+                x_post: { type: "STRING" },
+                threads: { type: "ARRAY", items: { type: "STRING" } },
+                facebook_post: { type: "STRING" },
+                instagram_post: { type: "STRING" }
+              },
+              required: ["titles", "x_post", "threads", "facebook_post", "instagram_post"]
+            };
+          }
+          
+          const result = await callGeminiAPI(prompt, systemPrompt, true, schema);
+          
+          const sanitizeStringArray = (arr) => {
+            if (!Array.isArray(arr)) return [];
+            return arr.map(item => typeof item === 'string' ? item : JSON.stringify(item));
+          };
+
+          if (creationMode === "short_video") {
+            setMarketingData({
+              video_captions: sanitizeStringArray(result?.video_captions || []),
+              x_posts: sanitizeStringArray(result?.x_posts || []),
+              threads_variations: Array.isArray(result?.threads_variations) 
+                ? result.threads_variations.map(thread => sanitizeStringArray(thread)) 
+                : [],
+              facebook_posts: sanitizeStringArray(result?.facebook_posts || [])
+            });
+          } else {
+            setMarketingData({
+              titles: sanitizeStringArray(result?.titles || []),
+              x_post: typeof result?.x_post === 'string' ? result.x_post : String(result?.x_post || ''),
+              threads: sanitizeStringArray(result?.threads || []),
+              facebook_post: typeof result?.facebook_post === 'string' ? result.facebook_post : String(result?.facebook_post || ''),
+              instagram_post: typeof result?.instagram_post === 'string' ? result.instagram_post : String(result?.instagram_post || '')
+            });
+          }
+
+          setActiveTab(3);
+
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // 5. サムネイル画像生成 (Gemini Engine 本気プロンプト＋アスペクト比アライン＋Midjourney画像インジェクション対応)
+      const generateThumbnailImage = async () => {
+        const targetTopic = marketingData?.titles?.[0] || appName || noteTitle || selectedTheme || genre;
+        if (!targetTopic) { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
+        const style = THUMBNAIL_STYLES.find(s => s.id === selectedStyleId);
+        
+        setIsGeneratingImage(true); setError("");
+        setGeneratedImagePrompt(""); setGeneratedImageUrl("");
+        
+        try {
+          const systemPrompt = `You are a world-class commercial designer and an elite prompt engineer for Imagen 3 and Imagen 4.
+Your goal is to generate an extraordinarily beautiful, professional-grade, high-conversion image generation prompt in English for a banner thumbnail.
+
+The user has specifically selected an aspect ratio of: "${aspectRatio}".
+Based on this aspect ratio, strictly apply these composition guidelines in your generated prompt:
+- If aspect ratio is "16:9": Instruct to create a wide landscape composition (16:9 aspect ratio) with negative space (empty blurred area, solid minimalist background, or soft gradient fade) occupying either the left 50% or right 50% of the image. This is critical for users to overlay big titles later on the side.
+- If aspect ratio is "9:16": Instruct to create a vertical portrait composition (9:16 aspect ratio) suitable for mobile reels, with negative space (clean empty space) at the top 40% or bottom 40% of the image for vertical text overlay.
+- If aspect ratio is "1:1": Instruct to create a balanced square composition (1:1 aspect ratio) suitable for social media feed, with negative space around the borders or at the bottom for clean text overlay.
+
+Strictly apply these overall guidelines:
+1. **Cinematic Lighting & Color**: Use premium, atmospheric lighting terms such as "cinematic backlighting", "soft studio key light", "subtle neon glow", "golden hour glow", or "sophisticated dual-tone color scheme". Avoid flat or boring colors.
+2. **Quality & Render Style**: Use high-end rendering terms suitable for the chosen art style. For 3D/Vectors, use "trending on ArtStation, Octane Render, 8k, masterpiece, clean path, smooth gradients". For photographic styles, use "shot on 85mm lens, f/1.8, soft bokeh, high-end commercial photography, photorealistic, sharp focus on subject, detailed textures".
+3. **Subject Integration**: Seamlessly translate the Japanese/English topic into a stunning visual metaphor or focal point placed strategically to avoid cluttering the negative space.
+
+Output ONLY the final raw English prompt text. Do not include any quotes, introductions, markdown formatting, or conversational text.`;
+          
+          const textPrompt = `Topic/Subject: "${targetTopic}"\nArt Style Keywords: "${style.prompt}"\nDesired Aspect Ratio: "${aspectRatio}"\nCreate a highly detailed image generation prompt.`;
+          
+          const imgPrompt = await callGeminiAPI(textPrompt, systemPrompt, false);
+          
+          // 選択されたスタイルIDに応じて、Midjourney参照URL（シード画像）をプロンプトの最先頭にインジェクションしてImagen 4に指示します
+          let finalPrompt = imgPrompt;
+          if (style.id === 1) {
+            // ① プレミアム日本イラスト風: 指定された「みっけトーン」の3Dフラット画像をブレンド
+            finalPrompt = "https://cdn.midjourney.com/acb14bb9-7279-47c3-a98f-5d22730251da/0_3.png " + imgPrompt;
+          } else if (style.id === 6) {
+            // ⑥ シネマティック・ファンタジーイラスト: 1枚目のSFファンタジー画像をブレンド
+            finalPrompt = "https://cdn.midjourney.com/2babba26-bfc0-44de-a49e-56f622b7283e/0_0.png " + imgPrompt;
+          } else if (style.id === 7) {
+            // ⑦ 3Dクレイ＆ミニマリズム: 2枚目の可愛いおもちゃ調クレイ画像をブレンド
+            finalPrompt = "https://cdn.midjourney.com/d99e1051-9d0f-425a-9cd1-2ab18516ca04/0_0.png " + imgPrompt;
+          } else if (style.id === 2 || style.id === 3 || style.id === 4 || style.id === 5) {
+            // 2〜5の他の基本イラストスタイルを選んだ場合も、安っぽさを防ぎ一貫したプレミアムデザイン質感（3Dフラット調）を担保するため、
+            // プレミアム日本イラスト風のURLを先頭にシードとして自動ブレンドします
+            finalPrompt = "https://cdn.midjourney.com/acb14bb9-7279-47c3-a98f-5d22730251da/0_3.png " + imgPrompt;
+          }
+
+          setGeneratedImagePrompt(finalPrompt);
+
+          const imageUrl = await generateImageAPI(finalPrompt);
+          setGeneratedImageUrl(imageUrl);
+          
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setIsGeneratingImage(false);
+        }
+      };
+
+      return (
+        <div className="w-full animate-fade-in">
+          {/* Header */}
+          <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+            <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+              {/* ヘッダーロゴクリックで初期状態へリセット */}
+              <div 
+                onClick={handleReset}
+                className="flex items-center gap-2 text-indigo-600 cursor-pointer hover:opacity-80 transition-all select-none"
+                title="初期画面に戻る（データをクリア）"
+              >
+                <Sparkles />
+                <h1 className="font-bold text-xl tracking-tight font-sans">売れるnote＆集客メーカー</h1>
+              </div>
+              <div className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                AI Content Studio
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-5xl mx-auto px-4 mt-8">
+            {/* Error Banner */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 text-red-700 animate-fade-in">
+                <AlertCircle className="flex-shrink-0 mt-0.5" />
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
+
+            {/* Tabs */}
+            <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 p-1 mb-8 overflow-x-auto">
+              {[
+                { id: 1, label: "Step 1: 企画・価値・価格", icon: Lightbulb },
+                { id: 2, label: "Step 2: 本文執筆", icon: PenTool },
+                { id: 3, label: "Step 3: タイトル＆集客", icon: Share2 },
+                { id: 4, label: "Step 4: サムネイル作成", icon: ImageIcon }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  disabled={(creationMode === "written_note" || creationMode === "short_video") && tab.id === 2}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    (creationMode === "written_note" || creationMode === "short_video") && tab.id === 2 ? "opacity-30 cursor-not-allowed" : ""
+                  } ${
+                    activeTab === tab.id
+                      ? "bg-indigo-600 text-white shadow-md"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                  }`}
+                >
+                  <tab.icon className="flex-shrink-0" />
+                  <span className="whitespace-nowrap sm:inline">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Content Area */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+              
+              {/* STEP 1 */}
+              {activeTab === 1 && (
+                <div className="space-y-8 animate-fade-in">
+                  
+                  {/* 作成モード選択トグル (4つのモード対応) */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">作成する記事・告知のタイプ</label>
+                    <div className="flex flex-col md:flex-row bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreationMode("normal");
+                          setThemes([]);
+                          setSelectedTheme("");
+                          setToc("");
+                        }}
+                        className={`flex-1 py-3 px-2 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "normal" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        🧠 悩み解決 (通常note)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreationMode("app");
+                          setThemes([]);
+                          setSelectedTheme("");
+                          setToc("");
+                        }}
+                        className={`flex-1 py-3 px-2 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "app" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        🚀 アプリ紹介 (ストーリー)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreationMode("written_note");
+                          setThemes([]);
+                          setSelectedTheme("");
+                          setToc("");
+                        }}
+                        className={`flex-1 py-3 px-2 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "written_note" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        📝 note告知 (既存拡散)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreationMode("short_video");
+                          setThemes([]);
+                          setSelectedTheme("");
+                          setToc("");
+                        }}
+                        className={`flex-1 py-3 px-2 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "short_video" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        🎬 ショート動画集客
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* モードに応じた入力フォーム切り替え */}
+                  {creationMode === "normal" && (
+                    /* 1. 悩み解決テーマ用 (仕様維持) */
+                    <div className="space-y-4 animate-fade-in">
+                      <h2 className="text-lg font-bold flex items-center gap-2 border-b pb-2">
+                        <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                        ジャンルからテーマを決める
+                      </h2>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <input
+                          type="text"
+                          value={genre}
+                          onChange={(e) => setGenre(e.target.value)}
+                          placeholder="例: ダイエット、副業、恋愛、子育て"
+                          className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none animate-fade-in"
+                        />
+                        <button
+                          onClick={generateThemes}
+                          disabled={loading}
+                          className="bg-slate-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          {loading && !themes.length ? <Loader2 /> : <Sparkles className="w-4 h-4" />}
+                          テーマ案を出す
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {creationMode === "app" && (
+                    /* 2. 自作アプリ紹介・ストーリーテリング型フォーム */
+                    <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 rounded-2xl border border-indigo-100/80 shadow-inner">
+                      <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
+                        <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                        紹介・プロモーションしたいアプリの情報
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">アプリ名</label>
+                          <input
+                            type="text"
+                            value={appName}
+                            onChange={(e) => setAppName(e.target.value)}
+                            placeholder="例: 売れるnote＆集客メーカー"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">アプリのURL (記事中に配置されます)</label>
+                          <input
+                            type="url"
+                            value={appUrl}
+                            onChange={(e) => setAppUrl(e.target.value)}
+                            placeholder="例: https://example.com/app"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          開発のきっかけ (相談や生々しい悩み、自身の葛藤など)
+                        </label>
+                        <textarea
+                          value={appTrigger}
+                          onChange={(e) => setAppTrigger(e.target.value)}
+                          placeholder="例: フォロワーさんから『noteを有料にしても全く買われない。どうやって構成を組んだらいいのか分からない』という切実な悩み相談を受けたことがきっかけ。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          このアプリで解決できる悩み・提供できる具体的な価値
+                        </label>
+                        <textarea
+                          value={appValue}
+                          onChange={(e) => setAppValue(e.target.value)}
+                          placeholder="例: 難しい販売心理学を学ばなくても、トグルやフォームを埋めるだけで、数万文字クラス of 売れる有料・無料記事と全SNS用の集客告知文が自動で一瞬で組み上がること。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          onClick={generateThemes}
+                          disabled={loading}
+                          className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md"
+                        >
+                          {loading && !themes.length ? <Loader2 /> : <Sparkles className="w-4 h-4 text-indigo-200" />}
+                          開発ストーリー型テーマ案を出す
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {creationMode === "written_note" && (
+                    /* 3. note書きました告知・拡散用フォーム */
+                    <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-emerald-50/40 to-teal-50/40 rounded-2xl border border-emerald-100 shadow-inner">
+                      <h2 className="text-lg font-bold flex items-center gap-2 border-b border-emerald-100 pb-2 text-emerald-950">
+                        <span className="bg-emerald-100 text-emerald-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                        すでに公開・執筆したnote記事の情報
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">noteのタイトル</label>
+                          <input
+                            type="text"
+                            value={noteTitle}
+                            onChange={(e) => setNoteTitle(e.target.value)}
+                            placeholder="例: 【保存版】ChatGPTで売れる有料noteを量産する『爆速テンプレート』"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white animate-fade-in"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">noteのURL (SNS投稿に自然に配置されます)</label>
+                          <input
+                            type="url"
+                            value={noteUrl}
+                            onChange={(e) => setNoteUrl(e.target.value)}
+                            placeholder="例: https://note.com/your_account/n/n12345678"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white animate-fade-in"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          記事の概要・に込めた想いや読んでほしいターゲット層（記事のコピペもOK）
+                        </label>
+                        <textarea
+                          value={noteSummary}
+                          onChange={(e) => setNoteSummary(e.target.value)}
+                          placeholder="例: 有料記事を初めて書く人が、構成に迷って手が止まる問題を解決するために書きました。前半部分の無料エリアに『購買心理学の寸止めテクニック』を網羅し、そのままマネするだけで読者を熱狂させて購入まで引き込めるテンプレートを公開しています。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* 価値・未来訴求 */}
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          この記事（または商品）を読んだ後に読者が得られる未来（価値）
+                        </label>
+                        <textarea
+                          value={benefit}
+                          onChange={(e) => setBenefit(e.target.value)}
+                          placeholder="例: 何時間も構成に迷わなくなり、おもしろいほど自然に売れるようになる。公式LINEのリストも毎日自動で獲得できる流れが手に入ります。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      {/* 特典設定セクション */}
+                      <div className="space-y-4 pt-4 border-t border-emerald-100/50">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">🎁 特典アピールの設定（LINE特典などを絡めることでSNSクリック率が跳ね上がります）</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-indigo-900">
+                              <input
+                                type="checkbox"
+                                checked={hasBonus}
+                                onChange={(e) => setHasBonus(e.target.checked)}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span>🎁 note購入者限定のプレゼント特典がある</span>
+                            </label>
+                            {hasBonus && (
+                              <input
+                                type="text"
+                                value={bonusContent}
+                                onChange={(e) => setBonusContent(e.target.value)}
+                                placeholder="特典の内容（例：そのままコピペして使える10個の厳選プロンプト）"
+                                className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white animate-fade-in"
+                              />
+                            )}
+                          </div>
+
+                          <div className="space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-900">
+                              <input
+                                type="checkbox"
+                                checked={hasLineBonus}
+                                onChange={(e) => setHasLineBonus(e.target.checked)}
+                                className="rounded text-emerald-600 focus:ring-emerald-500"
+                              />
+                              <span>💬 公式LINE登録特典を一緒にアピールする</span>
+                            </label>
+                            {hasLineBonus && (
+                              <div className="space-y-2 pt-1 animate-fade-in">
+                                <input
+                                  type="text"
+                                  value={lineBonusContent}
+                                  onChange={(e) => setLineBonusContent(e.target.value)}
+                                  placeholder="特典の内容（例：おすすめコンビニ痩せ商品チェックリストPDF）"
+                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                />
+                                <input
+                                  type="url"
+                                  value={lineUrl}
+                                  onChange={(e) => setLineUrl(e.target.value)}
+                                  placeholder="LINE公式アカウントの追加URL"
+                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          onClick={generateMarketing}
+                          disabled={loading}
+                          className="bg-emerald-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-emerald-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-base"
+                        >
+                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 text-emerald-200" />}
+                          4大SNS集客告知コピーを一括生成する
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {creationMode === "short_video" && (
+                    /* 4. 🎬 ショート動画集客 (リール・TikTok) 用フォーム */
+                    <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-purple-50/40 to-indigo-50/40 rounded-2xl border border-indigo-150 shadow-inner">
+                      <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
+                        <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                        ショート動画を投稿するアプリ・ツールの情報
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">アプリ名</label>
+                          <input
+                            type="text"
+                            value={appName}
+                            onChange={(e) => setAppName(e.target.value)}
+                            placeholder="例: ダイエットみっけ"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">アプリのURL</label>
+                          <input
+                            type="url"
+                            value={appUrl}
+                            onChange={(e) => setAppUrl(e.target.value)}
+                            placeholder="例: https://example.com/app"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white animate-fade-in"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          アプリの概要 (どんな機能があるか、何ができるか)
+                        </label>
+                        <textarea
+                          value={appSummary}
+                          onChange={(e) => setAppSummary(e.target.value)}
+                          placeholder="例: 性別×年代で8パターンの専用プランを用意。写真・音声・バーコード・手入力の4通りで記録でき、80〜90代は「痩せる」ではなく「しっかり食べる」方向へ発想転換してフレイル予防もサポート。ストリークやバッジで自然と続けたくなる仕組みもあります。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          解決できる悩み・提供できる具体的な価値
+                        </label>
+                        <textarea
+                          value={appValue}
+                          onChange={(e) => setAppValue(e.target.value)}
+                          placeholder="例: ダイエットアプリを気づけば開かなくなって三日坊主で終わってしまう悩みや、高齢の家族への健康管理・フレイル予防支援を解決。今日のやることが一目でわかるから、迷わず続けられます。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      {/* 特典設定セクション */}
+                      <div className="space-y-4 pt-4 border-t border-indigo-100/50">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">🎁 特典アピールの設定（LINE特典などを絡めることでSNSクリック率が跳ね上がります）</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-indigo-900">
+                              <input
+                                type="checkbox"
+                                checked={hasBonus}
+                                onChange={(e) => setHasBonus(e.target.checked)}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span>🎁 アプリ購入者限定のプレゼント特典がある</span>
+                            </label>
+                            {hasBonus && (
+                              <input
+                                type="text"
+                                value={bonusContent}
+                                onChange={(e) => setBonusContent(e.target.value)}
+                                placeholder="特典の内容（例：そのままコピペして使える10個の厳選プロンプト）"
+                                className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white animate-fade-in"
+                              />
+                            )}
+                          </div>
+
+                          <div className="space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-900">
+                              <input
+                                type="checkbox"
+                                checked={hasLineBonus}
+                                onChange={(e) => setHasLineBonus(e.target.checked)}
+                                className="rounded text-emerald-600 focus:ring-emerald-500"
+                              />
+                              <span>💬 公式LINE登録特典を一緒にアピールする</span>
+                            </label>
+                            {hasLineBonus && (
+                              <div className="space-y-2 pt-1 animate-fade-in">
+                                <input
+                                  type="text"
+                                  value={lineBonusContent}
+                                  onChange={(e) => setLineBonusContent(e.target.value)}
+                                  placeholder="特典の内容（例：おすすめコンビニ痩せ商品チェックリストPDF）"
+                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                />
+                                <input
+                                  type="url"
+                                  value={lineUrl}
+                                  onChange={(e) => setLineUrl(e.target.value)}
+                                  placeholder="LINE公式アカウントの追加URL"
+                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          onClick={generateMarketing}
+                          disabled={loading}
+                          className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-base"
+                        >
+                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 text-indigo-200" />}
+                          ショート動画・告知SNSコピーを一括生成する
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {creationMode !== "written_note" && creationMode !== "short_video" && themes.length > 0 && (
+                    <div className="space-y-6 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-fade-in">
+                      <div>
+                        <p className="text-sm font-medium text-indigo-800 mb-2">① 生成されたテーマ案 (気になるものを選択してください)</p>
+                        <div className="space-y-2">
+                          {themes.map((theme, i) => (
+                            <label key={i} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedTheme === theme ? 'bg-indigo-50 border-indigo-300' : 'bg-white border-slate-200 hover:border-indigo-200'}`}>
+                              <input
+                                type="radio"
+                                name="theme"
+                                value={theme}
+                                checked={selectedTheme === theme}
+                                onChange={(e) => setSelectedTheme(e.target.value)}
+                                className="mt-1 text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span className="text-slate-700 text-sm font-medium">{theme}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {selectedTheme && (
+                        <div className="space-y-6 pt-4 border-t border-indigo-100 animate-fade-in">
+                          <p className="text-sm font-bold text-indigo-900">② 販売形式と提供価値を設定する（無料公開による外部サイトへの誘導も可能です）</p>
+                          
+                          {/* 有料・無料のトグルスイッチ */}
+                          <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 max-w-sm">
+                            <button
+                              type="button"
+                              onClick={() => setIsPaid(true)}
+                              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isPaid ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                              💰 有料noteとして販売
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIsPaid(false)}
+                              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isPaid ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                              🎁 無料note（外部URL紹介）
+                            </button>
+                          </div>
+
+                          {/* 有料時の設定項目 */}
+                          {isPaid ? (
+                            <div className="space-y-6 animate-fade-in">
+                              {/* 提供価値の入力欄 */}
+                              <div className="space-y-2">
+                                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                  この商品が解決する悩み・得られる未来（提供価値）
+                                </label>
+                                <textarea
+                                  value={benefit}
+                                  onChange={(e) => setBenefit(e.target.value)}
+                                  placeholder="例：毎日のコンビニ飯選びに迷わなくなり、ストレスフリーで1ヶ月後に自然と体重を落とせる具体的なメニュー選択術と実践スケジュール"
+                                  className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                  rows={2}
+                                />
+                              </div>
+
+                              {/* 価格設定と販売戦略 */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                                <div className="space-y-2">
+                                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                    販売予定価格 (円)
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      value={price}
+                                      onChange={(e) => setPrice(e.target.value)}
+                                      className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                                      placeholder="980"
+                                    />
+                                    <span className="text-slate-600 text-sm font-bold">円</span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 bg-amber-50 text-amber-800 p-2 rounded border border-amber-100">
+                                    💡 <strong>価格の決め方アドバイス：</strong><br />
+                                    実績がない最初の内は、手に取りやすい <strong>980円〜3,000円</strong> 程度での設定がおすすめです。
+                                  </p>
+                                </div>
+
+                                <div className="space-y-3">
+                                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                    販売・マーケティング戦略
+                                  </label>
+                                  <div className="space-y-2 bg-white p-3 rounded-lg border border-slate-200">
+                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+                                      <input
+                                        type="checkbox"
+                                        checked={hasLimitedSale}
+                                        onChange={(e) => setHasLimitedSale(e.target.checked)}
+                                        className="rounded text-indigo-600 focus:ring-indigo-500"
+                                      />
+                                      <span>部数・数量限定で販売（売り切れごとに値上げ）</span>
+                                    </label>
+                                    <p className="text-[10px] text-slate-400 pl-6">
+                                      「今買わないと損をする」という心理が働き、購入率が跳ね上がります（動画ノウハウ直伝）。
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            /* 無料（外部URL誘導）設定 */
+                            <div className="space-y-6 animate-fade-in bg-emerald-50/50 p-5 rounded-xl border border-emerald-100">
+                              <p className="text-xs font-bold text-emerald-800">📌 無料noteを活用して、自身のHPや公式LINE、YouTubeへ誘導する導線を作ります。</p>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                    紹介したいサイトのURL
+                                  </label>
+                                  <input
+                                    type="url"
+                                    value={redirectUrl}
+                                    onChange={(e) => setRedirectUrl(e.target.value)}
+                                    placeholder="例: https://line.me/R/ti/p/..."
+                                    className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                  />
+                                  <p className="text-[11px] text-slate-500">※ noteの無料記事の最後（ハッシュタグの直前）にURLが自然に配置されます。</p>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                    URLクリックを促す目的や限定プレゼント
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={redirectPurpose}
+                                    onChange={(e) => setRedirectPurpose(e.target.value)}
+                                    placeholder="例: 公式LINE追加で『コンビニ痩せ即効メニューリストPDF』を無料配布中！"
+                                    className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                  />
+                                  <p className="text-[11px] text-slate-500">※ クリックしたくなるような強力な特典や誘導理由を入れてください。</p>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                  この記事が無料で提供する、読者が一番喜ぶ価値
+                                </label>
+                                <textarea
+                                  value={benefit}
+                                  onChange={(e) => setBenefit(e.target.value)}
+                                  placeholder="例：お金をかけずに今すぐスーパーやコンビニで実践できる、お腹いっぱい食べても太らない魔法の食事ルール解説"
+                                  className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                  rows={2}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 特典・プレゼント導線の設定セクション */}
+                          <div className="space-y-4 pt-4 border-t border-indigo-100">
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">🎁 特典・プレゼント導線の設計</p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* 1. 購入者/読者限定プレゼント特典 */}
+                              <div className="space-y-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-indigo-900">
+                                  <input
+                                    type="checkbox"
+                                    checked={hasBonus}
+                                    onChange={(e) => setHasBonus(e.target.checked)}
+                                    className="rounded text-indigo-600 focus:ring-indigo-500"
+                                  />
+                                  <span>🎁 限定プレゼント特典を付ける</span>
+                                </label>
+                                {hasBonus ? (
+                                  <div className="pt-2 animate-fade-in space-y-2">
+                                    <input
+                                      type="text"
+                                      value={bonusContent}
+                                      onChange={(e) => setBonusContent(e.target.value)}
+                                      placeholder="特典の内容（例：30日間書き込み式コンビニダイエット手帳）"
+                                      className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                    />
+                                    <p className="text-[10px] text-slate-500">※ note記事に直接添付するか、購入者だけが見られるエリアに用意するプレゼント情報です。</p>
+                                  </div>
+                                ) : (
+                                  <p className="text-[11px] text-slate-400">note単体の価値を倍増させ、購入率や満足度を高めるための特典です。</p>
+                                )}
+                              </div>
+
+                              {/* 2. LINE登録特典（公式LINE追加プレゼント） */}
+                              <div className="space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-900">
+                                  <input
+                                    type="checkbox"
+                                    checked={hasLineBonus}
+                                    onChange={(e) => setHasLineBonus(e.target.checked)}
+                                    className="rounded text-emerald-600 focus:ring-emerald-500"
+                                  />
+                                  <span>💬 公式LINE登録特典を付ける</span>
+                                </label>
+                                {hasLineBonus ? (
+                                  <div className="pt-2 animate-fade-in space-y-3">
+                                    <input
+                                      type="text"
+                                      value={lineBonusContent}
+                                      onChange={(e) => setLineBonusContent(e.target.value)}
+                                      placeholder="特典の内容（例：おすすめコンビニ痩せ商品チェックリストPDF）"
+                                      className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                    />
+                                    <input
+                                      type="url"
+                                      value={lineUrl}
+                                      onChange={(e) => setLineUrl(e.target.value)}
+                                      placeholder="LINE公式アカウントの追加URL"
+                                      className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                    />
+                                    <p className="text-[10px] text-slate-500">※ 本文の結びに「LINE登録で〇〇をプレゼント」という最強の顧客リスト収集導線を引きます。</p>
+                                  </div>
+                                ) : (
+                                  <p className="text-[11px] text-slate-400">公式LINEへ自動的に誘導し、見込み客の「友だちリスト」を獲得するための導線です。</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="pt-4 flex justify-end">
+                            <button
+                              onClick={generateToc}
+                              disabled={loading}
+                              className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+                            >
+                              {loading ? <Loader2 /> : <ChevronRight />}
+                              このテーマ・設定で目次を作る
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {toc && (
+                    <div className="space-y-3 animate-fade-in">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-slate-700">目次案 (自由に編集してブラッシュアップしましょう)</h3>
+                        <button onClick={() => handleCopy(toc, 'toc')} className="text-slate-400 hover:text-slate-600 flex items-center gap-1 text-xs">
+                          {copiedStates['toc'] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                          コピー
+                        </button>
+                      </div>
+                      <textarea
+                        value={toc}
+                        onChange={(e) => setToc(e.target.value)}
+                        rows={12}
+                        className="w-full p-4 border border-slate-300 rounded-lg text-sm leading-relaxed focus:ring-2 focus:ring-indigo-500 outline-none font-mono"
+                      />
+                      <div className="flex justify-end pt-4">
+                        <button
+                          onClick={() => setActiveTab(2)}
+                          className="bg-slate-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-slate-700 transition-colors shadow-md"
+                        >
+                          Step 2: 本文執筆へ進む
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* STEP 2 */}
+              {activeTab === 2 && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                      <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
+                      目次から本文をAI執筆
+                    </h2>
+                  </div>
+                  
+                  {/* written_note または short_video モードの場合、Step 2はジャンプ制限し、案内を表示 */}
+                  {creationMode === "written_note" || creationMode === "short_video" ? (
+                    <div className="text-center py-12 bg-emerald-50/50 rounded-2xl border border-dashed border-emerald-200 max-w-2xl mx-auto p-6 animate-fade-in">
+                      <FileText className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
+                      <h3 className="font-bold text-slate-800 text-base mb-1">
+                        本文執筆は不要です（{creationMode === "written_note" ? "告知モード" : "ショート動画集客モード"}稼働中）
+                      </h3>
+                      <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                        {creationMode === "written_note" 
+                          ? "すでに書き上げたnote記事を拡散・告知するモードです。一から本文を自動生成する必要はありません。" 
+                          : "ツール・アプリのショート動画用の集客文章と各SNSコピーを直接出力するモードです。note本文の自動生成はスキップされます。"
+                        }<br />
+                        情報をもとにした集客用コピー生成に直接お進みください。
+                      </p>
+                      <button 
+                        onClick={() => setActiveTab(3)} 
+                        className="bg-emerald-600 text-white font-bold px-6 py-2.5 rounded-lg text-sm hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 mx-auto"
+                      >
+                        Step 3: タイトル＆集客告知文へ進む <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : !toc ? (
+                    <div className="text-center py-10 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                      <p className="text-slate-500 mb-4">まだ目次が作成されていません。</p>
+                      <button onClick={() => setActiveTab(1)} className="text-indigo-600 font-medium hover:underline">
+                        Step 1に戻って目次を作成する
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* 設定の要約を表示 */}
+                      <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-xs space-y-1.5 text-slate-600">
+                        <p className="font-bold text-slate-700 text-sm mb-1">現在の設定パラメータ</p>
+                        <p><strong>選択中のテーマ:</strong> {selectedTheme}</p>
+                        {creationMode === "app" && <p><strong>対象アプリ:</strong> <span className="font-bold text-indigo-600">{appName}</span></p>}
+                        <p><strong>販売設定:</strong> {isPaid ? <span className="text-indigo-600 font-bold">💰 有料note ({price}円)</span> : <span className="text-emerald-600 font-bold">🎁 無料公開＋外部誘導 ({redirectPurpose || "サイト紹介"})</span>}</p>
+                        {!isPaid && (redirectUrl || appUrl) && <p><strong>誘導先URL:</strong> <span className="font-mono text-xs">{redirectUrl || appUrl}</span></p>}
+                        {benefit && <p><strong>期待される価値:</strong> {benefit}</p>}
+                        {hasBonus && <p><strong>限定プレゼント特典:</strong> 🎁 {bonusContent || "あり"}</p>}
+                        {hasLineBonus && <p><strong>LINE登録特典:</strong> 💬 {lineBonusContent || "あり"}</p>}
+                        {isPaid && hasLimitedSale && <p><strong>販売戦略:</strong> 数量限定販売（値上げ戦略あり）</p>}
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg flex items-start gap-3">
+                        <Lightbulb className="text-blue-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-blue-800">
+                          {isPaid 
+                            ? `無料エリア（約40%）で課題や葛藤、開発ストーリーを語り、寸止めした位置に「✂️ 有料設定ライン」を自動挿入します。その後、有料エリア（約60%）でアプリの具体的な活用ノウハウを執筆します。`
+                            : `無料で最高級 of 信頼を獲得し、自然と「${redirectPurpose || (creationMode === "app" ? "アプリリンク" : "リンクをクリック")}」したくなるように本文の導線文を自動構築します。`
+                          }
+                          {hasLineBonus && ` また、公式LINE（特典: ${lineBonusContent}）への最強登録導線を、本文の結びに組み込みます。`}
+                        </p>
+                      </div>
+                      
+                      <button
+                        onClick={generateArticle}
+                        disabled={loading}
+                        className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg"
+                      >
+                        {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> 本文を全力で執筆中...</> : <><PenTool className="w-5 h-5" /> AIで本文を一気に書き上げる</>}
+                      </button>
+
+                      {articleBody && (
+                        <div className="space-y-3 mt-6 animate-fade-in">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-700">生成された本文 (自由に修正してください)</h3>
+                            <button onClick={() => handleCopy(articleBody, 'body')} className="text-slate-500 hover:text-indigo-600 flex items-center gap-1 text-sm bg-slate-100 px-3 py-1 rounded">
+                              {copiedStates['body'] ? <><Check className="text-green-500" /> コピー完了</> : <><Copy /> 全てコピー</>}
+                            </button>
+                          </div>
+                          <textarea
+                            value={articleBody}
+                            onChange={(e) => setArticleBody(e.target.value)}
+                            rows={20}
+                            className="w-full p-5 border border-slate-300 rounded-lg text-base leading-relaxed focus:ring-2 focus:ring-indigo-500 outline-none font-sans"
+                          />
+                          <div className="flex justify-end pt-4">
+                             <button
+                              onClick={() => setActiveTab(3)}
+                              className="bg-slate-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-slate-700 transition-colors shadow-md"
+                            >
+                              Step 3: 集客準備へ進む
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* STEP 3 */}
+              {activeTab === 3 && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                      <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
+                      売るためのタイトル＆SNS投稿文
+                    </h2>
+                  </div>
+
+                  {creationMode !== "written_note" && creationMode !== "short_video" && !articleBody ? (
+                    <div className="text-center py-10 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                      <p className="text-slate-500 mb-4">本文データがありません。</p>
+                      <button onClick={() => setActiveTab(2)} className="text-indigo-600 font-medium hover:underline">
+                        Step 2に戻って本文を作成する
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                       {creationMode !== "written_note" && creationMode !== "short_video" && (
+                         <button
+                           onClick={generateMarketing}
+                           disabled={loading}
+                           className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold hover:bg-emerald-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg"
+                         >
+                           {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> 集客コンテンツを生成中...</> : <><Share2 className="w-5 h-5" /> タイトルとSNS集客文を生成する</>}
+                         </button>
+                       )}
+
+                      {marketingData && (
+                        <div className="space-y-8 mt-6 animate-fade-in">
+                          
+                          {/* 一括コピーセクション (通常・告知モード vs ショート動画モード) */}
+                          <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div>
+                              <h4 className="font-bold text-indigo-900 text-sm">📣 すべての投稿案を一発で一括コピー</h4>
+                              <p className="text-xs text-indigo-700">
+                                {creationMode === "short_video" 
+                                  ? "🎬ショート動画用キャプション（ハッシュタグ5つ）、𝕏（2回分）、Threads（3投稿分）、Facebook（2回分）を一発で1つのテキストにまとめてコピーします。" 
+                                  : "𝕏、Threads（3段分）、Facebook、Instagramのすべての集客告知テキストを、ワンクリックでまとめてコピーします。"
+                                }
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                let allSnsText = "";
+                                if (creationMode === "short_video") {
+                                  allSnsText = "【🎬 ショート動画用キャプション案 (3パターン)】\n\n" +
+                                    (marketingData.video_captions?.map((cap, i) => `■ パターン ${i+1}\n${cap}\n`).join("\n") || "") + "\n" +
+                                    "【𝕏 (Twitter) 投稿案 (2回分)】\n\n" +
+                                    (marketingData.x_posts?.map((post, i) => `■ 投稿 ${i+1}\n${post}\n`).join("\n") || "") + "\n" +
+                                    "【@ Threads 3段スレッド投稿案 (3バリエーション)】\n\n" +
+                                    (marketingData.threads_variations?.map((threads, idx) => `■ バリエーション ${idx+1}\n` + threads.map((t, i) => `  [${i+1}段目]\n  ${t}\n`).join("")).join("\n") || "") + "\n" +
+                                    "【f Facebook 投稿案 (2回分)】\n\n" +
+                                    (marketingData.facebook_posts?.map((post, i) => `■ 投稿 ${i+1}\n${post}\n`).join("\n") || "");
+                                } else {
+                                  allSnsText = `【𝕏 (Twitter) 投稿案】\n${marketingData.x_post}\n\n` +
+                                    `【@ Threads 3段スレッド投稿案】\n` +
+                                    `1段目:\n${marketingData.threads[0] || ""}\n\n` +
+                                    `2段目:\n${marketingData.threads[1] || ""}\n\n` +
+                                    `3段目:\n${marketingData.threads[2] || ""}\n\n` +
+                                    `【f Facebook 投稿案】\n${marketingData.facebook_post}\n\n` +
+                                    `【📷 Instagram キャプション案】\n${marketingData.instagram_post}`;
+                                }
+                                handleCopy(allSnsText, 'copy-all-sns');
+                              }}
+                              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm transition-all duration-200 animate-pulse"
+                            >
+                              {copiedStates['copy-all-sns'] ? (
+                                <><Check className="w-4 h-4 text-green-300" /> コピー完了！</>
+                              ) : (
+                                <><Copy className="w-4 h-4" /> すべて一括コピー</>
+                              )}
+                            </button>
+                          </div>
+                          
+                          {/* 🎬 ショート動画集客モード専用UI */}
+                          {creationMode === "short_video" ? (
+                            <div className="space-y-8 animate-fade-in">
+                              {/* 🎬 ショート動画用キャプション案 */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-indigo-950 px-2 py-0.5 rounded font-bold font-mono">ハッシュタグ5つ</span>
+                                    <h3 className="font-bold text-white">🎬 ショート動画（リール・TikTok）用キャプション案</h3>
+                                  </div>
+                                </div>
+                                <div className="p-4 space-y-4 bg-slate-50">
+                                  {marketingData.video_captions?.map((cap, idx) => (
+                                    <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group animate-fade-in">
+                                      <span className="absolute -top-2 -left-2 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">パターン {idx + 1}</span>
+                                      <textarea readOnly value={cap} rows={12} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2 font-mono whitespace-pre-wrap" />
+                                      <button onClick={() => handleCopy(cap, `video-cap-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                          {copiedStates[`video-cap-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* 𝕏 (Twitter) 投稿案（2回分） */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-[#000000] px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-slate-800 px-2 py-0.5 rounded font-bold font-mono">2回投稿分 / タグ5つ</span>
+                                    <h3 className="font-bold text-white">𝕏 (Twitter) 投稿案（2回分）</h3>
+                                  </div>
+                                </div>
+                                <div className="p-4 space-y-4 bg-slate-50">
+                                  {marketingData.x_posts?.map((post, idx) => (
+                                    <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group animate-fade-in">
+                                      <span className="absolute -top-2 -left-2 bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">投稿 {idx + 1}</span>
+                                      <textarea readOnly value={post} rows={4} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2" />
+                                      <button onClick={() => handleCopy(post, `x-post-sv-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                          {copiedStates[`x-post-sv-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* @ Threads 3段スレッド投稿案（3バリエーション） */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-purple-900 px-2 py-0.5 rounded font-bold font-mono">3段スレッド × 3パターン</span>
+                                    <h3 className="font-bold text-white">@ Threads 3段スレッド投稿案</h3>
+                                  </div>
+                                </div>
+                                <div className="p-4 space-y-6 bg-slate-50">
+                                  {marketingData.threads_variations?.map((threads, idx) => (
+                                    <div key={idx} className="bg-white p-5 rounded-xl border border-slate-200 space-y-4 relative animate-fade-in">
+                                      <span className="absolute -top-2.5 left-4 bg-purple-600 text-white text-xs px-3 py-0.5 rounded-full font-bold shadow-sm">バリエーション {idx + 1}</span>
+                                      <div className="space-y-4 pt-2">
+                                        {threads.map((thread, i) => (
+                                          <div key={i} className="relative pl-6">
+                                            {i !== 2 && <div className="absolute left-[11px] top-8 bottom-[-24px] w-0.5 bg-slate-200"></div>}
+                                            <div className="absolute left-0 top-1 w-6 h-6 bg-slate-100 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-slate-400">
+                                              {i + 1}
+                                            </div>
+                                            <div className="bg-slate-50/50 p-3 rounded-lg border border-slate-100 relative group animate-fade-in">
+                                              <textarea readOnly value={thread} rows={3} className="w-full text-xs resize-none outline-none bg-transparent text-slate-700" />
+                                              <button onClick={() => handleCopy(thread, `thread-sv-${idx}-${i}`)} className="absolute top-1 right-1 p-1 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                  {copiedStates[`thread-sv-${idx}-${i}`] ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* f Facebook 投稿案（2回分） */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-[#1877F2] px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-blue-900 px-2 py-0.5 rounded font-bold font-mono">2投稿 / タグ5つ</span>
+                                    <h3 className="font-bold text-white">f Facebook 投稿案（2回分）</h3>
+                                  </div>
+                                </div>
+                                <div className="p-4 space-y-4 bg-slate-50">
+                                  {marketingData.facebook_posts?.map((post, idx) => (
+                                    <div key={idx} className="bg-white p-4 rounded-lg border border-slate-200 relative group animate-fade-in">
+                                      <span className="absolute -top-2 -left-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">投稿 {idx + 1}</span>
+                                      <textarea readOnly value={post} rows={6} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700 mt-2" />
+                                      <button onClick={() => handleCopy(post, `fb-post-sv-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                          {copiedStates[`fb-post-sv-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            /* 通常・アプリ・告知モードのUI (既存) */
+                            <div className="space-y-8 animate-fade-in">
+                              {/* Titles */}
+                              {marketingData.titles && marketingData.titles.length > 0 && (
+                                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                  <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                       <FileText className="w-4 h-4 text-slate-500" /> 売れるタイトル案
+                                    </h3>
+                                  </div>
+                                  <div className="p-4 space-y-3">
+                                    {marketingData.titles.map((title, idx) => (
+                                      <div key={idx} className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-lg border border-slate-100 animate-fade-in">
+                                         <p className="text-sm font-medium text-slate-800">{title}</p>
+                                         <button onClick={() => handleCopy(title, `title-${idx}`)} className="p-2 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm">
+                                            {copiedStates[`title-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                         </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* X */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-fade-in">
+                                <div className="bg-[#000000] px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-slate-800 px-2 py-0.5 rounded font-bold font-mono">X アルゴリズム準拠</span>
+                                    <h3 className="font-bold text-white">𝕏 (Twitter) 投稿案</h3>
+                                  </div>
+                                  <button onClick={() => handleCopy(marketingData.x_post, 'x')} className="text-slate-300 hover:text-white flex items-center gap-1 text-xs">
+                                     {copiedStates['x'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
+                                  </button>
+                                </div>
+                                <div className="p-4 bg-slate-50">
+                                  <textarea readOnly value={marketingData.x_post} rows={5} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent font-sans" />
+                                </div>
+                              </div>
+
+                              {/* Threads */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-fade-in">
+                                <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-purple-900 px-2 py-0.5 rounded font-bold font-mono">スレッド型構成</span>
+                                    <h3 className="font-bold text-white">@ Threads 3段スレッド投稿案</h3>
+                                  </div>
+                                </div>
+                                <div className="p-4 space-y-4">
+                                   {marketingData.threads.map((thread, idx) => (
+                                     <div key={idx} className="relative pl-6 animate-fade-in">
+                                        {idx !== 2 && <div className="absolute left-[11px] top-8 bottom-[-24px] w-0.5 bg-slate-200"></div>}
+                                        <div className="absolute left-0 top-1 w-6 h-6 bg-slate-100 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-slate-400">
+                                          {idx + 1}
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 relative group animate-fade-in">
+                                          <textarea readOnly value={thread} rows={4} className="w-full text-sm resize-none outline-none bg-transparent text-slate-700" />
+                                          <button onClick={() => handleCopy(thread, `thread-${idx}`)} className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-indigo-600 rounded bg-white border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                              {copiedStates[`thread-${idx}`] ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                          </button>
+                                        </div>
+                                     </div>
+                                   ))}
+                                </div>
+                              </div>
+
+                              {/* Facebook */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-fade-in">
+                                <div className="bg-[#1877F2] px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-blue-900 px-2 py-0.5 rounded font-bold font-mono">共感重視</span>
+                                    <h3 className="font-bold text-white">f Facebook 投稿案</h3>
+                                  </div>
+                                  <button onClick={() => handleCopy(marketingData.facebook_post, 'fb')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
+                                     {copiedStates['fb'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
+                                  </button>
+                                </div>
+                                <div className="p-4 bg-slate-50">
+                                  <textarea readOnly value={marketingData.facebook_post} rows={8} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent" />
+                                </div>
+                              </div>
+
+                              {/* Instagram */}
+                              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-fade-in">
+                                <div className="bg-gradient-to-r from-yellow-500 via-red-500 to-purple-600 px-4 py-3 flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white text-xs bg-red-900 px-2 py-0.5 rounded font-bold font-mono">画像キャプション用</span>
+                                    <h3 className="font-bold text-white">📷 Instagram キャプション投稿案</h3>
+                                  </div>
+                                  <button onClick={() => handleCopy(marketingData.instagram_post, 'insta')} className="text-slate-200 hover:text-white flex items-center gap-1 text-xs">
+                                     {copiedStates['insta'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
+                                  </button>
+                                </div>
+                                <div className="p-4 bg-slate-50">
+                                  <textarea readOnly value={marketingData.instagram_post} rows={8} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent animate-fade-in" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex justify-end pt-4">
+                             <button
+                              onClick={() => setActiveTab(4)}
+                              className="bg-slate-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-slate-700 transition-colors shadow-md"
+                            >
+                              Step 4: サムネイル作成へ進む
+                            </button>
+                          </div>
+
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* STEP 4 */}
+              {activeTab === 4 && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                      <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">4</span>
+                      売れるnoteの顔「サムネイル画像」をAI生成
+                    </h2>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-indigo-500/10 to-blue-500/10 border border-indigo-100 p-4 rounded-xl flex items-start gap-3 shadow-sm">
+                    <Sparkles className="text-indigo-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-slate-700 space-y-1">
+                      <p className="font-semibold text-indigo-900">✨ Gemini 2.5 Pro &amp; Imagen 4 プレミアム最適化モード稼働中</p>
+                      <p>文字入れ前提の洗練された比率、商業アワード級の空気感、そしてテキストスペースを完璧に確保した高級感溢れるプロンプトを自動生成します。</p>
+                    </div>
+                  </div>
+
+                  {/* アスペクト比選択セクション */}
+                  <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-200 animate-fade-in">
+                    <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">1</span>
+                      アスペクト比を選択してください
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: "16:9", label: "横長 16:9", desc: "note見出し・YouTube・Xバナー等" },
+                        { id: "9:16", label: "縦長 9:16", desc: "スマホ壁紙・リール・TikTokサムネ等" },
+                        { id: "1:1", label: "正方形 1:1", desc: "Instagram投稿・公式LINE・アイコン等" }
+                      ].map((ratio) => (
+                        <button
+                          key={ratio.id}
+                          type="button"
+                          onClick={() => setAspectRatio(ratio.id)}
+                          className={`p-3 rounded-lg border text-left transition-all ${
+                            aspectRatio === ratio.id
+                              ? "bg-indigo-600 border-indigo-600 text-white shadow-md"
+                              : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
+                          }`}
+                        >
+                          <div className="font-bold text-sm">{ratio.label}</div>
+                          <div className={`text-[10px] mt-1 ${aspectRatio === ratio.id ? "text-indigo-200" : "text-slate-400"}`}>{ratio.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* スタイル選択 */}
+                  <div className="space-y-3 animate-fade-in">
+                    <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">2</span>
+                      記事やコンテンツの世界観に合うスタイルを選んでください
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {THUMBNAIL_STYLES.map((style) => (
+                        <div 
+                          key={style.id}
+                          onClick={() => setSelectedStyleId(style.id)}
+                          className={`cursor-pointer p-4 rounded-xl border transition-all ${
+                            selectedStyleId === style.id 
+                              ? "bg-indigo-50 border-indigo-500 shadow-md ring-1 ring-indigo-500 animate-fade-in" 
+                              : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-bold text-sm text-slate-800">{style.name}</h3>
+                            {selectedStyleId === style.id && <Check className="text-indigo-600" />}
+                          </div>
+                          <p className="text-xs text-slate-500 leading-relaxed">{style.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={generateThumbnailImage}
+                    disabled={isGeneratingImage || (creationMode === "normal" && !selectedTheme && !genre) || (creationMode === "app" && !appName) || (creationMode === "written_note" && !noteTitle) || (creationMode === "short_video" && !appName)}
+                    className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-4 rounded-xl font-bold hover:from-indigo-500 hover:to-indigo-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg mt-6"
+                  >
+                    {isGeneratingImage ? (
+                      <><Loader2 className="w-5 h-5 animate-spin" /> Gemini Engineがプロンプトとデザインを極限調整中...（約10〜20秒）</>
+                    ) : (
+                      <><Sparkles className="w-5 h-5 text-indigo-200" /> プレミアム仕様でサムネイル画像を自動生成する</>
+                    )}
+                  </button>
+
+                  {/* 生成結果 */}
+                  {(generatedImageUrl || generatedImagePrompt) && (
+                    <div className="mt-8 space-y-6 animate-fade-in">
+                      {generatedImageUrl && (
+                        <div className="space-y-4 animate-fade-in">
+                          <div className="flex items-center justify-between border-b pb-2">
+                             <div className="flex items-center gap-2">
+                               <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">生成成功</span>
+                               <h3 className="text-sm font-bold text-slate-800">完成したサムネイル見出し画像 ({aspectRatio})</h3>
+                             </div>
+                             <a 
+                               href={generatedImageUrl} 
+                               download={`note_thumbnail_image_${aspectRatio.replace(':', '_')}.png`}
+                               className="text-white bg-indigo-600 hover:bg-indigo-700 flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg font-bold shadow-sm transition-colors"
+                             >
+                               <Download className="w-4 h-4" /> 画像を保存
+                             </a>
+                          </div>
+                          
+                          {/* 選択したアスペクト比に応じてプレビュー比率を動的に変化させるコンテナ */}
+                          <div className="bg-slate-100 border border-slate-200 rounded-2xl p-4 shadow-inner flex justify-center items-center overflow-hidden">
+                            <div className={`w-full flex justify-center ${
+                              aspectRatio === "9:16" ? "max-w-[340px]" : "max-w-3xl"
+                            }`}>
+                              <img 
+                                src={generatedImageUrl} 
+                                alt="Generated Thumbnail" 
+                                className={`rounded-xl shadow-md border border-white w-full object-cover transition-all ${
+                                  aspectRatio === "16:9" ? "aspect-video" :
+                                  aspectRatio === "9:16" ? "aspect-[9/16] max-h-[600px]" :
+                                  "aspect-square max-w-[500px]"
+                                }`} 
+                              />
+                            </div>
+                          </div>
+                          
+                          <p className="text-xs text-slate-500 text-center leading-relaxed">
+                            💡 <strong>デザイナーからのヒント：</strong>アスペクト比「<strong>{aspectRatio}</strong>」に合わせて文字入れ用の美しい余白（フェード空間やボケ）が最適化されています。<br />
+                            Canva等を使って、空いているスペースにお好みのフォントでnoteのタイトルを配置すれば、プロ顔負けのバナーが瞬時に完成します！
+                          </p>
+                        </div>
+                      )}
+
+                      {generatedImagePrompt && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3 animate-fade-in">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="bg-indigo-100 text-indigo-800 text-xs px-2.5 py-0.5 rounded-full font-bold">Prompt Generated</span>
+                              <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">AI専用高精細プログラマブルプロンプト</h4>
+                            </div>
+                            <button onClick={() => handleCopy(generatedImagePrompt, 'img-prompt')} className="text-slate-400 hover:text-slate-600 flex items-center gap-1 text-xs">
+                              {copiedStates['img-prompt'] ? <Check className="text-green-500" /> : <Copy />}
+                            </button>
+                          </div>
+                          <div className="bg-white border border-slate-150 p-4 rounded-lg">
+                            <p className="text-xs font-mono text-slate-600 break-words leading-relaxed select-all">{generatedImagePrompt}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
+          </main>
+        </div>
+      );
     }
-  });
 
-  let qa=[];
-  document.querySelectorAll('[data-qa]').forEach(cb=>{
-    if(cb.checked){
-      const b=cb.closest('.item').querySelector('.body');
-      qa.push({q:b.querySelector('input').value.trim(), a:b.querySelector('textarea').value.trim()});
-    }
-  });
-
-  const NV='#223670', GD='#D0A900';
-  let out = `<!-- ここから AI検索みっけ 生成コンテンツ -->\n`;
-  out += `<div style="max-width:800px;margin:0 auto;font-family:sans-serif;color:#333;line-height:1.8;">\n`;
-
-  if(nayami.length){
-    out += `\n<section style="margin:40px 0;">\n<h2 style="color:${NV};border-left:6px solid ${GD};padding-left:12px;">こんなお悩み、ありませんか？</h2>\n<ul style="padding-left:20px;">\n`;
-    nayami.forEach(n=>{ out+=`  <li style="margin:8px 0;">${n}</li>\n`; });
-    out += `</ul>\n</section>\n`;
-  }
-
-  if(jirei.length){
-    out += `\n<section style="margin:40px 0;">\n<h2 style="color:${NV};border-left:6px solid ${GD};padding-left:12px;">解決事例</h2>\n`;
-    jirei.forEach(j=>{
-      out += `<div style="border:1px solid #e2e5ee;border-radius:12px;padding:18px;margin:14px 0;background:#fafbff;">\n`;
-      if(j.before) out+=`  <p style="margin:4px 0;"><b style="color:#999;">ビフォー：</b>${j.before}</p>\n`;
-      if(j.after)  out+=`  <p style="margin:4px 0;"><b style="color:${NV};">アフター：</b>${j.after}</p>\n`;
-      if(j.voice)  out+=`  <p style="margin:8px 0 0;color:${GD};">💬 お客様の声「${j.voice}」</p>\n`;
-      out += `</div>\n`;
-    });
-    out += `</section>\n`;
-  }
-
-  if(qa.length){
-    out += `\n<section style="margin:40px 0;">\n<h2 style="color:${NV};border-left:6px solid ${GD};padding-left:12px;">よくあるご質問</h2>\n`;
-    qa.forEach(x=>{
-      out += `<details style="border:1px solid #e2e5ee;border-radius:10px;padding:12px 16px;margin:10px 0;">\n`;
-      out += `  <summary style="font-weight:bold;color:${NV};cursor:pointer;">Q. ${x.q}</summary>\n`;
-      out += `  <p style="margin:10px 0 0;">A. ${x.a}</p>\n`;
-      out += `</details>\n`;
-    });
-    out += `</section>\n`;
-  }
-
-  out += `\n</div>\n<!-- ここまで AI検索みっけ 生成コンテンツ -->`;
-
-  document.getElementById('outputBox').value = out;
-
-  const frame=document.getElementById('previewFrame');
-  const doc=frame.contentDocument||frame.contentWindow.document;
-  doc.open();
-  doc.write('<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:16px;font-family:sans-serif;}</style></head><body>'+out+'</body></html>');
-  doc.close();
-
-  document.getElementById('outputWrap').classList.remove('hide');
-  switchOut('source');
-  document.getElementById('outputWrap').scrollIntoView({behavior:'smooth'});
-}
-
-function copyOutput(){
-  const box=document.getElementById('outputBox');
-  box.select();
-  navigator.clipboard.writeText(box.value).then(()=>{
-    alert('コピーしました。サイトに貼り付けてください 😊');
-  }).catch(()=>{
-    document.execCommand('copy');
-    alert('コピーしました 😊');
-  });
-}
-
-function backHome(){
-  document.getElementById('appScreen').classList.add('hide');
-  document.getElementById('prepScreen').classList.add('hide');
-  document.getElementById('inputScreen').classList.remove('hide');
-  document.getElementById('outputWrap').classList.add('hide');
-  window.scrollTo(0,0);
-}
-
-function esc(s){ return String(s).replace(/"/g,'&quot;'); }
-</script>
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
