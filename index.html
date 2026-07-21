@@ -178,8 +178,12 @@
       const [isPaid, setIsPaid] = useState(true);
       const [price, setPrice] = useState("980");
       const [benefit, setBenefit] = useState("");
-      const [isSuggestingBenefit, setIsSuggestingBenefit] = useState(false); // 提供価値の自動提案ローディング
+      const [isSuggestingBenefit, setIsSuggestingBenefit] = useState(false);
       
+      // 記事文字数ボリューム指定 (新機能)
+      // "2000" = 約2,000文字, "4000" = 約4,000文字, "8000" = 約7,000〜10,000文字
+      const [articleLength, setArticleLength] = useState("4000");
+
       // 特典設定
       const [hasBonus, setHasBonus] = useState(false);
       const [bonusContent, setBonusContent] = useState("");
@@ -202,8 +206,8 @@
       const [marketingData, setMarketingData] = useState(null);
 
       // Step 4 - サムネイル用の状態 (アスペクト比ステート)
-      const [selectedStyleId, setSelectedStyleId] = useState(1); // スタイル①を初期選択に
-      const [aspectRatio, setAspectRatio] = useState("16:9"); // "16:9", "9:16", "1:1"
+      const [selectedStyleId, setSelectedStyleId] = useState(1);
+      const [aspectRatio, setAspectRatio] = useState("16:9");
       const [generatedImagePrompt, setGeneratedImagePrompt] = useState("");
       const [generatedImageUrl, setGeneratedImageUrl] = useState("");
       const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -244,6 +248,7 @@
         setPrice("980");
         setBenefit("");
         setIsSuggestingBenefit(false);
+        setArticleLength("4000"); // 初期値リセット
         setHasBonus(false);
         setBonusContent("");
         setHasLineBonus(false);
@@ -255,7 +260,7 @@
         setToc("");
         setArticleBody("");
         setMarketingData(null);
-        setSelectedStyleId(1); // リセット時も①推奨
+        setSelectedStyleId(1);
         setAspectRatio("16:9");
         setGeneratedImagePrompt("");
         setGeneratedImageUrl("");
@@ -311,7 +316,7 @@
         }
       };
 
-      // 1-2. テーマ選択時に「提供価値」「限定特典」「LINE登録特典」のアイデアを一度に自動提案・自動入力する最強関数 (アップデート！)
+      // 1-2. テーマ選択時に「提供価値」「限定特典」「LINE登録特典」のアイデアを一度に自動提案・自動入力する最強関数
       const suggestBenefitAndBonuses = async (theme) => {
         if (!theme) return;
         setIsSuggestingBenefit(true);
@@ -351,11 +356,11 @@
             setBenefit(result.benefit || "");
             if (result.suggested_bonus) {
               setBonusContent(result.suggested_bonus);
-              setHasBonus(true); // 自動的にチェックボックスをONにして提案内容を表示
+              setHasBonus(true);
             }
             if (result.suggested_line_bonus) {
               setLineBonusContent(result.suggested_line_bonus);
-              setHasLineBonus(true); // 自動的にチェックボックスをONにして提案内容を表示
+              setHasLineBonus(true);
             }
           }
         } catch (err) {
@@ -366,7 +371,7 @@
         }
       };
 
-      // テーマ選択のハンドラ (新トリプル自動提案トリガー)
+      // テーマ選択のハンドラ
       const handleThemeChange = (theme) => {
         setSelectedTheme(theme);
         suggestBenefitAndBonuses(theme);
@@ -416,7 +421,7 @@
         }
       };
 
-      // 3. 本文の生成 (無料/有料寸止め境界線挿入を完全自動化)
+      // 3. 本文の生成 (文字数ボリューム指定に対応)
       const generateArticle = async () => {
         if (!toc) { setError("目次を入力してください"); return; }
         setLoading(true); setError("");
@@ -453,13 +458,24 @@
                And, 本文の最後の章（まとめ、または結び）のなかで、外部誘導先（目的: ${redirectPurpose || (creationMode === "app" ? `${appName}の無料体験・アクセス` : "詳細サイト確認")}, URL: ${redirectUrl || appUrl || "サイトリンク"}）への案内文（クリックを促す魅力的な導線文章）を、自然かつ強力なCall To Actionとして必ず設置してください。`;
           }
 
+          // 文字数指定のプロンプト構築
+          let lengthInstruction = `【指定文字数ボリューム】: 全体の文字数は「約 ${articleLength} 文字」を目安に執筆してください。`;
+          if (articleLength === "2000") {
+            lengthInstruction += " 要点をコンパクトにまとめ、短時間でサクッと読める簡潔な構成にしてください。";
+          } else if (articleLength === "8000") {
+            lengthInstruction += " 各章の事例、具体的テクニック、注意事項、テンプレ等を極限まで具体的に深掘りし、圧倒的なボリュームと網羅感を持つ永久保存版の超重厚なコンテンツに仕上げてください。";
+          } else {
+            lengthInstruction += " 読者の満足度と読みやすさを両立させた、標準的でしっかり内容の詰まった構成にしてください。";
+          }
+
           const systemPrompt = `あなたはプロのライターであり、かつ一流のプロダクトマーケターです。提供された目次を元に、noteの本文を執筆します。
           【重要ルール】
-          - note의 目次가 너무 복잡해지는 것을 막기 위해, 見出し는「大見出し（## 章タイトル）」만 사용해주세요. 中見出し（###）나 小見出し（####）는 절대로 만들지 마세요.
-          - 상세 포인트나 중요한 해설은, 見出し를 새로 만들지 않고, 문장 내에서「**太字**」로 강조해 이해하기 쉽게 설명하세요.
+          - ${lengthInstruction}
+          - noteの目次が多すぎて複雑になるのを防ぐため、見出しは「大見出し（## 章タイトル）」のみを使用してください。中見出し（###）や小見出し（####）は絶対に作らないでください。
+          - 詳細なポイントや重要な解説は、見出しを作成せずに、文章のなかで「**太字**」にして強調し分かりやすく説明してください。
           - AIっぽい堅苦しい表現は避け、人間らしい自然な言葉遣いにすること。
           - 読者がイメージしやすいように、具体的な例え話や、よくある失敗談などの「疑似体験談」を交えること。
-          - 読みやすさを重視し、適度に改行や空白行を入れること.
+          - 読みやすさを重視し、適度に改行や空白行を入れること。
           - 箇条書きや引用ブロックなどを効果的に使うこと。
           
           【特典導線ルール】
@@ -475,7 +491,7 @@
           ${monetizationContext}
           ${benefit ? `【期待される提供価値（購入/完読後に得られる成果）】: ${benefit}` : ''}`;
           
-          const prompt = `以下のテーマと目次に従って、有料または無料note의 본문을 끝까지 작성해 주세요.\n\nテーマ：${selectedTheme}\n\n目次：\n${toc}`;
+          const prompt = `以下のテーマと目主に従って、有料または無料noteの本文を最後まで書き上げてください。\n\nテーマ：${selectedTheme}\n\n目次：\n${toc}`;
           const result = await callGeminiAPI(prompt, systemPrompt, false);
           setArticleBody(result);
           setActiveTab(3);
@@ -486,7 +502,7 @@
         }
       };
 
-      // 4. タイトル案＆SNS投稿の生成 (有料/無料、自作note告知、さらに🎬ショート動画集客モードの分岐を搭載)
+      // 4. タイトル案＆SNS投稿の生成
       const generateMarketing = async () => {
         setLoading(true); setError("");
         try {
@@ -495,7 +511,6 @@
           let contentSourceText = "";
 
           if (creationMode === "written_note") {
-            // note書きました告知モード
             if (!noteTitle) { setError("noteのタイトルを入力してください"); setLoading(false); return; }
             if (!noteUrl) { setError("noteのURLを入力してください"); setLoading(false); return; }
             
@@ -517,7 +532,7 @@
             2. **Threads 3段スレッド投稿案**:
                - 1段目（問題提起）：ターゲットの悩みに寄り添い、強い興味を惹く「問題提起」と共感。
                - 2段目（チラ見せ）：note記事（タイトル: ${noteTitle}）の中身や価値を少しだけチラ見せして「もっと読みたい」欲求を引き出します。
-               - 3段目（CTA導線）：結論と、詳細を知りたくなるnote（URL: ${noteUrl}）への誘導リンク。LINE登録特典（${lineBonusContent}）があればそれも訴求.
+               - 3段目（CTA導線）：結論と、詳細を知りたくなるnote（URL: ${noteUrl}）への誘導リンク。LINE登録特典（${lineBonusContent}）があればそれも訴求。
             3. **Facebook 投稿案**:
                - noteのタイトル（${noteTitle}）とURL（${noteUrl}）を含め、ストーリーを交えた温かみのあるトーンの長文を作成。
                - 記事を書いた背景、誰を救いたいかを語り、文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。
@@ -526,7 +541,6 @@
                - ビジュアルイメージを想起させるフックから始まり、noteの内容の3つの見どころや学び、そして「プロフィールのリンク（またはコメント欄）からnoteへアクセス！」の誘導導線を作ります。
                - 文末に【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。`;
           } else if (creationMode === "short_video") {
-            // ショート動画集客モードのデータ構築とプロンプト
             if (!appName) { setError("アプリ名を入力してください"); setLoading(false); return; }
             if (!appSummary) { setError("アプリの概要を入力してください"); setLoading(false); return; }
             if (!appValue) { setError("解決できる悩み・提供できる具体的な価値を入力してください"); setLoading(false); return; }
@@ -580,7 +594,6 @@
                - 各パターンの末尾に必ず【半角スペース区切りの横並びハッシュタグをちょうど5つ】を配置してください。`;
 
           } else {
-            // 通常＆アプリモード
             contentSourceText = `【note本文データ】\n${articleBody.substring(0, 3000)}`;
             
             if (creationMode === "app") {
@@ -593,7 +606,7 @@
               monetizationStrategy = `【有料note販売】
                  - 販売予定価格: ${price}円
                  ${hasLimitedSale ? `- マーケ戦略: 数量限定販売（売り切れ次第値上げする希少性をアピールしてください）` : ''}
-                 SNS投稿（X, Threads, Facebook, Instagram）では、この価格 of 「お得感」「今すぐ買うべき理由（限定性・希少性）」を訴求してください。
+                 SNS投稿（X, Threads, Facebook, Instagram）では、この価格のお得感、今すぐ買うべき理由を訴求してください。
                  
                  【SNS告知アルゴリズム重要ルール】
                  - 各投稿、文末等に必ず【横並び（半角スペース区切り）でハッシュタグをちょうど5つ】設置してください。`;
@@ -680,7 +693,7 @@
         }
       };
 
-      // 5. サムネイル画像生成 (Gemini Engine 本気プロンプト＋アスペクト比アライン＋Midjourney画像インジェクション対応)
+      // 5. サムネイル画像生成
       const generateThumbnailImage = async () => {
         const targetTopic = marketingData?.titles?.[0] || appName || noteTitle || selectedTheme || genre;
         if (!targetTopic) { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
@@ -690,7 +703,6 @@
         setGeneratedImagePrompt(""); setGeneratedImageUrl("");
         
         try {
-          // 13の極意を動的分析させるため、入力コンテキストを構造化ペイロードとして提供
           const contextPayload = {
             creationMode,
             targetTopic,
@@ -715,19 +727,16 @@ Your goal is to generate an extraordinarily beautiful, professional-grade, high-
 
 To ensure the output image is of the absolute highest clickable and professional quality (avoiding any generic or cheap AI look), you MUST strictly apply these "13 Secrets of Clickable Thumbnails" (①〜⑬) when constructing the prompt:
 
-1. **Who is the Protagonist (① 主役を明確化)**: Automatically analyze the input context and specify a clear human protagonist that fits the target audience (e.g., "Japanese businessman", "senior citizen", "young female developer", "busy clinic doctor", "restaurant owner", etc.).
-2. **Action & Motion (② 動き・行動)**: Describe the protagonist in a natural, active state (e.g., "smiling and pointing at a glowing tablet", "looking surprised and relieved while holding a sleek smartphone", "scanning a QR code with a smile", "joyfully demonstrating on screen"). Avoid static poses.
-3. **Draw the Future, Not Just the App (③ アプリではなく未来)**: Visually represent the positive outcome or transformation. Show elements representing the transition "from complex/cluttered paper records to clean/simplified digital charts/vibrant healthy lifestyle graphics/organized success".
-4. **Integrate App Screens (④ アプリ画面)**: Describe a smartphone or tablet screen visible in the scene showing beautiful modern UI elements such as "clean analytical dashboard", "vibrant color progress charts", "clean chat interface with AI sparkles", or "accomplished checklist with clean checkmarks".
-5. **Value Icons (⑤ アイコンによる価値提示)**: Seamlessly blend small metaphorical floating icons into the composition (e.g., "floating glowing clean icons of AI sparkle, chat bubble, spreadsheets, health heart, or calendar").
-6. **Specify Background Scene (⑥ 利用シーン背景)**: Clearly describe the background context that matches the niche (e.g., "minimalist Scandinavian style cozy office with soft bokeh", "organized medical clinic", "cozy home workspace with warm lighting", "stylish restaurant kitchen").
-7. **Express Emotions (⑦ 感情表現)**: Infuse clear emotional keywords into the protagonist's face and overall atmosphere (e.g., "expression of relief, deep confidence, sense of hope, joyful smile, exciting discovery").
-8. **Brand Color Palette (⑧ ブランドカラー)**: Specify a premium and sophisticated color palette (e.g., "elegant white and deep indigo blue", "clean white and soft mint green", "sophisticated navy and gold accents", "vibrant sky blue and cream").
-9. **Spacious Negative Space for Titles (⑩ タイトル用の余白)**: Apply the negative space rules below to leave clean space for overlaying headline text:
-   - If selected aspect ratio is "16:9": Instruct to keep one side (left 50% or right 50%) completely clear ("large spacious negative space for title overlay").
-   - If selected aspect ratio is "9:16": Instruct to keep the top 45% or bottom 45% clear ("large spacious negative space at the top/bottom for vertical text overlay").
-   - If selected aspect ratio is "1:1": Instruct to keep the borders or bottom third clear ("generous spacious negative space for square title overlay").
-10. **Quality Enhancement Keywords (⑪ 品質指定)**: Include keywords such as "highly detailed", "masterpiece premium illustration", "professional graphic composition", "cinematic soft focus".
+1. **Who is the Protagonist (① 主役を明確化)**: Automatically analyze the input context and specify a clear human protagonist that fits the target audience.
+2. **Action & Motion (② 動き・行動)**: Describe the protagonist in a natural, active state.
+3. **Draw the Future, Not Just the App (③ アプリではなく未来)**: Visually represent the positive outcome or transformation.
+4. **Integrate App Screens (④ アプリ画面)**: Describe a smartphone or tablet screen visible in the scene showing beautiful modern UI elements.
+5. **Value Icons (⑤ アイコンによる価値提示)**: Seamlessly blend small metaphorical floating icons into the composition.
+6. **Specify Background Scene (⑥ 利用シーン背景)**: Clearly describe the background context that matches the niche.
+7. **Express Emotions (⑦ 感情表現)**: Infuse clear emotional keywords into the protagonist's face and overall atmosphere.
+8. **Brand Color Palette (⑧ ブランドカラー)**: Specify a premium and sophisticated color palette.
+9. **Spacious Negative Space for Titles (⑩ タイトル用の余白)**: Apply the negative space rules to leave clean space for overlaying headline text.
+10. **Quality Enhancement Keywords (⑪ 品質指定)**: Include keywords such as "highly detailed", "masterpiece premium illustration", "professional graphic composition".
 
 Output ONLY the final raw English prompt text. Do not include any quotes, introductions, markdown formatting, or conversational text.
 Do NOT write "--ar" or "--stylize" inside your text response, as they will be automatically appended by the program at the end.`;
@@ -739,32 +748,24 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
           
           const imgPrompt = await callGeminiAPI(textPrompt, systemPrompt, false);
           
-          // Midjourneyパラメータマッピング (⑫アスペクト比 ＆ ⑬Stylizeの設定)
-          let arParam = "--ar 128:67"; // デフォルト
+          let arParam = "--ar 128:67";
           if (aspectRatio === "16:9") arParam = "--ar 16:9";
           if (aspectRatio === "9:16") arParam = "--ar 9:16";
           if (aspectRatio === "1:1") arParam = "--ar 1:1";
           
           const midjourneyParams = ` ${arParam} --stylize 250`;
           
-          // 選択されたスタイルIDに応じて、Midjourney参照URL（シード画像）をプロンプトの最先頭にインジェクションしてImagen 4に指示します
           let finalPrompt = imgPrompt;
           if (style.id === 1) {
-            // ① プレミアム日本イラスト風: 指定された「みっけトーン」の3Dフラット画像をブレンド
             finalPrompt = "https://cdn.midjourney.com/acb14bb9-7279-47c3-a98f-5d22730251da/0_3.png " + imgPrompt;
           } else if (style.id === 6) {
-            // ⑥ シネマティック・ファンタジーイラスト: 1枚目のSFファンタジー画像をブレンド
             finalPrompt = "https://cdn.midjourney.com/2babba26-bfc0-44de-a49e-56f622b7283e/0_0.png " + imgPrompt;
           } else if (style.id === 7) {
-            // ⑦ 3Dクレイ＆ミニマリズム: 2枚目の可愛いおもちゃ調クレイ画像をブレンド
             finalPrompt = "https://cdn.midjourney.com/d99e1051-9d0f-425a-9cd1-2ab18516ca04/0_0.png " + imgPrompt;
           } else if (style.id === 2 || style.id === 3 || style.id === 4 || style.id === 5) {
-            // 2〜5の他の基本イラストスタイルを選んだ場合も、安っぽさを防ぎ一貫したプレミアムデザイン質感（3Dフラット調）を担保するため、
-            // プレミアム日本イラスト風のURLを先頭にシードとして自動ブレンドします
             finalPrompt = "https://cdn.midjourney.com/acb14bb9-7279-47c3-a98f-5d22730251da/0_3.png " + imgPrompt;
           }
 
-          // 最末尾に Midjourney 用パラメータをガチ連結！
           finalPrompt = finalPrompt.trim() + midjourneyParams;
 
           setGeneratedImagePrompt(finalPrompt);
@@ -784,7 +785,6 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
           {/* Header */}
           <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
             <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-              {/* ヘッダーロゴクリックで初期状態へリセット */}
               <div 
                 onClick={handleReset}
                 className="flex items-center gap-2 text-indigo-600 cursor-pointer hover:opacity-80 transition-all select-none"
@@ -841,7 +841,7 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
               {activeTab === 1 && (
                 <div className="space-y-8 animate-fade-in">
                   
-                  {/* 作成モード選択トグル (4つのモード対応) */}
+                  {/* 作成モード選択トグル */}
                   <div className="space-y-2">
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">作成する記事・告知のタイプ</label>
                     <div className="flex flex-col md:flex-row bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1">
@@ -898,7 +898,6 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
 
                   {/* モードに応じた入力フォーム切り替え */}
                   {creationMode === "normal" && (
-                    /* 1. 悩み解決テーマ用 (仕様維持) */
                     <div className="space-y-4 animate-fade-in">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b pb-2">
                         <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -925,7 +924,6 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                   )}
 
                   {creationMode === "app" && (
-                    /* 2. 自作アプリ紹介・ストーリーテリング型フォーム */
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 rounded-2xl border border-indigo-100/80 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
                         <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -995,7 +993,6 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                   )}
 
                   {creationMode === "written_note" && (
-                    /* 3. note書きました告知・拡散用フォーム */
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-emerald-50/40 to-teal-50/40 rounded-2xl border border-emerald-100 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-emerald-100 pb-2 text-emerald-950">
                         <span className="bg-emerald-100 text-emerald-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -1038,7 +1035,6 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                         />
                       </div>
 
-                      {/* 価値・未来訴求 */}
                       <div className="space-y-2">
                         <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
                           この記事（または商品）を読んだ後に読者が得られる未来（価値）
@@ -1124,7 +1120,6 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                   )}
 
                   {creationMode === "short_video" && (
-                    /* 4. 🎬 ショート動画集客 (リール・TikTok) 用フォーム */
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-purple-50/40 to-indigo-50/40 rounded-2xl border border-indigo-150 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
                         <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -1292,6 +1287,39 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                             >
                               🎁 無料note（外部URL紹介）
                             </button>
+                          </div>
+
+                          {/* 新機能: 記事文字数ボリュームの選択セレクター */}
+                          <div className="space-y-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm animate-fade-in">
+                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                              <span>📝 記事の文字数ボリューム目安</span>
+                              <span className="text-indigo-600 font-bold text-[11px]">【単価や用途に合わせてAIが自動調整】</span>
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                              {[
+                                { id: "2000", label: "⚡ サクッと読める", count: "約2,000文字", desc: "無料note / ライトな解説" },
+                                { id: "4000", label: "📘 標準ノウハウ", count: "約4,000文字", desc: "王道有料note (980〜2,980円)" },
+                                { id: "8000", label: "📕 永久保存・網羅版", count: "約7,000〜10,000文字", desc: "高単価教材 / 完全ロードマップ" }
+                              ].map((len) => (
+                                <button
+                                  key={len.id}
+                                  type="button"
+                                  onClick={() => setArticleLength(len.id)}
+                                  className={`p-3 rounded-lg border text-left transition-all ${
+                                    articleLength === len.id
+                                      ? "bg-indigo-50 border-indigo-500 text-indigo-900 ring-1 ring-indigo-500 shadow-sm"
+                                      : "bg-white border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  <div className="font-bold text-xs flex items-center justify-between">
+                                    <span>{len.label}</span>
+                                    {articleLength === len.id && <Check className="w-3.5 h-3.5 text-indigo-600" />}
+                                  </div>
+                                  <div className="text-[11px] font-bold text-indigo-600 mt-1">{len.count}</div>
+                                  <div className="text-[10px] text-slate-400 mt-0.5">{len.desc}</div>
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
                           {/* 有料時の設定項目 */}
@@ -1532,7 +1560,6 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                     </h2>
                   </div>
                   
-                  {/* written_note または short_video モードの場合、Step 2はジャンプ制限し、案内を表示 */}
                   {creationMode === "written_note" || creationMode === "short_video" ? (
                     <div className="text-center py-12 bg-emerald-50/50 rounded-2xl border border-dashed border-emerald-200 max-w-2xl mx-auto p-6 animate-fade-in">
                       <FileText className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
@@ -1567,6 +1594,7 @@ Base Art Style Keywords to integrate: "${style.prompt}"`;
                         <p className="font-bold text-slate-700 text-sm mb-1">現在の設定パラメータ</p>
                         <p><strong>選択中のテーマ:</strong> {selectedTheme}</p>
                         {creationMode === "app" && <p><strong>対象アプリ:</strong> <span className="font-bold text-indigo-600">{appName}</span></p>}
+                        <p><strong>指定文字数目安:</strong> <span className="font-bold text-indigo-600 font-mono">{articleLength === "2000" ? "約2,000文字" : articleLength === "8000" ? "約7,000〜10,000文字（完全保存版）" : "約4,000文字（標準）"}</span></p>
                         <p><strong>販売設定:</strong> {isPaid ? <span className="text-indigo-600 font-bold">💰 有料note ({price}円)</span> : <span className="text-emerald-600 font-bold">🎁 無料公開＋外部誘導 ({redirectPurpose || "サイト紹介"})</span>}</p>
                         {!isPaid && (redirectUrl || appUrl) && <p><strong>誘導先URL:</strong> <span className="font-mono text-xs">{redirectUrl || appUrl}</span></p>}
                         {benefit && <p><strong>期待される価値:</strong> {benefit}</p>}
