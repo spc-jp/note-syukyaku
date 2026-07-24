@@ -827,7 +827,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
             {/* Main Content Area */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
               
-              {}
+              {/* Step 1 */}
               {activeTab === 1 && (
                 <div className="space-y-8 animate-fade-in">
                   
@@ -873,7 +873,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                     </div>
                   </div>
 
-                  {}
+                  {/* 1. 体験談ストーリー */}
                   {creationMode === "experience" && (
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-emerald-50/50 to-green-50/50 rounded-2xl border border-emerald-100/80 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-emerald-100 pb-2 text-emerald-950">
@@ -963,6 +963,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                     </div>
                   )}
 
+                  {/* 2. 通常テーマ */}
                   {creationMode === "normal" && (
                     <div className="space-y-4 animate-fade-in">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b pb-2">
@@ -989,6 +990,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                     </div>
                   )}
 
+                  {/* 3. アプリ紹介 */}
                   {creationMode === "app" && (
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 rounded-2xl border border-indigo-100/80 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
@@ -1054,7 +1056,200 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                     </div>
                   )}
 
-                  {}
+                  {/* 4. note告知（既存拡散）フォーム */}
+                  {creationMode === "written_note" && (
+                    <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-emerald-50/40 to-teal-50/40 rounded-2xl border border-emerald-100 shadow-inner">
+                      <h2 className="text-lg font-bold flex items-center gap-2 border-b border-emerald-100 pb-2 text-emerald-950">
+                        <span className="bg-emerald-100 text-emerald-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                        すでに公開・執筆したnote記事の情報
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">noteのタイトル</label>
+                          <input
+                            type="text"
+                            value={noteTitle}
+                            onChange={(e) => setNoteTitle(e.target.value)}
+                            placeholder="例: 【保存版】ChatGPTで売れる有料noteを量産する『爆速テンプレート』"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">noteのURL</label>
+                          <input
+                            type="url"
+                            value={noteUrl}
+                            onChange={(e) => setNoteUrl(e.target.value)}
+                            placeholder="例: https://note.com/your_account/n/n12345678"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          記事の概要・熱い想いやターゲット層
+                        </label>
+                        <textarea
+                          value={noteSummary}
+                          onChange={(e) => setNoteSummary(e.target.value)}
+                          placeholder="例: 有料記事を初めて書く人が、構成に迷って手が止まる問題を解決するために書きました。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          読者が得られる未来（提供価値）
+                        </label>
+                        <textarea
+                          value={benefit}
+                          onChange={(e) => setBenefit(e.target.value)}
+                          placeholder="例: 何時間も構成に迷わなくなり、自然と売れる構成が手に入ります。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      {/* 特典設定 */}
+                      <div className="space-y-4 pt-4 border-t border-emerald-100/50">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">🎁 特典アピールの設定</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-indigo-900">
+                              <input
+                                type="checkbox"
+                                checked={hasBonus}
+                                onChange={(e) => setHasBonus(e.target.checked)}
+                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span>🎁 note購入者限定のプレゼント特典がある</span>
+                            </label>
+                            {hasBonus && (
+                              <input
+                                type="text"
+                                value={bonusContent}
+                                onChange={(e) => setBonusContent(e.target.value)}
+                                placeholder="特典の内容（例：そのまま使えるプロンプト10選）"
+                                className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white mt-2"
+                              />
+                            )}
+                          </div>
+
+                          <div className="space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-emerald-900">
+                              <input
+                                type="checkbox"
+                                checked={hasLineBonus}
+                                onChange={(e) => setHasLineBonus(e.target.checked)}
+                                className="rounded text-emerald-600 focus:ring-emerald-500"
+                              />
+                              <span>💬 公式LINE登録特典を一緒にアピールする</span>
+                            </label>
+                            {hasLineBonus && (
+                              <div className="space-y-2 pt-1 mt-2">
+                                <input
+                                  type="text"
+                                  value={lineBonusContent}
+                                  onChange={(e) => setLineBonusContent(e.target.value)}
+                                  placeholder="特典の内容（例：コンビニ痩せ商品リストPDF）"
+                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                />
+                                <input
+                                  type="url"
+                                  value={lineUrl}
+                                  onChange={(e) => setLineUrl(e.target.value)}
+                                  placeholder="LINE公式アカウントの追加URL"
+                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          onClick={generateMarketing}
+                          disabled={loading}
+                          className="bg-emerald-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-emerald-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-base"
+                        >
+                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 text-emerald-200" />}
+                          4大SNS集客告知コピーを一括生成する
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 5. ショート動画集客フォーム */}
+                  {creationMode === "short_video" && (
+                    <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-purple-50/40 to-indigo-50/40 rounded-2xl border border-indigo-150 shadow-inner">
+                      <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
+                        <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                        ショート動画を投稿するアプリ・ツールの情報
+                      </h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">アプリ名</label>
+                          <input
+                            type="text"
+                            value={appName}
+                            onChange={(e) => setAppName(e.target.value)}
+                            placeholder="例: ダイエットみっけ"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">アプリのURL</label>
+                          <input
+                            type="url"
+                            value={appUrl}
+                            onChange={(e) => setAppUrl(e.target.value)}
+                            placeholder="例: https://example.com/app"
+                            className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">アプリの概要</label>
+                        <textarea
+                          value={appSummary}
+                          onChange={(e) => setAppSummary(e.target.value)}
+                          placeholder="例: 写真・音声・バーコード等で簡単に健康管理ができる多機能アプリ。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">解決できる悩み・価値</label>
+                        <textarea
+                          value={appValue}
+                          onChange={(e) => setAppValue(e.target.value)}
+                          placeholder="例: 記録がめんどくさくて三日坊主で終わる悩みを解消し、手軽に習慣化できること。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          onClick={generateMarketing}
+                          disabled={loading}
+                          className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-base"
+                        >
+                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 text-indigo-200" />}
+                          ショート動画・告知SNSコピーを一括生成する
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* テーマ選択エリア（通常・アプリ・体験談） */}
                   {creationMode !== "written_note" && creationMode !== "short_video" && themes.length > 0 && (
                     <div className="space-y-6 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-fade-in">
                       <div>
@@ -1153,7 +1348,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                 </div>
               )}
 
-              {}
+              {/* Step 2 */}
               {activeTab === 2 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
@@ -1209,7 +1404,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                 </div>
               )}
 
-              {}
+              {/* Step 3 */}
               {activeTab === 3 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
@@ -1330,7 +1525,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                 </div>
               )}
 
-              {}
+              {/* Step 4 */}
               {activeTab === 4 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
