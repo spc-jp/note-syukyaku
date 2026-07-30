@@ -172,7 +172,7 @@
       const [error, setError] = useState("");
 
       // 作成モード切り替え 
-      // "experience" = 体験談ストーリー, "app" = アプリ紹介, "normal" = 悩み解決, "written_note" = note告知, "short_video" = ショート動画集客
+      // "experience" = 体験談ストーリー (デフォルト), "app" = アプリ紹介, "normal" = 悩み解決, "written_note" = note告知, "short_video" = ショート動画集客
       const [creationMode, setCreationMode] = useState("experience");
 
       // Step 1 - 体験談ストーリー用
@@ -201,6 +201,9 @@
       const [noteTitle, setNoteTitle] = useState("");
       const [noteUrl, setNoteUrl] = useState("");
       const [noteSummary, setNoteSummary] = useState("");
+
+      // 文字数選択 (1500, 2500, 4000)
+      const [targetWordCount, setTargetWordCount] = useState("2500");
       
       // 有料/無料設定
       const [isPaid, setIsPaid] = useState(true);
@@ -253,7 +256,6 @@
         document.body.removeChild(textArea);
       };
 
-      // 【初期画面に戻すリセット関数】
       const handleReset = () => {
         setActiveTab(1);
         setCreationMode("experience");
@@ -274,6 +276,7 @@
         setNoteTitle("");
         setNoteUrl("");
         setNoteSummary("");
+        setTargetWordCount("2500");
         setIsPaid(true);
         setPrice("980");
         setBenefit("");
@@ -486,6 +489,8 @@
           let systemPrompt = "";
           let prompt = "";
 
+          const wordCountGuide = targetWordCount === "1500" ? "全体で約1500字程度" : targetWordCount === "4000" ? "全体で4000字以上の圧倒的な超長文" : "全体で約2500字程度";
+
           if (creationMode === "experience") {
             const exitUrl = getExitUrl(experienceExit);
             
@@ -516,7 +521,7 @@
 　「ここに実際の言葉を入れてください」と注記する
 
 出力:
-・2000〜2500字の記事本文
+・${wordCountGuide}の記事本文
 ・タイトル案を3つ。すべてに「70歳」または「70歳の私」を含める`;
 
             prompt = `以下の入力欄のデータ、テーマ、目次をもとに、70歳のフリーランスWebマーケター「YoshiBon」として熱い記事本文とタイトル案3つを作成してください。
@@ -558,6 +563,7 @@ ${toc}`;
             }
 
             systemPrompt = `あなたはプロのライターでありマーケターです。
+            - 文字数指定: ${wordCountGuide}
             - 見出しは「大見出し（## 章タイトル）」のみを使用。
             - 人間らしい自然な言葉遣い。
             ${hasLineBonus ? `- 本文の最後に公式LINE登録特典（${lineBonusContent} / URL: ${lineUrl || '公式LINEリンク'}）の案内CTAを設置。` : ''}
@@ -615,6 +621,7 @@ ${toc}`;
 
 【各SNSアルゴリズム最適化ルール】
 1. 𝕏 (Twitter):
+   - 【厳格な文字数ルール】ハッシュタグ5つを含めて「必ず140文字以内（推奨120〜130文字）」にピッタリ収めてください！長すぎる文章は厳禁。
    - 1行目に強烈なフック（ターゲットの悩みの代弁、数字、共感）。
    - 箇条書きや空白行を活用し、高い視覚的可読性。
    - 文末に横並び半角スペース区切りのハッシュタグをちょうど5つ設置。
@@ -827,7 +834,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
             {/* Main Content Area */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
               
-              {/* Step 1 */}
+              {}
               {activeTab === 1 && (
                 <div className="space-y-8 animate-fade-in">
                   
@@ -1273,7 +1280,33 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                       
                       {selectedTheme && (
                         <div className="space-y-6 pt-4 border-t border-indigo-100 animate-fade-in">
-                          <p className="text-sm font-bold text-indigo-900">② 販売形式と提供価値を設定する</p>
+                          <p className="text-sm font-bold text-indigo-900">② 販売形式・文字数・提供価値を設定する</p>
+
+                          {/* 文字数選択 3パターン */}
+                          <div className="space-y-2">
+                            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">📝 記事の目標文字数ボリューム</label>
+                            <div className="grid grid-cols-3 gap-2">
+                              {[
+                                { id: "1500", label: "コンパクト", desc: "約 1,500字" },
+                                { id: "2500", label: "標準", desc: "約 2,500字 (推奨)" },
+                                { id: "4000", label: "ガッツリ長文", desc: "4,000字〜" }
+                              ].map((item) => (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  onClick={() => setTargetWordCount(item.id)}
+                                  className={`p-2.5 rounded-lg border text-center transition-all ${
+                                    targetWordCount === item.id
+                                      ? "bg-indigo-600 border-indigo-600 text-white font-bold shadow-sm"
+                                      : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300"
+                                  }`}
+                                >
+                                  <div className="text-xs">{item.label}</div>
+                                  <div className={`text-[10px] mt-0.5 ${targetWordCount === item.id ? "text-indigo-100" : "text-slate-400"}`}>{item.desc}</div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                           
                           <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 max-w-sm">
                             <button
@@ -1348,7 +1381,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                 </div>
               )}
 
-              {/* Step 2 */}
+              {}
               {activeTab === 2 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
@@ -1372,7 +1405,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                         disabled={loading}
                         className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-lg"
                       >
-                        {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> 本文を執筆中...</> : <><PenTool className="w-5 h-5" /> AIで本文を一気に書き上げる</>}
+                        {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> 本文を執筆中...</> : <><PenTool className="w-5 h-5" /> AIで本文を一気に書き上げる ({targetWordCount}字目標)</>}
                       </button>
 
                       {articleBody && (
@@ -1404,7 +1437,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                 </div>
               )}
 
-              {/* Step 3 */}
+              {}
               {activeTab === 3 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
@@ -1424,7 +1457,54 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
 
                   {marketingData && (
                     <div className="space-y-8 mt-6 animate-fade-in">
-                      {/* Threads */}
+                      
+                      {/* 全SNS一括コピーボタン */}
+                      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-4 rounded-xl flex items-center justify-between shadow-sm">
+                        <div>
+                          <p className="font-bold text-emerald-900 text-sm">📋 全SNS集客投稿を一括コピー</p>
+                          <p className="text-xs text-emerald-700 mt-0.5">生成されたすべてのSNS投稿文（𝕏、Threads、Facebook、Instagram）を1つのテキストとしてコピーします。</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            let fullText = "";
+                            if (creationMode === "short_video") {
+                              fullText = `【🎬 ショート動画用キャプション】\n${(marketingData.video_captions || []).join("\n\n---\n\n")}\n\n` +
+                                `【𝕏 (Twitter) 投稿】\n${(marketingData.x_posts || []).join("\n\n")}\n\n` +
+                                `【f Facebook 投稿】\n${(marketingData.facebook_posts || []).join("\n\n")}`;
+                            } else {
+                              fullText = `【𝕏 (Twitter) 投稿案】\n${marketingData.x_post || ""}\n\n` +
+                                `【@ Threads 3段スレッド投稿案】\n① Hook:\n${marketingData.threads?.[0] || ""}\n\n② Value:\n${marketingData.threads?.[1] || ""}\n\n③ Engagement:\n${marketingData.threads?.[2] || ""}\n\n` +
+                                `【f Facebook 投稿案】\n${marketingData.facebook_post || ""}\n\n` +
+                                `【📷 Instagram キャプション投稿案】\n${marketingData.instagram_post || ""}`;
+                            }
+                            handleCopy(fullText, 'copy-all-sns');
+                          }}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2 flex-shrink-0"
+                        >
+                          {copiedStates['copy-all-sns'] ? <><Check className="w-4 h-4 text-emerald-200" /> 一括コピー完了！</> : <><Copy className="w-4 h-4" /> 全SNS投稿を一括コピー</>}
+                        </button>
+                      </div>
+
+                      {/* X (Twitter) */}
+                      {marketingData.x_post && (
+                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-fade-in">
+                          <div className="bg-black px-4 py-3 flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white text-xs bg-red-600 font-bold px-2 py-0.5 rounded font-mono">140字以内厳守 (タグ込)</span>
+                              <h3 className="font-bold text-white">𝕏 (Twitter) 投稿案</h3>
+                            </div>
+                            <button onClick={() => handleCopy(marketingData.x_post, 'x')} className="text-slate-300 hover:text-white flex items-center gap-1 text-xs">
+                              {copiedStates['x'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
+                            </button>
+                          </div>
+                          <div className="p-4 bg-slate-50">
+                            <textarea readOnly value={marketingData.x_post} rows={5} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent font-sans" />
+                            <div className="text-right text-[11px] text-slate-400 mt-1">文字数: {marketingData.x_post.length}文字</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Threads (① Hook ② Value ③ Engagement 3パート構造) */}
                       {marketingData.threads && marketingData.threads.length >= 3 && (
                         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-fade-in">
                           <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-3 flex justify-between items-center">
@@ -1475,24 +1555,6 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                         </div>
                       )}
 
-                      {/* X (Twitter) */}
-                      {marketingData.x_post && (
-                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-fade-in">
-                          <div className="bg-black px-4 py-3 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <span className="text-white text-xs bg-slate-800 px-2 py-0.5 rounded font-bold font-mono">アルゴリズム最適化</span>
-                              <h3 className="font-bold text-white">𝕏 (Twitter) 投稿案</h3>
-                            </div>
-                            <button onClick={() => handleCopy(marketingData.x_post, 'x')} className="text-slate-300 hover:text-white flex items-center gap-1 text-xs">
-                              {copiedStates['x'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
-                            </button>
-                          </div>
-                          <div className="p-4 bg-slate-50">
-                            <textarea readOnly value={marketingData.x_post} rows={5} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent font-sans" />
-                          </div>
-                        </div>
-                      )}
-
                       {/* Instagram */}
                       {marketingData.instagram_post && (
                         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-fade-in">
@@ -1525,7 +1587,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                 </div>
               )}
 
-              {/* Step 4 */}
+              {}
               {activeTab === 4 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
