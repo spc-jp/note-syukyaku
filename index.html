@@ -310,6 +310,7 @@
             systemPrompt = `あなたは、70歳のフリーランスWebマーケター「YoshiBon」です。
             個人の実体験や挑戦エピソードを基に、読者の共感と好奇心を強く惹きつける「70歳の実体験ストーリー型テーマ案（タイトル案）」を提案してください。
             タイトル案には必ず「70歳」または「70歳の私」を含めてください。
+            【具体性とペルソナルール】「誰に向けた記事か」「〇〇円、作業時間1/10などの具体的な実績や変化の数値」を明確に盛り込んでください。
             単なる報告ではなく、葛藤、失敗からの気づき、人間ドラマが伝わり「読んでみたい」と思わせる魅力的なタイトルにしてください。
             出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
             
@@ -326,6 +327,7 @@
             if (!genre) { setError("ジャンルを入力してください（例：ダイエット、副業、人間関係など）"); setLoading(false); return; }
             systemPrompt = `あなたは優秀なコンテンツマーケターです。
             HARMの法則（Health, Ambition, Relation, Money）を意識し、悩み解決につながるnoteの「HowTo系テーマ案（〜の方法、〜の手順など）」を提案してください。
+            【ペルソナと数値】たった一人に刺さるターゲットペルソナと、具体数値（〇〇日で〇〇kg減、月1万円増等）を散りばめてください。
             出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
             prompt = `ジャンル「${genre}」で、ターゲット層が思わず買いたくなる有料または優良フリーのnoteのテーマ案（タイトル）を5つ作成してください。`;
 
@@ -377,8 +379,8 @@
           const systemPrompt = `あなたは優秀なコピーライターであり、マーケターです。
           提示された有料noteまたはツール紹介のテーマ（タイトル）から、以下の3つを分析し提案してください。
           
-          1. benefit: 読者がそれを手に入れることで『解決できる悩み』と『購入後に得られるポジティブな未来（提供価値・ベネフィット）』を、読者目線で強烈に惹かれる具体的な1〜2文（80文字〜150文字程度）の文章。
-          2. suggested_bonus: note購入者に渡すのに最も最適な「コピペ用プロンプト」や「穴埋めワークシート」など、すぐに実践できる具体的な限定プレゼント特典の内容案。
+          1. benefit: 読者がそれを手に入れることで『解決できる悩み』と『購入後に得られるポジティブな未来（提供価値・ベネフィット）』を、読者目線で強烈に惹かれる具体的な1〜2文（80文字〜150文字程度）の文章。具体的な数値変化も1つ盛り込んでください。
+          2. suggested_bonus: note購入者に渡すのに最も最適な「コピペ用プロンプト」や「穴埋めワークシート」など、作業時間をゼロにする実践テンプレート特典の内容案。
           3. suggested_line_bonus: 公式LINEへの登録（リスト収集）の成約率を最大化させるための、登録時にもらえる魅力的な「無料プレゼント特典」の内容案。
           
           【作成上の絶対ルール】
@@ -449,7 +451,7 @@
 
           if (isPaid) {
             monetizationStrategy = `【有料販売（無料・有料の分割設計）】: この商品は「予定価格：${price}円」で販売予定です。
-            前半の無料公開エリアで読者に強い共感とドキュメンタリー要素を伝え、最高の解決策・ノウハウの手前（はさみマークのペイウォールライン）で有料へと移行する寸止め構成にしてください。`;
+            前半の無料エリアで「WHAT（何が課題か・課題の深掘り）」と「WHY（なぜこの方法が必要なのか・納得感）」を徹底解説し、最高の解決手順「HOW（具体的テンプレートや手順）」の手前（はさみマークのペイウォールライン）で有料へと移行する寸止め構成にしてください。`;
           } else {
             monetizationStrategy = `【無料公開＋外部誘導】: この記事は無料で一般公開されますが、最終的に読者を外部サイト（出口: ${experienceExit || '指定サイト'}）へ自然に誘導する目的があります。`;
           }
@@ -503,6 +505,7 @@
 ・語尾は「〜なんですよね」「〜と思います」など話し言葉に近づける
 ・絵文字は1記事に3〜5個まで
 ・見出しは「■」で始める。6〜8本
+・【ペルソナと数値の黄金法則】「昔の自分のような悩みを持つ会社員・シニア」など特定のたった一人に向けた熱量で書き、時間や金額等の「具体的な数字（例: 〇〇時間短縮、〇〇円達成）」を必ず盛り込む
 
 構成:
 挨拶と、今回のテーマを一言で
@@ -547,16 +550,23 @@ ${toc}`;
               読者が「かつての自分と同じだ」と共感するストーリーを描いてください。
               1. 開発のきっかけ（${appTrigger}）を語る。
               2. 『${appName}』という専用の道具を作った瞬間を書く。
-              3. アプリによって『${appValue}』という劇的変化が得られた経緯を書く。
+              3. アプリによって『${appValue}』という具体的成果（数値含む）が得られた経緯を書く。
               ${appUrl ? `4. アプリのアクセスURL（${appUrl}）を魅力的に配置。` : ''}`;
             }
 
             if (isPaid) {
               monetizationContext = `この記事は「価格：${price}円」の有料noteとして販売されます。
-                 1. 本文の約 35〜45% を「無料部分」として執筆。
-                 2. 無料部分の最後に寸止めセールスコピーを配置。
-                 3. 直後に「✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー」を挿入。
-                 4. その後に「有料エリア」を執筆。`;
+
+                 【無料エリアと有料エリアの黄金境界線ルール】
+                 1. 無料部分（全体の約40%）:
+                    - 「WHAT（何が問題か）」と「WHY（なぜ従来のやり方ではダメなのか/なぜ重要か）」を徹底的に解説。読者に「まさに自分のことだ！なるほど！」という深い共感と知識の納得感（100%の満足）を与えてください。
+                 2. 寸止めセールスコピー＆ブレッド（有料ライン直前）:
+                    - 有料部分に入る直前に、熱いセールスコピーを入れます。
+                    - 必ず「この先で手に入る具体的メリットの箇条書き（ブレッド 5選）」を入れます（例：「・明日からそのまま使える実践プロンプト 3選」「・作業時間を1/10に短縮する完全チェックリスト」など）。
+                    - 購入リスクを排除する言葉（「ランチ1回分の投資で一生モノの知識」「合わなければ全額返金対応」等）と特典のダメ押し（${bonusContent || '限定特典プロンプト付き'}）を設置。
+                    - その直後に必ず独立行で「✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー」を挿入してください。
+                 3. 有料部分（全体の約60%）:
+                    - 「HOW（具体的な作業手順・コピペでそのまま使えるテンプレート・時間短縮の裏ワザ）」に絞り込んで執筆してください。無駄な前置きは不要で、即実践できるツール・手順だけを提供してください。`;
             } else {
               monetizationContext = `この記事は「完全無料」コンテンツです。
                  本文の最後で誘導先 (目的: ${redirectPurpose || "詳細確認"}, URL: ${redirectUrl || appUrl || "サイトリンク"}) への案内文を設置してください。`;
@@ -565,7 +575,7 @@ ${toc}`;
             systemPrompt = `あなたはプロのライターでありマーケターです。
             - 文字数指定: ${wordCountGuide}
             - 見出しは「大見出し（## 章タイトル）」のみを使用。
-            - 人間らしい自然な言葉遣い。
+            - 【ペルソナと数値】たった一人に向けた語りかけ（ペルソナ）と具体的な数値（〇〇%達成、〇〇円等）を本文中に必ず散りばめる。
             ${hasLineBonus ? `- 本文の最後に公式LINE登録特典（${lineBonusContent} / URL: ${lineUrl || '公式LINEリンク'}）の案内CTAを設置。` : ''}
             - 本文の最後にハッシュタグをちょうど7つ出力。
             ${storyPrompt}
@@ -616,20 +626,21 @@ ${toc}`;
             contentSourceText = `【note本文データ】\n${articleBody.substring(0, 3000)}`;
           }
 
+          const targetNoteUrl = noteUrl || appUrl || "https://note.com/";
+
           const systemPrompt = `あなたはSNSマーケティングとコピーライティングの超一流プロです。
-渡されたコンテンツを元に、各SNSのアルゴリズム特性を最大限に活かした集客投稿文・タイトル案を作成してください。
+渡されたコンテンツを元に、各SNSのアルゴリズム特性（シャドウデモート対策含む）を最大限に活かした集客投稿文・タイトル案を作成してください。
 
-【各SNSアルゴリズム最適化ルール】
-1. 𝕏 (Twitter):
-   - 【厳格な文字数ルール】ハッシュタグ5つを含めて「必ず140文字以内（推奨120〜130文字）」にピッタリ収めてください！長すぎる文章は厳禁。
-   - 1行目に強烈なフック（ターゲットの悩みの代弁、数字、共感）。
-   - 箇条書きや空白行を活用し、高い視覚的可読性。
-   - 文末に横並び半角スペース区切りのハッシュタグをちょうど5つ設置。
+【アルゴリズム＆シャドウデモート回避の絶対ルール】
+1. 𝕏 (Twitter) [※ 2段階投稿構造化ルール]:
+   - 外部URLを直接メインツイートに貼るとアルゴリズムでリーチが激減するため、【① 本文（親ツイート）】と【② リプライ用（子ツイート）】に完全分離してください。
+   - 【① 本文（親ツイート）】: URLを一切貼らないでください！ハッシュタグ5つを含めて「必ず140文字以内（推奨120〜130文字）」にピッタリ収めてください。1行目の強力フック、具体的数値、共感・有益情報でバズ・拡散を狙う。文末に半角スペース区切りのハッシュタグ5つ。
+   - 【② リプライ用（子ツイート）】: 「続きや実践テンプレート・詳細はこちらから👇」等の短い誘導コピー ＋ note URL (${targetNoteUrl})。
 
-2. Threads（※【3段スレッド構成】を絶対厳守）:
-   - 1段目: 【① Hook (フック)】スクロールをピタッと止める強烈な1文・悩み共有。
-   - 2段目: 【② Value (価値)】読者がハッとする役立つ情報、本質的な気づき、解決策。
-   - 3段目: 【③ Engagement (交流 + URL)】質問・意見募集・共感を促す問いかけの締め ＋ URL (${noteUrl || appUrl || 'URL'})。
+2. Threads（※【3段スレッド構成 ＆ 外部URLシャドウデモート対策】）:
+   - 1段目: 【① Hook (フック)】スクロールをピタッと止める強烈な1文・悩み共有（URLなし）。
+   - 2段目: 【② Value (価値)】読者がハッとする役立つ情報、本質的な気づき、具体数値（URLなし）。
+   - 3段目: 【③ Engagement (交流 + URL)】質問・意見募集・共感を促す問いかけの締め ＋ URL (${targetNoteUrl})。
 
 3. Facebook（※【改行・段落分け】を絶対厳守）:
    - ベタ書き厳禁！2〜3文ごとに必ず【改行＋空行】を入れて段落分けする。
@@ -654,13 +665,14 @@ ${toc}`;
               properties: {
                 video_captions: { type: "ARRAY", items: { type: "STRING" } },
                 x_posts: { type: "ARRAY", items: { type: "STRING" } },
+                x_replies: { type: "ARRAY", items: { type: "STRING" } },
                 threads_variations: {
                   type: "ARRAY",
                   items: { type: "ARRAY", items: { type: "STRING" } }
                 },
                 facebook_posts: { type: "ARRAY", items: { type: "STRING" } }
               },
-              required: ["video_captions", "x_posts", "threads_variations", "facebook_posts"]
+              required: ["video_captions", "x_posts", "x_replies", "threads_variations", "facebook_posts"]
             };
           } else {
             schema = {
@@ -668,11 +680,12 @@ ${toc}`;
               properties: {
                 titles: { type: "ARRAY", items: { type: "STRING" } },
                 x_post: { type: "STRING" },
+                x_reply: { type: "STRING" },
                 threads: { type: "ARRAY", items: { type: "STRING" } },
                 facebook_post: { type: "STRING" },
                 instagram_post: { type: "STRING" }
               },
-              required: ["titles", "x_post", "threads", "facebook_post", "instagram_post"]
+              required: ["titles", "x_post", "x_reply", "threads", "facebook_post", "instagram_post"]
             };
           }
           
@@ -687,6 +700,7 @@ ${toc}`;
             setMarketingData({
               video_captions: sanitizeStringArray(result?.video_captions || []),
               x_posts: sanitizeStringArray(result?.x_posts || []),
+              x_replies: sanitizeStringArray(result?.x_replies || []),
               threads_variations: Array.isArray(result?.threads_variations) 
                 ? result.threads_variations.map(thread => sanitizeStringArray(thread)) 
                 : [],
@@ -696,6 +710,7 @@ ${toc}`;
             setMarketingData({
               titles: sanitizeStringArray(result?.titles || []),
               x_post: typeof result?.x_post === 'string' ? result.x_post : String(result?.x_post || ''),
+              x_reply: typeof result?.x_reply === 'string' ? result.x_reply : String(result?.x_reply || ''),
               threads: sanitizeStringArray(result?.threads || []),
               facebook_post: typeof result?.facebook_post === 'string' ? result.facebook_post : String(result?.facebook_post || ''),
               instagram_post: typeof result?.instagram_post === 'string' ? result.instagram_post : String(result?.instagram_post || '')
@@ -834,7 +849,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
             {/* Main Content Area */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
               
-              {}
+              {/* STEP 1 */}
               {activeTab === 1 && (
                 <div className="space-y-8 animate-fade-in">
                   
@@ -1381,7 +1396,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                 </div>
               )}
 
-              {}
+              {/* STEP 2 */}
               {activeTab === 2 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
@@ -1437,7 +1452,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                 </div>
               )}
 
-              {}
+              {/* STEP 3 */}
               {activeTab === 3 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
@@ -1462,17 +1477,19 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                       <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-4 rounded-xl flex items-center justify-between shadow-sm">
                         <div>
                           <p className="font-bold text-emerald-900 text-sm">📋 全SNS集客投稿を一括コピー</p>
-                          <p className="text-xs text-emerald-700 mt-0.5">生成されたすべてのSNS投稿文（𝕏、Threads、Facebook、Instagram）を1つのテキストとしてコピーします。</p>
+                          <p className="text-xs text-emerald-700 mt-0.5">生成されたすべてのSNS投稿文（𝕏本文・リプライ、Threads、Facebook、Instagram）を1つのテキストとしてコピーします。</p>
                         </div>
                         <button
                           onClick={() => {
                             let fullText = "";
                             if (creationMode === "short_video") {
                               fullText = `【🎬 ショート動画用キャプション】\n${(marketingData.video_captions || []).join("\n\n---\n\n")}\n\n` +
-                                `【𝕏 (Twitter) 投稿】\n${(marketingData.x_posts || []).join("\n\n")}\n\n` +
+                                `【𝕏 (Twitter) 本文】\n${(marketingData.x_posts || []).join("\n\n")}\n\n` +
+                                `【𝕏 リプライURL誘導】\n${(marketingData.x_replies || []).join("\n\n")}\n\n` +
                                 `【f Facebook 投稿】\n${(marketingData.facebook_posts || []).join("\n\n")}`;
                             } else {
-                              fullText = `【𝕏 (Twitter) 投稿案】\n${marketingData.x_post || ""}\n\n` +
+                              fullText = `【𝕏 (Twitter) 本文（外部URLなし・バズ狙い）】\n${marketingData.x_post || ""}\n\n` +
+                                `【𝕏 (Twitter) リプライ用（note誘導URL）】\n${marketingData.x_reply || ""}\n\n` +
                                 `【@ Threads 3段スレッド投稿案】\n① Hook:\n${marketingData.threads?.[0] || ""}\n\n② Value:\n${marketingData.threads?.[1] || ""}\n\n③ Engagement:\n${marketingData.threads?.[2] || ""}\n\n` +
                                 `【f Facebook 投稿案】\n${marketingData.facebook_post || ""}\n\n` +
                                 `【📷 Instagram キャプション投稿案】\n${marketingData.instagram_post || ""}`;
@@ -1485,21 +1502,42 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                         </button>
                       </div>
 
-                      {/* X (Twitter) */}
+                      {/* X (Twitter) 2段階投稿構造 (①本文 + ②リプライURL) */}
                       {marketingData.x_post && (
                         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-fade-in">
                           <div className="bg-black px-4 py-3 flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                              <span className="text-white text-xs bg-red-600 font-bold px-2 py-0.5 rounded font-mono">140字以内厳守 (タグ込)</span>
+                              <span className="text-white text-xs bg-red-600 font-bold px-2 py-0.5 rounded font-mono">2段階投稿 (シャドウデモート回避)</span>
                               <h3 className="font-bold text-white">𝕏 (Twitter) 投稿案</h3>
                             </div>
-                            <button onClick={() => handleCopy(marketingData.x_post, 'x')} className="text-slate-300 hover:text-white flex items-center gap-1 text-xs">
-                              {copiedStates['x'] ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />} コピー
-                            </button>
                           </div>
-                          <div className="p-4 bg-slate-50">
-                            <textarea readOnly value={marketingData.x_post} rows={5} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent font-sans" />
-                            <div className="text-right text-[11px] text-slate-400 mt-1">文字数: {marketingData.x_post.length}文字</div>
+                          <div className="p-4 space-y-4 bg-slate-50">
+                            
+                            {/* ① 親ツイート本文 */}
+                            <div className="bg-white p-4 rounded-xl border border-slate-200 relative group shadow-sm">
+                              <div className="flex items-center justify-between mb-2 border-b border-slate-100 pb-1.5">
+                                <span className="bg-black text-white text-[10px] px-2 py-0.5 rounded font-bold">① 親ツイート本文 (外部URLなし・140字以内)</span>
+                                <button onClick={() => handleCopy(marketingData.x_post, 'x-main')} className="text-slate-400 hover:text-slate-700 flex items-center gap-1 text-xs">
+                                  {copiedStates['x-main'] ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />} コピー
+                                </button>
+                              </div>
+                              <textarea readOnly value={marketingData.x_post} rows={4} className="w-full text-sm resize-none outline-none text-slate-700 bg-transparent font-sans" />
+                              <div className="text-right text-[11px] text-slate-400 mt-1">文字数: {marketingData.x_post.length}文字</div>
+                            </div>
+
+                            {/* ② 子ツイートリプライ (URL設置) */}
+                            {marketingData.x_reply && (
+                              <div className="bg-indigo-50/60 p-4 rounded-xl border border-indigo-150 relative group shadow-sm">
+                                <div className="flex items-center justify-between mb-2 border-b border-indigo-100 pb-1.5">
+                                  <span className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">② リプライ欄用 (note誘導URL)</span>
+                                  <button onClick={() => handleCopy(marketingData.x_reply, 'x-reply')} className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-xs">
+                                    {copiedStates['x-reply'] ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />} コピー
+                                  </button>
+                                </div>
+                                <textarea readOnly value={marketingData.x_reply} rows={3} className="w-full text-sm resize-none outline-none text-indigo-950 bg-transparent font-sans" />
+                              </div>
+                            )}
+
                           </div>
                         </div>
                       )}
@@ -1517,7 +1555,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                             {[
                               { title: "① Hook（フック: スクロール停止の一文）", text: marketingData.threads[0], color: "bg-pink-500" },
                               { title: "② Value（価値: 役立つ情報や気づき）", text: marketingData.threads[1], color: "bg-purple-500" },
-                              { title: "③ Engagement（交流 + URL: 質問・共感の締め）", text: marketingData.threads[2], color: "bg-indigo-500" }
+                              { title: "③ Engagement（交流 + URL: 質問・共感の締め）", text: marketingValid(marketingData.threads[2]), color: "bg-indigo-500" }
                             ].map((part, idx) => (
                               <div key={idx} className="relative pl-6 animate-fade-in">
                                 {idx !== 2 && <div className="absolute left-[11px] top-8 bottom-[-24px] w-0.5 bg-slate-300"></div>}
@@ -1587,7 +1625,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                 </div>
               )}
 
-              {}
+              {/* STEP 4 */}
               {activeTab === 4 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
@@ -1702,6 +1740,11 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
           </main>
         </div>
       );
+    }
+
+    // 安全ヘルパー関数
+    function marketingValid(val) {
+      return typeof val === 'string' ? val : (val ? JSON.stringify(val) : '');
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
