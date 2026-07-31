@@ -60,7 +60,6 @@
       }
     };
 
-    // --- アイコンコンポーネント ---
     const Icon = ({ children, className }) => (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         {children}
@@ -78,6 +77,7 @@
     const Loader2 = ({className=""}) => <Icon className={`w-4 h-4 animate-spin ${className}`}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></Icon>;
     const ImageIcon = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></Icon>;
     const Download = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></Icon>;
+    const ExternalLink = ({className=""}) => <Icon className={`w-3.5 h-3.5 ${className}`}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></Icon>;
 
     const callGeminiAPI = async (prompt, systemInstruction = "", isJson = false, schema = null) => {
       const url = `${WORKER_URL}/generate-text`;
@@ -171,9 +171,12 @@
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState("");
 
-      // 作成モード切り替え 
-      // "experience" = 体験談ストーリー (デフォルト), "app" = アプリ紹介, "normal" = 悩み解決, "written_note" = note告知, "short_video" = ショート動画集客
+      // 作成モード切り替え
+      // "experience" = 体験談, "research" = リサーチ結果ペースト, "app" = アプリ紹介, "normal" = 悩み解決, "written_note" = note告知, "short_video" = ショート動画
       const [creationMode, setCreationMode] = useState("experience");
+
+      // Geminiリサーチ結果ペースト用
+      const [researchInput, setResearchInput] = useState("");
 
       // Step 1 - 体験談ストーリー用
       const [experienceChallenge, setExperienceChallenge] = useState("");
@@ -259,6 +262,7 @@
       const handleReset = () => {
         setActiveTab(1);
         setCreationMode("experience");
+        setResearchInput("");
         setExperienceChallenge("");
         setExperienceAnxiety("");
         setExperienceTurningPoint("");
@@ -305,48 +309,40 @@
           let systemPrompt = "";
           let prompt = "";
 
-          if (creationMode === "experience") {
+          if (creationMode === "research") {
+            if (!researchInput.trim()) { setError("Geminiのリサーチ結果をテキストエリアに貼り付けてください"); setLoading(false); return; }
+            systemPrompt = `あなたはプロのコンテンツマーケターです。
+渡されたリサーチ結果（ペルソナ、無料構成、有料境界線、有料構成）を読み解き、ターゲット層が思わず買いたくなる魅力的なnoteのタイトル案（テーマ案）を5つ作成してください。
+出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
+            prompt = `以下のリサーチ出力結果から、最も売れるnoteのタイトル案（テーマ案）を5つ作成してください。\n\n【リサーチ出力】\n${researchInput}`;
+
+          } else if (creationMode === "experience") {
             if (!experienceChallenge) { setError("挑戦したことを入力してください"); setLoading(false); return; }
             systemPrompt = `あなたは、70歳のフリーランスWebマーケター「YoshiBon」です。
-            個人の実体験や挑戦エピソードを基に、読者の共感と好奇心を強く惹きつける「70歳の実体験ストーリー型テーマ案（タイトル案）」を提案してください。
-            タイトル案には必ず「70歳」または「70歳の私」を含めてください。
-            【具体性とペルソナルール】「誰に向けた記事か」「〇〇円、作業時間1/10などの具体的な実績や変化の数値」を明確に盛り込んでください。
-            単なる報告ではなく、葛藤、失敗からの気づき、人間ドラマが伝わり「読んでみたい」と思わせる魅力的なタイトルにしてください。
-            出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
+個人の実体験や挑戦エピソードを基に、読者の共感と好奇心を強く惹きつける「70歳の実体験ストーリー型テーマ案（タイトル案）」を提案してください。
+タイトル案には必ず「70歳」または「70歳の私」を含めてください。
+【具体性とペルソナルール】「誰に向けた記事か」「〇〇円、作業時間1/10などの具体的な実績や変化の数値」を明確に盛り込んでください。
+出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
             
-            prompt = `以下の体験談情報に基づき、読者の興味を惹きつけるタイトル案（テーマ案）を5つ作成してください。すべてのタイトル案に「70歳」または「70歳の私」を含めてください。
-            
-            ■ 挑戦したこと: ${experienceChallenge}
-            ■ 最初にあった不安・苦手意識: ${experienceAnxiety || "なし"}
-            ■ 転換点になった出来事・一言: ${experienceTurningPoint || "なし"}
-            ■ 実際にやってみて分かったこと: ${experienceDiscovery || "なし"}
-            ■ 相手からもらった反応・言葉: ${experienceReaction || "なし"}
-            ■ 読者への導線（出口）: ${experienceExit}`;
+            prompt = `以下の体験談情報に基づき、タイトル案を5つ作成してください。
+■ 挑戦したこと: ${experienceChallenge}
+■ 最初にあった不安: ${experienceAnxiety || "なし"}
+■ 転換点: ${experienceTurningPoint || "なし"}
+■ 分かったこと: ${experienceDiscovery || "なし"}
+■ 相手の反応: ${experienceReaction || "なし"}
+■ 出口: ${experienceExit}`;
 
           } else if (creationMode === "normal") {
-            if (!genre) { setError("ジャンルを入力してください（例：ダイエット、副業、人間関係など）"); setLoading(false); return; }
-            systemPrompt = `あなたは優秀なコンテンツマーケターです。
-            HARMの法則（Health, Ambition, Relation, Money）を意識し、悩み解決につながるnoteの「HowTo系テーマ案（〜の方法、〜の手順など）」を提案してください。
-            【ペルソナと数値】たった一人に刺さるターゲットペルソナと、具体数値（〇〇日で〇〇kg減、月1万円増等）を散りばめてください。
-            出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
-            prompt = `ジャンル「${genre}」で、ターゲット層が思わず買いたくなる有料または優良フリーのnoteのテーマ案（タイトル）を5つ作成してください。`;
+            if (!genre) { setError("ジャンルを入力してください"); setLoading(false); return; }
+            systemPrompt = `あなたは優秀なコンテンツマーケターです。HARMの法則を意識し、悩み解決系noteテーマ案を提案してください。
+出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
+            prompt = `ジャンル「${genre}」でターゲット層が買いたくなるテーマ案を5つ作成してください。`;
 
           } else if (creationMode === "app") {
             if (!appName) { setError("アプリ名を入力してください"); setLoading(false); return; }
-            if (!appTrigger) { setError("開発のきっかけを入力してください"); setLoading(false); return; }
-            if (!appValue) { setError("解決できる悩み・価値を入力してください"); setLoading(false); return; }
-            
-            systemPrompt = `あなたは優秀なコンテンツマーケターおよびソフトウェアエヴァンジェリストです。
-            自作アプリや自作ツールをnote記事で販売・紹介し、読者を集客するための感情を揺さぶる「開発ストーリー型・悩み解決系テーマ案（タイトル案）」を提案してください。
-            単なる機能紹介や説明書（マニュアル）的な退屈なタイトルではなく、読者が抱える生々しい「悩み」や「相談ストーリー」にフォーカスし、その解決策として自作アプリが登場するドラマチックで魅力的なタイトルにしてください。
-            出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
-            
-            prompt = `以下のアプリ情報に基づき、購入意欲を高める魅力的なnote記事のタイトル案（テーマ案）を5つ作成してください。
-            
-            ■ アプリ名: ${appName}
-            ■ 開発のきっかけ（悩み・相談等）: ${appTrigger}
-            ■ 解決できる悩み・価値: ${appValue}
-            ${appUrl ? `■ アプリURL: ${appUrl}` : ''}`;
+            systemPrompt = `自作アプリ・ツールの開発ストーリー型テーマ案を提案してください。
+出力はJSON形式で、5つのテーマ案の文字列の配列を返してください。`;
+            prompt = `アプリ名: ${appName}, きっかけ: ${appTrigger}, 解決価値: ${appValue}`;
           }
           
           const schema = { type: "ARRAY", items: { type: "STRING" } };
@@ -376,20 +372,9 @@
         setLineBonusContent("");
         
         try {
-          const systemPrompt = `あなたは優秀なコピーライターであり、マーケターです。
-          提示された有料noteまたはツール紹介のテーマ（タイトル）から、以下の3つを分析し提案してください。
-          
-          1. benefit: 読者がそれを手に入れることで『解決できる悩み』と『購入後に得られるポジティブな未来（提供価値・ベネフィット）』を、読者目線で強烈に惹かれる具体的な1〜2文（80文字〜150文字程度）の文章。具体的な数値変化も1つ盛り込んでください。
-          2. suggested_bonus: note購入者に渡すのに最も最適な「コピペ用プロンプト」や「穴埋めワークシート」など、作業時間をゼロにする実践テンプレート特典の内容案。
-          3. suggested_line_bonus: 公式LINEへの登録（リスト収集）の成約率を最大化させるための、登録時にもらえる魅力的な「無料プレゼント特典」の内容案。
-          
-          【作成上の絶対ルール】
-          - 日本語で自然な書き言葉、読みやすさを最優先してください。
-          - 具体的で魅力的な表現やキーワードを含めてください。`;
-          
-          const prompt = `テーマ（タイトル）: 「${theme}」
-          このnoteをテーマに最適な「提供価値」「限定プレゼント特典」「公式LINE登録特典」のアイデアを1回のJSONコールで提案してください。`;
-          
+          const systemPrompt = `あなたは優秀なコピーライター・マーケターです。
+提示されたテーマから「benefit（提供価値）」「suggested_bonus（購入特典）」「suggested_line_bonus（公式LINE特典）」を分析・提案してください。`;
+          const prompt = `テーマ（タイトル）: 「${theme}」の提供価値と特典アイデアを1回のJSONコールで提案してください。`;
           const schema = {
             type: "OBJECT",
             properties: {
@@ -401,21 +386,13 @@
           };
           
           const result = await callGeminiAPI(prompt, systemPrompt, true, schema);
-          
           if (result) {
             setBenefit(result.benefit || "");
-            if (result.suggested_bonus) {
-              setBonusContent(result.suggested_bonus);
-              setHasBonus(true);
-            }
-            if (result.suggested_line_bonus) {
-              setLineBonusContent(result.suggested_line_bonus);
-              setHasLineBonus(true);
-            }
+            if (result.suggested_bonus) { setBonusContent(result.suggested_bonus); setHasBonus(true); }
+            if (result.suggested_line_bonus) { setLineBonusContent(result.suggested_line_bonus); setHasLineBonus(true); }
           }
         } catch (err) {
-          console.error("トリプル自動提案エラー:", err);
-          setBenefit("");
+          console.error("自動提案エラー:", err);
         } finally {
           setIsSuggestingBenefit(false);
         }
@@ -427,54 +404,33 @@
       };
 
       const generateToc = async () => {
-        if (!selectedTheme) { setError("テーマを選択してください"); return; }
+        if (!selectedTheme && creationMode !== "research") { setError("テーマを選択してください"); return; }
+        if (creationMode === "research" && !selectedTheme) {
+          if (themes.length > 0) setSelectedTheme(themes[0]);
+          else setSelectedTheme("リサーチに基づくnote実践完全ガイド");
+        }
         setLoading(true); setError("");
         try {
-          let monetizationStrategy = "";
-          let targetAppInfo = "";
+          let systemPrompt = "";
+          let prompt = "";
 
-          if (creationMode === "experience") {
-            targetAppInfo = `【体験談データ】:
-            - 挑戦したこと: ${experienceChallenge}
-            - 最初の不安: ${experienceAnxiety}
-            - 転換点・一言: ${experienceTurningPoint}
-            - やってみて分かったこと: ${experienceDiscovery}
-            - 相手の反応: ${experienceReaction}
-            - 出口: ${experienceExit}\n`;
-          } else if (creationMode === "app") {
-            targetAppInfo = `【アプリデータ】:
-            - アプリ名: ${appName}
-            ${appUrl ? `- アプリURL: ${appUrl}` : ''}
-            - 開発のきっかけ: ${appTrigger}
-            - 解決できる価値: ${appValue}\n`;
-          }
+          if (creationMode === "research") {
+            systemPrompt = `あなたはプロのライターおよびマーケターです。
+渡されたリサーチ構成（1.ペルソナ、2.無料記事構成、3.有料境界線、4.有料記事構成）をベースに、6〜8本の大見出し（■で始まる）からなる論理的で魅力的なnote目次案を作成してください。
+目次の中には必ず無料部分と有料部分の切り替えラインが分かる構造を取り入れてください。`;
+            prompt = `【テーマ】: ${selectedTheme || "リサーチに基づくnote構成"}
+\n【リサーチ出力】:\n${researchInput}\n\nこの構成案から全体の目次案を出力してください。`;
 
-          if (isPaid) {
-            monetizationStrategy = `【有料販売（無料・有料の分割設計）】: この商品は「予定価格：${price}円」で販売予定です。
-            前半の無料エリアで「WHAT（何が課題か・課題の深掘り）」と「WHY（なぜこの方法が必要なのか・納得感）」を徹底解説し、最高の解決手順「HOW（具体的テンプレートや手順）」の手前（はさみマークのペイウォールライン）で有料へと移行する寸止め構成にしてください。`;
+          } else if (creationMode === "experience") {
+            systemPrompt = `あなたは、70歳のフリーランスWebマーケター「YoshiBon」です。
+見出しは必ず「■」で始め、6〜8本の大見出しのみでシンプルかつドラマチックな構成にしてください。`;
+            prompt = `テーマ：「${selectedTheme}」\n目次を作成してください。`;
+
           } else {
-            monetizationStrategy = `【無料公開＋外部誘導】: この記事は無料で一般公開されますが、最終的に読者を外部サイト（出口: ${experienceExit || '指定サイト'}）へ自然に誘導する目的があります。`;
+            systemPrompt = `プロのライターとして、読者の悩みを解決する大見出し（## 章タイトル）のみのシンプルな目次を作成してください。`;
+            prompt = `テーマ：「${selectedTheme}」\n目次を作成してください。`;
           }
 
-          const systemPrompt = creationMode === "experience"
-            ? `あなたは、70歳のフリーランスWebマーケター「YoshiBon」です。
-            見出しは必ず「■」で始め、6〜8本の大見出しのみでシンプルかつドラマチックな構成にしてください。
-            構成の流れ:
-            - 挨拶とテーマの一言
-            - ■ 正直に言うと、最初は◯◯だった (不安の告白)
-            - ■ でも、◯◯の一言で変わった (転換点)
-            - ■ 実際にやったこと (地味な作業ほど具体的に)
-            - ■ やってみて分かったこと
-            - ■ 相手からもらった言葉
-            - ■ 70歳の私が、この仕事を続けている理由
-            - ■ 出口`
-            : `あなたはプロのライターおよびマーケターです。読者の共感を呼び、悩みを解決するnoteの目次を作成します。
-            大見出し（章タイトル等の大枠）のみを使って、シンプルで多すぎない論理的な構成にしてください。
-            ${targetAppInfo}
-            ${monetizationStrategy}
-            ${benefit ? `【提供価値】: ${benefit}` : ''}`;
-          
-          const prompt = `テーマ：「${selectedTheme}」\nこのテーマでnoteを書きます。目次を作成してください。`;
           const result = await callGeminiAPI(prompt, systemPrompt, false);
           setToc(result);
         } catch (err) {
@@ -491,24 +447,46 @@
           let systemPrompt = "";
           let prompt = "";
 
-          const wordCountGuide = targetWordCount === "1500" ? "全体で約1500字程度" : targetWordCount === "4000" ? "全体で4000字以上の圧倒的な超長文" : "全体で約2500字程度";
+          const wordCountText = targetWordCount === "1500" ? "全体で約1500字程度" : targetWordCount === "4000" ? "全体で4000字以上の圧倒的な超長文" : "全体で約2500字程度";
 
-          if (creationMode === "experience") {
+          if (creationMode === "research") {
+            systemPrompt = `あなたはプロのコピーライターであり、Webマーケターです。
+渡された【リサーチ情報（1.ペルソナと悩み, 2.無料記事構成, 3.有料切り替え境界線, 4.有料記事構成）】と目次を元に、最高に売れるnote記事本文を執筆してください。
+
+【文字数ボリューム指示】
+- ${wordCountText}で徹底的に詳しく執筆してください。
+
+【無料・有料の分割および寸止め境界線ルール】
+1. 記事の前半（全体の約40%）: リサーチの「1.ペルソナ」「2.無料記事の構成案」を反映し、「WHAT（何が問題か）」と「WHY（なぜ重要か/なぜ従来法は失敗するのか）」を読者が深く共感するように徹底解説してください。
+2. 有料ライン直前: リサーチの「3.【有料切り替えの境界線】」に従い、有料部分で手に入る具体的メリットの箇条書き（ブレッド 5選）を含む熱い寸止めコピーを入れ、その直後に独立行で必ず
+   ✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー
+   を挿入してください。
+3. 記事の後半（全体の約60%）: リサーチの「4.有料記事の構成案」を反映し、「HOW（具体的実践手順・そのまま使えるテンプレート・裏ワザ）」を一切手抜きせず具体的に執筆してください。
+
+【その他の必須ルール】
+- 主語や語尾は読者に語りかける親しみやすい敬体（〜です、〜ます）。
+- 見出しは「■」または「##」を使用。
+- 文末のハッシュタグをちょうど7つ設置。`;
+
+            prompt = `【リサーチ情報】:
+${researchInput}
+
+【テーマ】: ${selectedTheme}
+【設定文字数】: ${targetWordCount}文字目標
+【目次】:
+${toc}`;
+
+          } else if (creationMode === "experience") {
             const exitUrl = getExitUrl(experienceExit);
-            
             systemPrompt = `あなたは、70歳のフリーランスWebマーケター「YoshiBon」として記事を書きます。
 絶対条件:
-・主語は必ず「私」。読者への説教や一般論から始めない
-・冒頭は必ず、自分の不安や苦手意識の告白から入る
-・専門用語を使わない。中学生でも読める言葉にする
-・成功談として書かない。迷った過程を必ず残す
-・語尾は「〜なんですよね」「〜と思います」など話し言葉に近づける
-・絵文字は1記事に3〜5個まで
-・見出しは「■」で始める。6〜8本
-・【ペルソナと数値の黄金法則】「昔の自分のような悩みを持つ会社員・シニア」など特定のたった一人に向けた熱量で書き、時間や金額等の「具体的な数字（例: 〇〇時間短縮、〇〇円達成）」を必ず盛り込む
+・主語は「私」。読者への説教や一般論から始めない。冒頭は自分の不安の告白から。
+・専門用語を使わない。中学生でも読める言葉にする。
+・語尾は話し言葉に近づける。絵文字は3〜5個まで。見出しは「■」で6〜8本。
+・文字数ボリューム: ${wordCountText}。
 
 構成:
-挨拶と、今回のテーマを一言で
+挨拶とテーマ
 ■ 正直に言うと、最初は◯◯だった (不安の告白)
 ■ でも、◯◯の一言で変わった (転換点)
 ■ 実際にやったこと (地味な作業ほど具体的に)
@@ -517,25 +495,17 @@
 ■ 70歳の私が、この仕事を続けている理由
 ■ 出口 (${experienceExit} ${exitUrl ? `URL: ${exitUrl}` : ''})
 
-禁止事項:
-・タイトルに「第◯話」などの連載番号を入れない
-・「いかがでしたか」で締めない
-・入力されていない事実を創作しない。不足部分は【　】で空欄にし、
-　「ここに実際の言葉を入れてください」と注記する
-
 出力:
-・${wordCountGuide}の記事本文
-・タイトル案を3つ。すべてに「70歳」または「70歳の私」を含める`;
+・${wordCountText}の記事本文
+・タイトル案3つ（全てに「70歳」または「70歳の私」を含める）`;
 
-            prompt = `以下の入力欄のデータ、テーマ、目次をもとに、70歳のフリーランスWebマーケター「YoshiBon」として熱い記事本文とタイトル案3つを作成してください。
-
-【入力情報】
+            prompt = `【入力情報】
 ■ 挑戦したこと: ${experienceChallenge || "未入力"}
 ■ 最初の不安: ${experienceAnxiety || "未入力"}
 ■ 転換点: ${experienceTurningPoint || "未入力"}
 ■ 分かったこと: ${experienceDiscovery || "未入力"}
 ■ 相手の反応: ${experienceReaction || "未入力"}
-■ 出口: ${experienceExit} ${exitUrl ? `(末尾に設置する誘導URL: ${exitUrl})` : "(URLは挿入しない)"}
+■ 出口: ${experienceExit} ${exitUrl ? `(末尾URL: ${exitUrl})` : ""}
 
 【テーマ】: ${selectedTheme}
 【目次】:
@@ -543,45 +513,19 @@ ${toc}`;
 
           } else {
             let monetizationContext = "";
-            let storyPrompt = "";
-
-            if (creationMode === "app") {
-              storyPrompt = `【アプリ開発ストーリーテリング指示】
-              読者が「かつての自分と同じだ」と共感するストーリーを描いてください。
-              1. 開発のきっかけ（${appTrigger}）を語る。
-              2. 『${appName}』という専用の道具を作った瞬間を書く。
-              3. アプリによって『${appValue}』という具体的成果（数値含む）が得られた経緯を書く。
-              ${appUrl ? `4. アプリのアクセスURL（${appUrl}）を魅力的に配置。` : ''}`;
-            }
-
             if (isPaid) {
-              monetizationContext = `この記事は「価格：${price}円」の有料noteとして販売されます。
-
-                 【無料エリアと有料エリアの黄金境界線ルール】
-                 1. 無料部分（全体の約40%）:
-                    - 「WHAT（何が問題か）」と「WHY（なぜ従来のやり方ではダメなのか/なぜ重要か）」を徹底的に解説。読者に「まさに自分のことだ！なるほど！」という深い共感と知識の納得感（100%の満足）を与えてください。
-                 2. 寸止めセールスコピー＆ブレッド（有料ライン直前）:
-                    - 有料部分に入る直前に、熱いセールスコピーを入れます。
-                    - 必ず「この先で手に入る具体的メリットの箇条書き（ブレッド 5選）」を入れます（例：「・明日からそのまま使える実践プロンプト 3選」「・作業時間を1/10に短縮する完全チェックリスト」など）。
-                    - 購入リスクを排除する言葉（「ランチ1回分の投資で一生モノの知識」「合わなければ全額返金対応」等）と特典のダメ押し（${bonusContent || '限定特典プロンプト付き'}）を設置。
-                    - その直後に必ず独立行で「✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー」を挿入してください。
-                 3. 有料部分（全体の約60%）:
-                    - 「HOW（具体的な作業手順・コピペでそのまま使えるテンプレート・時間短縮の裏ワザ）」に絞り込んで執筆してください。無駄な前置きは不要で、即実践できるツール・手順だけを提供してください。`;
+              monetizationContext = `この記事は「価格：${price}円」の有料noteです。
+無料部分（約40%）でWHAT/WHYを解説し、寸止めブレッドと「✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー」を挟み、有料部分（約60%）で実践テンプレートやHOWを提示してください。`;
             } else {
-              monetizationContext = `この記事は「完全無料」コンテンツです。
-                 本文の最後で誘導先 (目的: ${redirectPurpose || "詳細確認"}, URL: ${redirectUrl || appUrl || "サイトリンク"}) への案内文を設置してください。`;
+              monetizationContext = `この記事は完全無料です。本文最後で誘導先 (目的: ${redirectPurpose || "詳細"}, URL: ${redirectUrl || appUrl || "サイトリンク"}) への案内を設置してください。`;
             }
 
-            systemPrompt = `あなたはプロのライターでありマーケターです。
-            - 文字数指定: ${wordCountGuide}
-            - 見出しは「大見出し（## 章タイトル）」のみを使用。
-            - 【ペルソナと数値】たった一人に向けた語りかけ（ペルソナ）と具体的な数値（〇〇%達成、〇〇円等）を本文中に必ず散りばめる。
-            ${hasLineBonus ? `- 本文の最後に公式LINE登録特典（${lineBonusContent} / URL: ${lineUrl || '公式LINEリンク'}）の案内CTAを設置。` : ''}
-            - 本文の最後にハッシュタグをちょうど7つ出力。
-            ${storyPrompt}
-            ${monetizationContext}`;
+            systemPrompt = `プロのライターとして、文字数ガイド: ${wordCountText}に従ってnote本文を執筆してください。
+- 見出しは「## 章タイトル」のみを使用。
+- 本文最後にハッシュタグ7つ。
+${monetizationContext}`;
 
-            prompt = `テーマ：${selectedTheme}\n\n目次：\n${toc}`;
+            prompt = `テーマ：${selectedTheme}\n目次：\n${toc}`;
           }
 
           const result = await callGeminiAPI(prompt, systemPrompt, false);
@@ -601,26 +545,22 @@ ${toc}`;
 
           if (creationMode === "written_note") {
             if (!noteTitle) { setError("noteのタイトルを入力してください"); setLoading(false); return; }
-            if (!noteUrl) { setError("noteのURLを入力してください"); setLoading(false); return; }
-            
             contentSourceText = `【執筆済みnoteデータ】
-            - タイトル: ${noteTitle}
-            - URL: ${noteUrl}
-            - 記事の要約・ターゲット層: ${noteSummary || "特になし"}
-            ${benefit ? `- 提供価値: ${benefit}` : ''}
-            ${hasLineBonus ? `- 公式LINE登録特典: ${lineBonusContent} (LINE URL: ${lineUrl || '公式LINEリンク'})` : ''}
-            ${hasBonus ? `- 特典情報: ${bonusContent}` : ''}`;
+- タイトル: ${noteTitle}
+- URL: ${noteUrl}
+- 概要: ${noteSummary || "特になし"}
+${benefit ? `- 提供価値: ${benefit}` : ''}`;
 
           } else if (creationMode === "short_video") {
             if (!appName) { setError("アプリ名を入力してください"); setLoading(false); return; }
-            if (!appSummary) { setError("アプリの概要を入力してください"); setLoading(false); return; }
-            if (!appValue) { setError("解決できる悩み・価値を入力してください"); setLoading(false); return; }
+            contentSourceText = `【ショート動画用アプリデータ】
+- アプリ名: ${appName}
+- アプリURL: ${appUrl}
+- 概要: ${appSummary}
+- 解決価値: ${appValue}`;
 
-            contentSourceText = `【ショート動画告知用アプリデータ】
-            - アプリ名: ${appName}
-            - アプリURL: ${appUrl}
-            - アプリの概要: ${appSummary}
-            - 解決できる悩み・価値: ${appValue}`;
+          } else if (creationMode === "research") {
+            contentSourceText = `【リサーチ結果＆note本文データ】\n${researchInput}\n\n${articleBody.substring(0, 2000)}`;
 
           } else {
             contentSourceText = `【note本文データ】\n${articleBody.substring(0, 3000)}`;
@@ -628,94 +568,40 @@ ${toc}`;
 
           const targetNoteUrl = noteUrl || appUrl || "https://note.com/";
 
-          const systemPrompt = `あなたはSNSマーケティングとコピーライティングの超一流プロです。
-渡されたコンテンツを元に、各SNSのアルゴリズム特性（シャドウデモート対策含む）を最大限に活かした集客投稿文・タイトル案を作成してください。
+          const systemPrompt = `あなたはSNSマーケティングの超一流プロです。渡された情報を元に、各SNSのアルゴリズム（シャドウデモート対策含む）に最適化した投稿を作成してください。
 
-【アルゴリズム＆シャドウデモート回避の絶対ルール】
-1. 𝕏 (Twitter) [※ 2段階投稿構造化ルール]:
-   - 外部URLを直接メインツイートに貼るとアルゴリズムでリーチが激減するため、【① 本文（親ツイート）】と【② リプライ用（子ツイート）】に完全分離してください。
-   - 【① 本文（親ツイート）】: URLを一切貼らないでください！ハッシュタグ5つを含めて「必ず140文字以内（推奨120〜130文字）」にピッタリ収めてください。1行目の強力フック、具体的数値、共感・有益情報でバズ・拡散を狙う。文末に半角スペース区切りのハッシュタグ5つ。
-   - 【② リプライ用（子ツイート）】: 「続きや実践テンプレート・詳細はこちらから👇」等の短い誘導コピー ＋ note URL (${targetNoteUrl})。
+1. 𝕏 (Twitter): 【① 本文（親ツイート・URL一切なし）】は140文字以内（推奨120〜130文字）でハッシュタグ5つを含む。【② リプライ用（子ツイート）】に誘導コピー＋URL (${targetNoteUrl})。
+2. Threads: 3段スレッド形式（① Hook: スクロール停止の強烈一文 → ② Value: 役立つ気づき・具体数値 → ③ Engagement: 質問・共感の締め ＋ URL (${targetNoteUrl})）。
+3. Facebook: 2〜3文ごとに必ず【改行＋空行】を入れて段落分けする。末尾にハッシュタグ5つ。
+4. Instagram: 保存（Save）を促すCTA文言と末尾にハッシュタグ5つ。`;
 
-2. Threads（※【3段スレッド構成 ＆ 外部URLシャドウデモート対策】）:
-   - 1段目: 【① Hook (フック)】スクロールをピタッと止める強烈な1文・悩み共有（URLなし）。
-   - 2段目: 【② Value (価値)】読者がハッとする役立つ情報、本質的な気づき、具体数値（URLなし）。
-   - 3段目: 【③ Engagement (交流 + URL)】質問・意見募集・共感を促す問いかけの締め ＋ URL (${targetNoteUrl})。
-
-3. Facebook（※【改行・段落分け】を絶対厳守）:
-   - ベタ書き厳禁！2〜3文ごとに必ず【改行＋空行】を入れて段落分けする。
-   - ストーリーテリング（背景、葛藤、発見、解決）で滞在時間を伸ばす。
-   - 文末に横並び半角スペース区切りのハッシュタグをちょうど5つ設置。
-
-4. Instagram (キャプション):
-   - 最初の2行で惹きつけるフック。
-   - 保存（Save）を促すCTA文言。
-   - 文末に横並び半角スペース区切りのハッシュタグをちょうど5つ設置。
-
-5. ショート動画台本/キャプション (TikTok / Reels / Shorts):
-   - 冒頭1〜3秒で離脱を防ぐ強力なフック。
-   - 文末に横並び半角スペース区切りのハッシュタグをちょうど5つ設置。`;
-
-          const prompt = `以下のソースデータを元に、各SNSのアルゴリズムに最適化した集客文章を作成してください。\n\n---ソースデータ---\n${contentSourceText}`;
+          const prompt = `以下のソースデータを元にSNS集客投稿を作成してください。\n\n---ソース---\n${contentSourceText}`;
           
-          let schema = null;
-          if (creationMode === "short_video") {
-            schema = {
-              type: "OBJECT",
-              properties: {
-                video_captions: { type: "ARRAY", items: { type: "STRING" } },
-                x_posts: { type: "ARRAY", items: { type: "STRING" } },
-                x_replies: { type: "ARRAY", items: { type: "STRING" } },
-                threads_variations: {
-                  type: "ARRAY",
-                  items: { type: "ARRAY", items: { type: "STRING" } }
-                },
-                facebook_posts: { type: "ARRAY", items: { type: "STRING" } }
-              },
-              required: ["video_captions", "x_posts", "x_replies", "threads_variations", "facebook_posts"]
-            };
-          } else {
-            schema = {
-              type: "OBJECT",
-              properties: {
-                titles: { type: "ARRAY", items: { type: "STRING" } },
-                x_post: { type: "STRING" },
-                x_reply: { type: "STRING" },
-                threads: { type: "ARRAY", items: { type: "STRING" } },
-                facebook_post: { type: "STRING" },
-                instagram_post: { type: "STRING" }
-              },
-              required: ["titles", "x_post", "x_reply", "threads", "facebook_post", "instagram_post"]
-            };
-          }
+          let schema = {
+            type: "OBJECT",
+            properties: {
+              titles: { type: "ARRAY", items: { type: "STRING" } },
+              x_post: { type: "STRING" },
+              x_reply: { type: "STRING" },
+              threads: { type: "ARRAY", items: { type: "STRING" } },
+              facebook_post: { type: "STRING" },
+              instagram_post: { type: "STRING" }
+            },
+            required: ["titles", "x_post", "x_reply", "threads", "facebook_post", "instagram_post"]
+          };
           
           const result = await callGeminiAPI(prompt, systemPrompt, true, schema);
           
-          const sanitizeStringArray = (arr) => {
-            if (!Array.isArray(arr)) return [];
-            return arr.map(item => typeof item === 'string' ? item : JSON.stringify(item));
-          };
+          const sanitizeStringArray = (arr) => Array.isArray(arr) ? arr.map(i => typeof i === 'string' ? i : JSON.stringify(i)) : [];
 
-          if (creationMode === "short_video") {
-            setMarketingData({
-              video_captions: sanitizeStringArray(result?.video_captions || []),
-              x_posts: sanitizeStringArray(result?.x_posts || []),
-              x_replies: sanitizeStringArray(result?.x_replies || []),
-              threads_variations: Array.isArray(result?.threads_variations) 
-                ? result.threads_variations.map(thread => sanitizeStringArray(thread)) 
-                : [],
-              facebook_posts: sanitizeStringArray(result?.facebook_posts || [])
-            });
-          } else {
-            setMarketingData({
-              titles: sanitizeStringArray(result?.titles || []),
-              x_post: typeof result?.x_post === 'string' ? result.x_post : String(result?.x_post || ''),
-              x_reply: typeof result?.x_reply === 'string' ? result.x_reply : String(result?.x_reply || ''),
-              threads: sanitizeStringArray(result?.threads || []),
-              facebook_post: typeof result?.facebook_post === 'string' ? result.facebook_post : String(result?.facebook_post || ''),
-              instagram_post: typeof result?.instagram_post === 'string' ? result.instagram_post : String(result?.instagram_post || '')
-            });
-          }
+          setMarketingData({
+            titles: sanitizeStringArray(result?.titles || []),
+            x_post: String(result?.x_post || ''),
+            x_reply: String(result?.x_reply || ''),
+            threads: sanitizeStringArray(result?.threads || []),
+            facebook_post: String(result?.facebook_post || ''),
+            instagram_post: String(result?.instagram_post || '')
+          });
 
           setActiveTab(3);
 
@@ -728,54 +614,23 @@ ${toc}`;
 
       const generateThumbnailImage = async () => {
         const targetTopic = marketingData?.titles?.[0] || experienceChallenge || appName || noteTitle || selectedTheme || genre;
-        if (!targetTopic) { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
+        if (!targetTopic && creationMode !== "research") { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
         const style = THUMBNAIL_STYLES.find(s => s.id === selectedStyleId);
         
         setIsGeneratingImage(true); setError("");
-        setGeneratedImagePrompt(""); setGeneratedImageUrl("");
         
         try {
-          const contextPayload = {
-            creationMode,
-            targetTopic,
-            experienceChallenge,
-            genre,
-            selectedTheme,
-            appName,
-            benefit,
-            isPaid,
-            aspectRatio
-          };
-
-          const systemPrompt = `You are an elite prompt engineer specializing in Midjourney and Imagen 4.
-Generate a professional, high-conversion image prompt in English for a thumbnail.
-
-Apply these rules:
-1. Specify clear protagonist fitting target audience.
-2. Active motion & emotion.
-3. Show positive outcome/transformation.
-4. Clean modern visual layout.
-5. Leave spacious negative space for headline text depending on ratio (${aspectRatio}).
-
-Output ONLY the raw English prompt text. Do NOT include quotes or markdown formatting.`;
-          
+          const contextPayload = { creationMode, targetTopic: targetTopic || "リサーチおすすめnote", aspectRatio };
+          const systemPrompt = `You are an elite prompt engineer for Midjourney and Imagen 4. Output ONLY the raw English prompt text for a high-converting banner thumbnail.`;
           const textPrompt = `Generate a thumbnail prompt for context: ${JSON.stringify(contextPayload)}. Style: "${style.prompt}"`;
           const imgPrompt = await callGeminiAPI(textPrompt, systemPrompt, false);
           
-          let arParam = "--ar 16:9";
-          if (aspectRatio === "9:16") arParam = "--ar 9:16";
-          if (aspectRatio === "1:1") arParam = "--ar 1:1";
-          
-          let finalPrompt = imgPrompt;
-          if (style.id === 1 || style.id === 2 || style.id === 3) {
-            finalPrompt = "https://cdn.midjourney.com/acb14bb9-7279-47c3-a98f-5d22730251da/0_3.png " + imgPrompt;
-          }
-          finalPrompt = finalPrompt.trim() + ` ${arParam} --stylize 250`;
+          let arParam = aspectRatio === "9:16" ? "--ar 9:16" : aspectRatio === "1:1" ? "--ar 1:1" : "--ar 16:9";
+          let finalPrompt = imgPrompt.trim() + ` ${arParam} --stylize 250`;
 
           setGeneratedImagePrompt(finalPrompt);
           const imageUrl = await generateImageAPI(finalPrompt);
           setGeneratedImageUrl(imageUrl);
-          
         } catch (err) {
           setError(err.message);
         } finally {
@@ -796,8 +651,20 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                 <Sparkles />
                 <h1 className="font-bold text-xl tracking-tight font-sans">売れるnote＆集客メーカー</h1>
               </div>
-              <div className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                AI Content Studio
+              <div className="flex items-center gap-2.5">
+                <a 
+                  href="https://spc-jp.github.io/note-research-mikke/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-full transition-all shadow-sm"
+                  title="別タブでリサーチアプリ（noteリサーチみっけ）を開く"
+                >
+                  <span>🔬 noteリサーチみっけ</span>
+                  <ExternalLink />
+                </a>
+                <div className="hidden sm:block text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
+                  AI Content Studio
+                </div>
               </div>
             </div>
           </header>
@@ -853,7 +720,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
               {activeTab === 1 && (
                 <div className="space-y-8 animate-fade-in">
                   
-                  {/* Mode Selector (5つのモード・スワイプ対応) */}
+                  {/* Mode Selector (6つのモード・スワイプ対応) */}
                   <div className="space-y-2">
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">作成する記事・告知のタイプ</label>
                     <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1 overflow-x-auto no-scrollbar">
@@ -863,6 +730,13 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                         className={`whitespace-nowrap flex-shrink-0 py-3 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "experience" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                       >
                         🌱 体験談ストーリー (自分がやってみた)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setCreationMode("research"); setThemes([]); setSelectedTheme(""); setToc(""); }}
+                        className={`whitespace-nowrap flex-shrink-0 py-3 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "research" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        🔬 リサーチ結果ペースト (Gemini構成案)
                       </button>
                       <button
                         type="button"
@@ -985,7 +859,68 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                     </div>
                   )}
 
-                  {/* 2. 通常テーマ */}
+                  {/* 2. リサーチ結果ペーストモード */}
+                  {creationMode === "research" && (
+                    <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-indigo-50/60 to-purple-50/60 rounded-2xl border border-indigo-150 shadow-inner">
+                      <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
+                        <h2 className="text-lg font-bold flex items-center gap-2 text-indigo-950">
+                          <span className="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                          Gemini等で作成したリサーチ結果を貼り付け
+                        </h2>
+                        <a 
+                          href="https://spc-jp.github.io/note-research-mikke/" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 shadow-sm"
+                        >
+                          <span>🔬 noteリサーチみっけで分析</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                      
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        Geminiで出力された「1. ペルソナ」「2. 無料記事の構成案」「3. 【有料切り替えの境界線】」「4. 有料記事の構成案」のテキストをそのまま下の枠内にコピペしてください。
+                      </p>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          リサーチ出力テキスト（コピペ欄）
+                        </label>
+                        <textarea
+                          value={researchInput}
+                          onChange={(e) => setResearchInput(e.target.value)}
+                          placeholder={`## 1. 読者のペルソナとリアルな悩み
+・30代後半、副業で月5万円稼ぎたいが構成に迷う...
+
+## 2. 無料記事の構成案（共感・理由・ロードマップ）
+・■ なぜ頑張ってもnoteが買われないのか？
+・■ 売れる記事に必要な黄金の「分割ルール」とは？
+
+## 3. 【有料切り替えの境界線】
+・寸止めブレッド5つと「✂️ーーー有料ライン」
+
+## 4. 有料記事の構成案（実践ノウハウ・特典）
+・■ テンプレートをそのままマネするだけの実践手順
+・■ 特典：コピペ用AIプロンプト10選`}
+                          className="w-full p-4 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-mono leading-relaxed"
+                          rows={10}
+                        />
+                      </div>
+
+                      <div className="pt-2 flex justify-end gap-3">
+                        <button
+                          onClick={generateThemes}
+                          disabled={loading}
+                          className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md"
+                        >
+                          {loading && !themes.length ? <Loader2 /> : <Sparkles className="w-4 h-4 text-indigo-200" />}
+                          リサーチ結果から売れるテーマ案・目次を作る
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3. 通常テーマ */}
                   {creationMode === "normal" && (
                     <div className="space-y-4 animate-fade-in">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b pb-2">
@@ -998,7 +933,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                           value={genre}
                           onChange={(e) => setGenre(e.target.value)}
                           placeholder="例: ダイエット、副業、恋愛、子育て"
-                          className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none animate-fade-in"
+                          className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                         />
                         <button
                           onClick={generateThemes}
@@ -1012,7 +947,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                     </div>
                   )}
 
-                  {/* 3. アプリ紹介 */}
+                  {/* 4. アプリ紹介 */}
                   {creationMode === "app" && (
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 rounded-2xl border border-indigo-100/80 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
@@ -1078,7 +1013,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                     </div>
                   )}
 
-                  {/* 4. note告知（既存拡散）フォーム */}
+                  {/* 5. note告知（既存拡散）フォーム */}
                   {creationMode === "written_note" && (
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-emerald-50/40 to-teal-50/40 rounded-2xl border border-emerald-100 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-emerald-100 pb-2 text-emerald-950">
@@ -1205,7 +1140,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                     </div>
                   )}
 
-                  {/* 5. ショート動画集客フォーム */}
+                  {/* 6. ショート動画集客フォーム */}
                   {creationMode === "short_video" && (
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-purple-50/40 to-indigo-50/40 rounded-2xl border border-indigo-150 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
@@ -1271,31 +1206,33 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                     </div>
                   )}
 
-                  {/* テーマ選択エリア（通常・アプリ・体験談） */}
-                  {creationMode !== "written_note" && creationMode !== "short_video" && themes.length > 0 && (
+                  {/* テーマ選択エリア（通常・アプリ・体験談・リサーチ） */}
+                  {creationMode !== "written_note" && creationMode !== "short_video" && (themes.length > 0 || creationMode === "research") && (
                     <div className="space-y-6 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-fade-in">
-                      <div>
-                        <p className="text-sm font-medium text-indigo-800 mb-2">① 生成されたテーマ案 (気になるものを選択してください)</p>
-                        <div className="space-y-2">
-                          {themes.map((theme, i) => (
-                            <label key={i} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedTheme === theme ? 'bg-indigo-50 border-indigo-300' : 'bg-white border-slate-200 hover:border-indigo-200'}`}>
-                              <input
-                                type="radio"
-                                name="theme"
-                                value={theme}
-                                checked={selectedTheme === theme}
-                                onChange={(e) => handleThemeChange(e.target.value)}
-                                className="mt-1 text-indigo-600 focus:ring-indigo-500"
-                              />
-                              <span className="text-slate-700 text-sm font-medium">{theme}</span>
-                            </label>
-                          ))}
+                      {themes.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-indigo-800 mb-2">① 生成されたテーマ案 (気になるものを選択してください)</p>
+                          <div className="space-y-2">
+                            {themes.map((theme, i) => (
+                              <label key={i} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedTheme === theme ? 'bg-indigo-50 border-indigo-300' : 'bg-white border-slate-200 hover:border-indigo-200'}`}>
+                                <input
+                                  type="radio"
+                                  name="theme"
+                                  value={theme}
+                                  checked={selectedTheme === theme}
+                                  onChange={(e) => handleThemeChange(e.target.value)}
+                                  className="mt-1 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <span className="text-slate-700 text-sm font-medium">{theme}</span>
+                              </label>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      )}
                       
-                      {selectedTheme && (
+                      {(selectedTheme || creationMode === "research") && (
                         <div className="space-y-6 pt-4 border-t border-indigo-100 animate-fade-in">
-                          <p className="text-sm font-bold text-indigo-900">② 販売形式・文字数・提供価値を設定する</p>
+                          <p className="text-sm font-bold text-indigo-900">② 販売形式・目標文字数ボリュームを設定する</p>
 
                           {/* 文字数選択 3パターン */}
                           <div className="space-y-2">
@@ -1402,7 +1339,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                   <div className="flex items-center justify-between border-b pb-2">
                     <h2 className="text-lg font-bold flex items-center gap-2">
                       <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
-                      目次から本文をAI執筆 {creationMode === "experience" && "（70歳フリーランスYoshiBonモード）"}
+                      目次から本文をAI執筆 {creationMode === "experience" && "（70歳フリーランスYoshiBonモード）"} {creationMode === "research" && "（Geminiリサーチ解析モード）"}
                     </h2>
                   </div>
                   
@@ -1481,19 +1418,11 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                         </div>
                         <button
                           onClick={() => {
-                            let fullText = "";
-                            if (creationMode === "short_video") {
-                              fullText = `【🎬 ショート動画用キャプション】\n${(marketingData.video_captions || []).join("\n\n---\n\n")}\n\n` +
-                                `【𝕏 (Twitter) 本文】\n${(marketingData.x_posts || []).join("\n\n")}\n\n` +
-                                `【𝕏 リプライURL誘導】\n${(marketingData.x_replies || []).join("\n\n")}\n\n` +
-                                `【f Facebook 投稿】\n${(marketingData.facebook_posts || []).join("\n\n")}`;
-                            } else {
-                              fullText = `【𝕏 (Twitter) 本文（外部URLなし・バズ狙い）】\n${marketingData.x_post || ""}\n\n` +
-                                `【𝕏 (Twitter) リプライ用（note誘導URL）】\n${marketingData.x_reply || ""}\n\n` +
-                                `【@ Threads 3段スレッド投稿案】\n① Hook:\n${marketingData.threads?.[0] || ""}\n\n② Value:\n${marketingData.threads?.[1] || ""}\n\n③ Engagement:\n${marketingData.threads?.[2] || ""}\n\n` +
-                                `【f Facebook 投稿案】\n${marketingData.facebook_post || ""}\n\n` +
-                                `【📷 Instagram キャプション投稿案】\n${marketingData.instagram_post || ""}`;
-                            }
+                            let fullText = `【𝕏 (Twitter) 本文（外部URLなし・バズ狙い）】\n${marketingData.x_post || ""}\n\n` +
+                              `【𝕏 (Twitter) リプライ用（note誘導URL）】\n${marketingData.x_reply || ""}\n\n` +
+                              `【@ Threads 3段スレッド投稿案】\n① Hook:\n${marketingData.threads?.[0] || ""}\n\n② Value:\n${marketingData.threads?.[1] || ""}\n\n③ Engagement:\n${marketingData.threads?.[2] || ""}\n\n` +
+                              `【f Facebook 投稿案】\n${marketingData.facebook_post || ""}\n\n` +
+                              `【📷 Instagram キャプション投稿案】\n${marketingData.instagram_post || ""}`;
                             handleCopy(fullText, 'copy-all-sns');
                           }}
                           className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2 flex-shrink-0"
@@ -1512,8 +1441,6 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                             </div>
                           </div>
                           <div className="p-4 space-y-4 bg-slate-50">
-                            
-                            {/* ① 親ツイート本文 */}
                             <div className="bg-white p-4 rounded-xl border border-slate-200 relative group shadow-sm">
                               <div className="flex items-center justify-between mb-2 border-b border-slate-100 pb-1.5">
                                 <span className="bg-black text-white text-[10px] px-2 py-0.5 rounded font-bold">① 親ツイート本文 (外部URLなし・140字以内)</span>
@@ -1525,7 +1452,6 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                               <div className="text-right text-[11px] text-slate-400 mt-1">文字数: {marketingData.x_post.length}文字</div>
                             </div>
 
-                            {/* ② 子ツイートリプライ (URL設置) */}
                             {marketingData.x_reply && (
                               <div className="bg-indigo-50/60 p-4 rounded-xl border border-indigo-150 relative group shadow-sm">
                                 <div className="flex items-center justify-between mb-2 border-b border-indigo-100 pb-1.5">
@@ -1537,12 +1463,11 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                                 <textarea readOnly value={marketingData.x_reply} rows={3} className="w-full text-sm resize-none outline-none text-indigo-950 bg-transparent font-sans" />
                               </div>
                             )}
-
                           </div>
                         </div>
                       )}
 
-                      {/* Threads (① Hook ② Value ③ Engagement 3パート構造) */}
+                      {/* Threads */}
                       {marketingData.threads && marketingData.threads.length >= 3 && (
                         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-fade-in">
                           <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-3 flex justify-between items-center">
@@ -1555,7 +1480,7 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
                             {[
                               { title: "① Hook（フック: スクロール停止の一文）", text: marketingData.threads[0], color: "bg-pink-500" },
                               { title: "② Value（価値: 役立つ情報や気づき）", text: marketingData.threads[1], color: "bg-purple-500" },
-                              { title: "③ Engagement（交流 + URL: 質問・共感の締め）", text: marketingValid(marketingData.threads[2]), color: "bg-indigo-500" }
+                              { title: "③ Engagement（交流 + URL: 質問・共感の締め）", text: String(marketingData.threads[2] || ''), color: "bg-indigo-500" }
                             ].map((part, idx) => (
                               <div key={idx} className="relative pl-6 animate-fade-in">
                                 {idx !== 2 && <div className="absolute left-[11px] top-8 bottom-[-24px] w-0.5 bg-slate-300"></div>}
@@ -1740,11 +1665,6 @@ Output ONLY the raw English prompt text. Do NOT include quotes or markdown forma
           </main>
         </div>
       );
-    }
-
-    // 安全ヘルパー関数
-    function marketingValid(val) {
-      return typeof val === 'string' ? val : (val ? JSON.stringify(val) : '');
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
