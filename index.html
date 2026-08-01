@@ -262,6 +262,33 @@
         }
       };
 
+      const handleCopyAllMarketing = () => {
+        if (!marketingData) return;
+        let text = "";
+        if (marketingData.titles && marketingData.titles.length > 0) {
+          text += "========================================\n【タイトル・キャッチコピー案】\n========================================\n";
+          text += marketingData.titles.map((t, i) => `${i + 1}. ${t}`).join("\n") + "\n\n";
+        }
+        if (marketingData.x_post) {
+          text += "========================================\n【𝕏 (Twitter)】\n========================================\n";
+          text += "▼ 親ツイート（文字数140字以内・URL無し）\n" + marketingData.x_post + "\n\n";
+          text += "▼ 子ツイート（リプライ欄用・誘導URL付き）\n" + marketingData.x_reply + "\n\n";
+        }
+        if (marketingData.threads && marketingData.threads.length > 0) {
+          text += "========================================\n【Threads (スレッド形式投稿)】\n========================================\n";
+          text += marketingData.threads.map((t, idx) => `[Post ${idx + 1}]\n${t}`).join("\n\n") + "\n\n";
+        }
+        if (marketingData.facebook_post) {
+          text += "========================================\n【Facebook用長文投稿】\n========================================\n";
+          text += marketingData.facebook_post + "\n\n";
+        }
+        if (marketingData.instagram_post) {
+          text += "========================================\n【Instagramキャプション】\n========================================\n";
+          text += marketingData.instagram_post + "\n";
+        }
+        handleCopy(text.trim(), 'copy-all-marketing');
+      };
+
       const handleReset = () => {
         setActiveTab(1);
         setCreationMode("experience");
@@ -1449,11 +1476,24 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
 
               {activeTab === 3 && (
                 <div className="space-y-8 animate-fade-in">
-                  <div className="flex items-center justify-between border-b pb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-3">
                     <h2 className="text-lg font-bold flex items-center gap-2">
                       <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
                       4大SNS集客告知コピー＆タイトル候補
                     </h2>
+                    {marketingData && (
+                      <button
+                        onClick={handleCopyAllMarketing}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition-all shrink-0 cursor-pointer"
+                        title="全SNS投稿文・タイトル案をまとめて一括コピー"
+                      >
+                        {copiedStates['copy-all-marketing'] ? (
+                          <><Check className="w-4 h-4 text-emerald-200" /> 全SNSを一括コピー完了！</>
+                        ) : (
+                          <><Copy className="w-4 h-4" /> 📋 全SNS告知文を一括コピー</>
+                        )}
+                      </button>
+                    )}
                   </div>
 
                   {!marketingData ? (
