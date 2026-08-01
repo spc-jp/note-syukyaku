@@ -312,10 +312,17 @@
           let systemPrompt = "";
           let prompt = "";
 
+          const titleHookRules = `
+【タイトル生成の重要ルール（高成約率のヒットパターン）】
+1. 限定性・希少性フック: 「書店では読めない」「一般検索では出ない」「実務現場から生まれた」といったフックフレーズを適切に付与してください。
+2. 対比型 矢印（→）構文: 5案中最低2案には必ず「【現状の悩み・状態】 → 【AI・ツールの活用】で【得られた成果・変化】」の矢印構文を入れてください。
+3. 超特化ターゲット: 「士業のための」「〇〇に悩む人向け」のようにターゲットをピンポイントで絞り込んでください。`;
+
           if (creationMode === "research") {
             if (!researchInput.trim()) { setError("Geminiのリサーチ結果をテキストエリアに貼り付けてください"); setLoading(false); return; }
             systemPrompt = `あなたはプロのコンテンツマーケターです。
 渡されたリサーチ結果（ペルソナ、無料構成、有料境界線、有料構成）を読み解き、ターゲット層が思わず買いたくなる魅力的なnoteのタイトル案（テーマ案）を5つ作成してください。
+${titleHookRules}
 出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
             prompt = `以下のリサーチ出力結果から、最も売れるnoteのタイトル案（テーマ案）を5つ作成してください。\n\n【リサーチ出力】\n${researchInput}`;
 
@@ -324,6 +331,7 @@
             systemPrompt = `あなたは、70歳のフリーランスWebマーケター「YoshiBon」です。
 個人の実体験や挑戦エピソードを基に、読者の共感と好奇心を強く惹きつける「70歳の実体験ストーリー型テーマ案（タイトル案）」を提案してください。
 タイトル案には必ず「70歳」または「70歳の私」を含めてください。
+${titleHookRules}
 【具体性とペルソナルール】「誰に向けた記事か」「〇〇円、作業時間1/10などの具体的な実績や変化の数値」を明確に盛り込んでください。
 出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
             
@@ -338,12 +346,14 @@
           } else if (creationMode === "normal") {
             if (!genre) { setError("ジャンルを入力してください"); setLoading(false); return; }
             systemPrompt = `あなたは優秀なコンテンツマーケターです。HARMの法則を意識し、悩み解決系noteテーマ案を提案してください。
+${titleHookRules}
 出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
             prompt = `ジャンル「${genre}」でターゲット層が買いたくなるテーマ案を5つ作成してください。`;
 
           } else if (creationMode === "app") {
             if (!appName) { setError("アプリ名を入力してください"); setLoading(false); return; }
             systemPrompt = `自作アプリ・ツールの開発ストーリー型テーマ案を提案してください。
+${titleHookRules}
 出力はJSON形式で、5つのテーマ案の文字列の配列を返してください。`;
             prompt = `アプリ名: ${appName}, きっかけ: ${appTrigger}, 解決価値: ${appValue}`;
           }
@@ -614,6 +624,10 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
 
           const systemPrompt = `あなたはSNSマーケティングの超一流プロです。渡された情報を元に、各SNSのアルゴリズム（シャドウデモート対策含む）に最適化した投稿を作成してください。
 
+【タイトル案生成ルール】
+- 提案するタイトル案（titles）には「対比型矢印構文（〇〇 → 〇〇）」「限定性フック（書店では出ない/現場直伝）」「シリーズ・第〇話風表現」を組み込んでバズる型を作成してください。
+
+【SNS投稿生成ルール】
 1. 𝕏 (Twitter): 【① 本文（親ツイート・URL一切なし）】は140文字以内（推奨120〜130文字）でハッシュタグ5つを含む。【② リプライ用（子ツイート）】に誘導コピー＋URL (${targetNoteUrl})。
 2. Threads: 3段スレッド形式（① Hook: スクロール停止の強烈一文 → ② Value: 役立つ気づき・具体数値 → ③ Engagement: 質問・共感の締め ＋ URL (${targetNoteUrl})）。
 3. Facebook: 2〜3文ごとに必ず【改行＋空行】を入れて段落分けする。末尾にハッシュタグ5つ。
@@ -768,8 +782,6 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
             {/* Main Content Area */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
               
-              {/* STEP 1 */}
-              {}
               {activeTab === 1 && (
                 <div className="space-y-8 animate-fade-in">
                   
@@ -1328,8 +1340,6 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                 </div>
               )}
 
-              {/* STEP 2 */}
-              {}
               {activeTab === 2 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
@@ -1437,8 +1447,6 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                 </div>
               )}
 
-              {/* STEP 3 */}
-              {}
               {activeTab === 3 && (
                 <div className="space-y-8 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
@@ -1466,7 +1474,7 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                       {marketingData.titles && marketingData.titles.length > 0 && (
                         <div className="space-y-3 bg-indigo-50/60 p-5 rounded-2xl border border-indigo-100">
                           <h3 className="font-bold text-indigo-950 text-base flex items-center gap-2">
-                            <span>💡</span> おすすめキャッチコピー・タイトル案
+                            <span>💡</span> おすすめキャッチコピー・タイトル案 (売れたタイトル構造採用)
                           </h3>
                           <div className="space-y-2">
                             {marketingData.titles.map((title, idx) => (
@@ -1610,8 +1618,6 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                 </div>
               )}
 
-              {/* STEP 4 */}
-              {}
               {activeTab === 4 && (
                 <div className="space-y-8 animate-fade-in">
                   <div className="flex items-center justify-between border-b pb-2">
