@@ -15,7 +15,7 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   
-  <!-- Babel (ブラウザ内でJSXをコンパイルするため) -->
+  <!-- Babel -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
@@ -26,7 +26,6 @@
     .animate-fade-in {
       animation: fadeIn 0.4s ease-out forwards;
     }
-    /* スクロールバー非表示（横スワイプ対応） */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -78,6 +77,7 @@
     const ImageIcon = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></Icon>;
     const Download = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></Icon>;
     const ExternalLink = ({className=""}) => <Icon className={`w-3.5 h-3.5 ${className}`}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></Icon>;
+    const Heart = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></Icon>;
 
     const callGeminiAPI = async (prompt, systemInstruction = "", isJson = false, schema = null) => {
       const url = `${WORKER_URL}/generate-text`;
@@ -189,12 +189,19 @@
       const [creationMode, setCreationMode] = useState("experience");
       const [researchInput, setResearchInput] = useState("");
 
+      // 体験談モード用
       const [experienceChallenge, setExperienceChallenge] = useState("");
       const [experienceAnxiety, setExperienceAnxiety] = useState("");
       const [experienceTurningPoint, setExperienceTurningPoint] = useState("");
       const [experienceDiscovery, setExperienceDiscovery] = useState("");
       const [experienceReaction, setExperienceReaction] = useState("");
       const [experienceExit, setExperienceExit] = useState("みっけシリーズ紹介");
+
+      // 無料ファン化記事モード用
+      const [fanFailureStory, setFanFailureStory] = useState("");
+      const [fanPassionPhilosophy, setFanPassionPhilosophy] = useState("");
+      const [fanMessage, setFanMessage] = useState("");
+      const [fanActionGoal, setFanActionGoal] = useState("スキ・コメントを促す");
 
       const [genre, setGenre] = useState("");
       const [themes, setThemes] = useState([]);
@@ -299,6 +306,10 @@
         setExperienceDiscovery("");
         setExperienceReaction("");
         setExperienceExit("みっけシリーズ紹介");
+        setFanFailureStory("");
+        setFanPassionPhilosophy("");
+        setFanMessage("");
+        setFanActionGoal("スキ・コメントを促す");
         setGenre("");
         setThemes([]);
         setSelectedTheme("");
@@ -369,6 +380,19 @@ ${titleHookRules}
 ■ 分かったこと: ${experienceDiscovery || "なし"}
 ■ 相手の反応: ${experienceReaction || "なし"}
 ■ 出口: ${experienceExit}`;
+
+          } else if (creationMode === "fan_building") {
+            if (!fanFailureStory && !fanPassionPhilosophy) { setError("失敗談または活動の理念・想いを入力してください"); setLoading(false); return; }
+            systemPrompt = `あなたはSNS・noteでのブランディングとファン作りのプロです。
+読者が「格好つけない人間味」「裏側の葛藤」「熱い理念」に共感し、思わず応援・フォローしたくなる『無料ファン化ストーリー記事』のタイトル案を5つ作成してください。
+売り込み感を出さず、エピソードや自己開示の魅力を最大化するタイトルにしてください。
+出力はJSON形式で、5つのテーマ案の文字列（タイトルのみ）の配列を返してください。`;
+
+            prompt = `以下のファン化エピソード情報から、読者の心を動かすタイトル案を5つ作成してください。
+■ 過去の失敗談・泥臭い苦労: ${fanFailureStory || "未入力"}
+■ 活動のきっかけ・譲れない理念: ${fanPassionPhilosophy || "未入力"}
+■ 伝えたいメッセージ: ${fanMessage || "未入力"}
+■ 促したいアクション: ${fanActionGoal}`;
 
           } else if (creationMode === "normal") {
             if (!genre) { setError("ジャンルを入力してください"); setLoading(false); return; }
@@ -456,15 +480,25 @@ ${titleHookRules}
 
           if (creationMode === "research") {
             systemPrompt = `あなたはプロのライターおよびマーケターです。
-渡されたリサーチ構成（1.ペルソナ、2.無料記事構成、3.有料境界線、4.有料記事構成）をベースに、6〜8本の大見出し（■で始まる）からなる論理的で魅力的なnote目次案を作成してください。
-目次の中には必ず無料部分と有料部分の切り替えラインが分かる構造を取り入れてください。`;
-            prompt = `【テーマ】: ${selectedTheme || "リサーチに基づくnote構成"}
-\n【リサーチ出力】:\n${researchInput}\n\nこの構成案から全体の目次案を出力してください。`;
+渡されたリサーチ構成（1.ペルソナ、2.無料構成、3.有料境界線、4.有料構成）をベースに、6〜8本の大見出し（■で始まる）からなる論理的で魅力的なnote目次案を作成してください。`;
+            prompt = `【テーマ】: ${selectedTheme || "リサーチに基づくnote構成"}\n【リサーチ出力】:\n${researchInput}\n\n全体の目次案を出力してください。`;
 
           } else if (creationMode === "experience") {
-            systemPrompt = `あなたは、70歳のフリーランスWebマーケター「YoshiBon」です。
-見出しは必ず「■」で始め、6〜8本の大見出しのみでシンプルかつドラマチックな構成にしてください。`;
+            systemPrompt = `あなたは、70歳のフリーランスWebマーケター「YoshiBon」です。見出しは必ず「■」で始め、6〜8本の大見出しのみでシンプルかつドラマチックな構成にしてください。`;
             prompt = `テーマ：「${selectedTheme}」\n目次を作成してください。`;
+
+          } else if (creationMode === "fan_building") {
+            systemPrompt = `あなたはプロのストーリーライターです。
+売り込みを一切せず、読者の共感と信頼を獲得する「ファン化ストーリー記事」の目次案を作成してください。
+大見出し（■で始まる）6〜7本で構成し、
+【過去の泥臭い失敗談 → 転換点・気づき → 譲れない理念・裏側 → 読者へのメッセージ → 感謝とお願い】の流れを汲んでください。`;
+            prompt = `【テーマ】: ${selectedTheme}
+【失敗談】: ${fanFailureStory}
+【理念・裏側】: ${fanPassionPhilosophy}
+【伝えたい想い】: ${fanMessage}
+【行動目標】: ${fanActionGoal}
+
+上記を元に、読者の心を動かすファン化noteの目次を作成してください。`;
 
           } else {
             systemPrompt = `プロのライターとして、読者の悩みを解決する大見出し（## 章タイトル）のみのシンプルな目次を作成してください。`;
@@ -491,53 +525,15 @@ ${titleHookRules}
 
           if (creationMode === "research") {
             systemPrompt = `あなたはプロのコピーライターであり、Webマーケターです。
-渡された【リサーチ情報（1.ペルソナと悩み, 2.無料記事構成, 3.有料切り替え境界線, 4.有料記事構成）】と目次を元に、最高に売れるnote記事本文を執筆してください。
+渡された【リサーチ情報】と目次を元に、最高に売れるnote記事本文を執筆してください。
+【文字数ボリューム指示】: ${wordCountText}。`;
 
-【文字数ボリューム指示】
-- ${wordCountText}で徹底的に詳しく執筆してください。
-
-【無料・有料の分割および寸止め境界線ルール】
-1. 記事の前半（全体の約40%）: リサーチの「1.ペルソナ」「2.無料記事の構成案」を反映し、「WHAT（何が問題か）」と「WHY（なぜ重要か/なぜ従来法は失敗するのか）」を読者が深く共感するように徹底解説してください。
-2. 有料ライン直前: リサーチの「3.【有料切り替えの境界線】」に従い、有料部分で手に入る具体的メリットの箇条書き（ブレッド 5選）を含む熱い寸止めコピーを入れ、その直後に独立行で必ず
-   ✂️ーーー【有料設定ライン（ここから先を有料エリアにしてください）】ーーー
-   を挿入してください。
-3. 記事の後半（全体の約60%）: リサーチの「4.有料記事の構成案」を反映し、「HOW（具体的実践手順・そのまま使えるテンプレート・裏ワザ）」を一切手抜きせず具体的に執筆してください。
-
-【その他の必須ルール】
-- 主語や語尾は読者に語りかける親しみやすい敬体（〜です、〜ます）。
-- 見出しは「■」または「##」を使用。
-- 文末のハッシュタグをちょうど7つ設置。`;
-
-            prompt = `【リサーチ情報】:
-${researchInput}
-
-【テーマ】: ${selectedTheme}
-【設定文字数】: ${targetWordCount}文字目標
-【目次】:
-${toc}`;
+            prompt = `【リサーチ情報】:\n${researchInput}\n\n【テーマ】: ${selectedTheme}\n【設定文字数】: ${targetWordCount}文字目標\n【目次】:\n${toc}`;
 
           } else if (creationMode === "experience") {
             const exitUrl = getExitUrl(experienceExit);
             systemPrompt = `あなたは、70歳のフリーランスWebマーケター「YoshiBon」として記事を書きます。
-絶対条件:
-・主語は「私」。読者への説教や一般論から始めない。冒頭は自分の不安の告白から。
-・専門用語を使わない。中学生でも読める言葉にする。
-・語尾は話し言葉に近づける。絵文字は3〜5個まで。見出しは「■」で6〜8本。
-・文字数ボリューム: ${wordCountText}。
-
-構成:
-挨拶とテーマ
-■ 正直に言うと、最初は◯◯だった (不安の告白)
-■ でも、◯◯の一言で変わった (転換点)
-■ 実際にやったこと (地味な作業ほど具体的に)
-■ やってみて分かったこと
-■ 相手からもらった言葉
-■ 70歳の私が、この仕事を続けている理由
-■ 出口 (${experienceExit} ${exitUrl ? `URL: ${exitUrl}` : ''})
-
-出力:
-・${wordCountText}の記事本文
-・タイトル案3つ（全てに「70歳」または「70歳の私」を含める）`;
+主語は「私」。親しみやすい敬体。${wordCountText}。`;
 
             prompt = `【入力情報】
 ■ 挑戦したこと: ${experienceChallenge || "未入力"}
@@ -548,6 +544,26 @@ ${toc}`;
 ■ 出口: ${experienceExit} ${exitUrl ? `(末尾URL: ${exitUrl})` : ""}
 
 【テーマ】: ${selectedTheme}
+【目次】:\n${toc}`;
+
+          } else if (creationMode === "fan_building") {
+            systemPrompt = `あなたは読者に心から愛されるコンテンツライターです。
+完全無料の「ファン化・信頼構築note」を執筆してください。
+
+【執筆の絶対ルール】
+1. セールスや売り込み文句は一切入れない。
+2. 格好つけず、過去の失敗や泥臭い葛藤を自己開示して人間味を伝える。
+3. なぜ今の活動をしているのか、譲れない理念・思想を情熱的に語る。
+4. 読者への温かい励ましと感謝を伝え、記事の最後で「${fanActionGoal}」を優しく呼びかける。
+5. 文字数ガイド: ${wordCountText}。
+6. 見出しは「■」を使用し、文末にハッシュタグ7つを設置。`;
+
+            prompt = `【テーマ】: ${selectedTheme}
+【過去の失敗・葛藤】: ${fanFailureStory}
+【活動の理念・想い】: ${fanPassionPhilosophy}
+【伝えたいメッセージ】: ${fanMessage}
+【読者に促す行動】: ${fanActionGoal}
+
 【目次】:
 ${toc}`;
 
@@ -639,6 +655,13 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
 - アプリURL: ${appUrl}
 - 概要: ${appSummary}
 - 解決価値: ${appValue}`;
+
+          } else if (creationMode === "fan_building") {
+            contentSourceText = `【無料ファン化noteデータ】
+- タイトル: ${selectedTheme}
+- 失敗談・理念: ${fanFailureStory} ${fanPassionPhilosophy}
+- 呼びかけ: ${fanActionGoal}
+- 本文要約: ${articleBody.substring(0, 1500)}`;
 
           } else if (creationMode === "research") {
             contentSourceText = `【リサーチ結果＆note本文データ】\n${researchInput}\n\n${articleBody.substring(0, 2000)}`;
@@ -821,14 +844,21 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                         onClick={() => { setCreationMode("experience"); setThemes([]); setSelectedTheme(""); setToc(""); }}
                         className={`whitespace-nowrap flex-shrink-0 py-3 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "experience" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                       >
-                        🌱 体験談ストーリー (自分がやってみた)
+                        🌱 体験談ストーリー (やってみた)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setCreationMode("fan_building"); setThemes([]); setSelectedTheme(""); setToc(""); setIsPaid(false); }}
+                        className={`whitespace-nowrap flex-shrink-0 py-3 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "fan_building" ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        ❤️ 無料ファン化 (信頼・共感づくり)
                       </button>
                       <button
                         type="button"
                         onClick={() => { setCreationMode("research"); setThemes([]); setSelectedTheme(""); setToc(""); }}
                         className={`whitespace-nowrap flex-shrink-0 py-3 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${creationMode === "research" ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                       >
-                        🔬 リサーチ結果ペースト (Gemini構成案)
+                        🔬 リサーチ結果ペースト (Gemini案)
                       </button>
                       <button
                         type="button"
@@ -951,7 +981,83 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                     </div>
                   )}
 
-                  {/* 2. リサーチ結果ペーストモード */}
+                  {/* 2. ❤️ 無料ファン化記事モード（新規追加） */}
+                  {creationMode === "fan_building" && (
+                    <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-rose-50/60 to-pink-50/60 rounded-2xl border border-rose-100 shadow-inner">
+                      <h2 className="text-lg font-bold flex items-center gap-2 border-b border-rose-100 pb-2 text-rose-950">
+                        <span className="bg-rose-100 text-rose-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                        信頼・共感を生み出すファン化エピソード情報
+                      </h2>
+                      
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          過去の痛い失敗談・泥臭い苦労エピソード
+                        </label>
+                        <textarea
+                          value={fanFailureStory}
+                          onChange={(e) => setFanFailureStory(e.target.value)}
+                          placeholder="例: 独学で挑戦した初期、全く成果が出ず挫折しかけた時のこと。周囲から『無理だよ』と言われて悔しかった思い出など"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-rose-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          活動のきっかけ・譲れない理念や裏側の想い
+                        </label>
+                        <textarea
+                          value={fanPassionPhilosophy}
+                          onChange={(e) => setFanPassionPhilosophy(e.target.value)}
+                          placeholder="例: 同じように悩む人を一人でも減らしたい。誰でも最初は初心者だからこそ、優しく寄り添う情報発信を続けたい。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-rose-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          読者に一番伝えたい熱いメッセージ・気づき
+                        </label>
+                        <textarea
+                          value={fanMessage}
+                          onChange={(e) => setFanMessage(e.target.value)}
+                          placeholder="例: 何歳からでも、失敗しても、何度でもやり直せる。一歩踏み出す勇気を持ってほしい。"
+                          className="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-rose-500 bg-white"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          記事末尾で読者に促すアクション (目的)
+                        </label>
+                        <select
+                          value={fanActionGoal}
+                          onChange={(e) => setFanActionGoal(e.target.value)}
+                          className="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-rose-500 bg-white cursor-pointer font-medium"
+                        >
+                          <option value="スキ・コメント・感想を促す">❤️ スキ・コメント・感想を促す（エンゲージメント向上）</option>
+                          <option value="noteや𝕏のフォローを促す">👥 noteや𝕏のフォローを促す（フォロワー増加）</option>
+                          <option value="LINE登録・無料特典へ誘導する">📲 公式LINE登録・無料特典へ誘導する（リスト獲得）</option>
+                          <option value="次回予告（シリーズ化）へ繋ぐ">🔖 次回予告・シリーズの続きに期待させる</option>
+                        </select>
+                      </div>
+
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          onClick={generateThemes}
+                          disabled={loading}
+                          className="bg-rose-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-rose-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md"
+                        >
+                          {loading && !themes.length ? <Loader2 /> : <Heart className="w-4 h-4 text-rose-200" />}
+                          無料ファン化記事のテーマ案を出す
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3. リサーチ結果ペーストモード */}
                   {creationMode === "research" && (
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-indigo-50/60 to-purple-50/60 rounded-2xl border border-indigo-150 shadow-inner">
                       <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
@@ -986,14 +1092,7 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
 
 ## 2. 無料記事の構成案（共感・理由・ロードマップ）
 ・■ なぜ頑張ってもnoteが買われないのか？
-・■ 売れる記事に必要な黄金の「分割ルール」とは？
-
-## 3. 【有料切り替えの境界線】
-・寸止めブレッド5つと「✂️ーーー有料ライン」
-
-## 4. 有料記事の構成案（実践ノウハウ・特典）
-・■ テンプレートをそのままマネするだけの実践手順
-・■ 特典：コピペ用AIプロンプト10選`}
+・■ 売れる記事に必要な黄金の「分割ルール」とは？`}
                           className="w-full p-4 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-mono leading-relaxed"
                           rows={10}
                         />
@@ -1012,7 +1111,7 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                     </div>
                   )}
 
-                  {/* 3. 通常テーマ */}
+                  {/* 4. 通常テーマ */}
                   {creationMode === "normal" && (
                     <div className="space-y-4 animate-fade-in">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b pb-2">
@@ -1039,7 +1138,7 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                     </div>
                   )}
 
-                  {/* 4. アプリ紹介 */}
+                  {/* 5. アプリ紹介 */}
                   {creationMode === "app" && (
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 rounded-2xl border border-indigo-100/80 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
@@ -1105,7 +1204,7 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                     </div>
                   )}
 
-                  {/* 5. note告知（既存拡散）フォーム */}
+                  {/* 6. note告知（既存拡散）フォーム */}
                   {creationMode === "written_note" && (
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-emerald-50/40 to-teal-50/40 rounded-2xl border border-emerald-100 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-emerald-100 pb-2 text-emerald-950">
@@ -1175,7 +1274,7 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                     </div>
                   )}
 
-                  {/* 6. ショート動画集客フォーム */}
+                  {/* 7. ショート動画集客フォーム */}
                   {creationMode === "short_video" && (
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-purple-50/40 to-indigo-50/40 rounded-2xl border border-indigo-150 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-indigo-100 pb-2 text-indigo-950">
@@ -1294,22 +1393,24 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                             </div>
                           </div>
                           
-                          <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 max-w-sm">
-                            <button
-                              type="button"
-                              onClick={() => setIsPaid(true)}
-                              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isPaid ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                            >
-                              💰 有料noteとして販売
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setIsPaid(false)}
-                              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isPaid ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                            >
-                              🎁 無料note（外部URL紹介）
-                            </button>
-                          </div>
+                          {creationMode !== "fan_building" && (
+                            <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 max-w-sm">
+                              <button
+                                type="button"
+                                onClick={() => setIsPaid(true)}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isPaid ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                              >
+                                💰 有料noteとして販売
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setIsPaid(false)}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isPaid ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                              >
+                                🎁 無料note（外部URL紹介）
+                              </button>
+                            </div>
+                          )}
 
                           <div className="space-y-2">
                             <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
@@ -1372,7 +1473,7 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                   <div className="flex items-center justify-between border-b pb-2">
                     <h2 className="text-lg font-bold flex items-center gap-2">
                       <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
-                      目次から本文をAI執筆 {creationMode === "experience" && "（70歳フリーランスYoshiBonモード）"} {creationMode === "research" && "（Geminiリサーチ解析モード）"}
+                      目次から本文をAI執筆 {creationMode === "experience" && "（70歳フリーランスYoshiBonモード）"} {creationMode === "fan_building" && "（❤️ 無料ファン化ストーリーモード）"}
                     </h2>
                   </div>
                   
@@ -1409,53 +1510,55 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                           />
 
                           {/* 🎁 購入者限定特典資料の独立一括生成セクション */}
-                          <div className="pt-6 border-t border-slate-200 mt-8 space-y-4">
-                            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-5 rounded-2xl shadow-sm">
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div>
-                                  <h4 className="font-bold text-amber-950 text-base flex items-center gap-2">
-                                    <span>🎁</span> 【有料note購入者限定】特権・特典資料の自動生成
-                                  </h4>
-                                  <p className="text-xs text-amber-800 mt-1 leading-relaxed">
-                                    購入後の満足度を高める「コピペ用実践テンプレート」「AIプロンプト集」「チェックリスト」「ワークシート」を独立した別資料として一瞬で作成します。
-                                  </p>
-                                </div>
-                                <button
-                                  onClick={generateBonusDocument}
-                                  disabled={isGeneratingBonus}
-                                  className="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-50 text-sm"
-                                >
-                                  {isGeneratingBonus ? (
-                                    <><Loader2 className="w-4 h-4 animate-spin" /> 特典資料を作成中...</>
-                                  ) : (
-                                    <><Sparkles className="w-4 h-4 text-amber-200" /> 特典資料を一括生成</>
-                                  )}
-                                </button>
-                              </div>
-
-                              {bonusDocument && (
-                                <div className="mt-5 pt-4 border-t border-amber-200/60 space-y-3 animate-fade-in">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-amber-900 bg-amber-100 px-2.5 py-1 rounded-md">
-                                      完成した特典資料 (配布用・コピペOK)
-                                    </span>
-                                    <button 
-                                      onClick={() => handleCopy(bonusDocument, 'bonus-doc')} 
-                                      className="text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors shadow-sm"
-                                    >
-                                      {copiedStates['bonus-doc'] ? <><Check className="w-3.5 h-3.5 text-amber-200" /> コピー完了！</> : <><Copy className="w-3.5 h-3.5" /> 特典資料をコピー</>}
-                                    </button>
+                          {creationMode !== "fan_building" && (
+                            <div className="pt-6 border-t border-slate-200 mt-8 space-y-4">
+                              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-5 rounded-2xl shadow-sm">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                  <div>
+                                    <h4 className="font-bold text-amber-950 text-base flex items-center gap-2">
+                                      <span>🎁</span> 【有料note購入者限定】特権・特典資料の自動生成
+                                    </h4>
+                                    <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                                      購入後の満足度を高める「コピペ用実践テンプレート」「AIプロンプト集」「チェックリスト」「ワークシート」を独立した別資料として一瞬で作成します。
+                                    </p>
                                   </div>
-                                  <textarea
-                                    value={bonusDocument}
-                                    onChange={(e) => setBonusDocument(e.target.value)}
-                                    rows={12}
-                                    className="w-full p-4 border border-amber-300 rounded-xl text-sm leading-relaxed focus:ring-2 focus:ring-amber-500 outline-none font-sans bg-white text-slate-800"
-                                  />
+                                  <button
+                                    onClick={generateBonusDocument}
+                                    disabled={isGeneratingBonus}
+                                    className="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-50 text-sm"
+                                  >
+                                    {isGeneratingBonus ? (
+                                      <><Loader2 className="w-4 h-4 animate-spin" /> 特典資料を作成中...</>
+                                    ) : (
+                                      <><Sparkles className="w-4 h-4 text-amber-200" /> 特典資料を一括生成</>
+                                    )}
+                                  </button>
                                 </div>
-                              )}
+
+                                {bonusDocument && (
+                                  <div className="mt-5 pt-4 border-t border-amber-200/60 space-y-3 animate-fade-in">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-bold text-amber-900 bg-amber-100 px-2.5 py-1 rounded-md">
+                                        完成した特典資料 (配布用・コピペOK)
+                                      </span>
+                                      <button 
+                                        onClick={() => handleCopy(bonusDocument, 'bonus-doc')} 
+                                        className="text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors shadow-sm"
+                                      >
+                                        {copiedStates['bonus-doc'] ? <><Check className="w-3.5 h-3.5 text-amber-200" /> コピー完了！</> : <><Copy className="w-3.5 h-3.5" /> 特典資料をコピー</>}
+                                      </button>
+                                    </div>
+                                    <textarea
+                                      value={bonusDocument}
+                                      onChange={(e) => setBonusDocument(e.target.value)}
+                                      rows={12}
+                                      className="w-full p-4 border border-amber-300 rounded-xl text-sm leading-relaxed focus:ring-2 focus:ring-amber-500 outline-none font-sans bg-white text-slate-800"
+                                    />
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          )}
 
                           <div className="flex justify-end pt-4 gap-3">
                             <button
