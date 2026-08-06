@@ -64,7 +64,7 @@
         {children}
       </svg>
     );
-    const Sparkles = ({className=""}) => <Icon className={`w-6 h-6 ${className}`}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></Icon>;
+    const Sparkles = ({className=""}) => <Icon className={`w-6 h-6 ${className}`}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1 1.275-1.275L12 3Z"/></Icon>;
     const Copy = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></Icon>;
     const Check = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M20 6 9 17l-5-5"/></Icon>;
     const ChevronRight = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="m9 18 6-6-6-6"/></Icon>;
@@ -78,6 +78,17 @@
     const Download = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></Icon>;
     const ExternalLink = ({className=""}) => <Icon className={`w-3.5 h-3.5 ${className}`}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></Icon>;
     const Heart = ({className=""}) => <Icon className={`w-4 h-4 ${className}`}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></Icon>;
+
+    const HUMANLIKE_WRITING_RULES = `
+【AI構文（AIっぽさ）を徹底的に消す執筆ルール】
+1. AI特有の定番表現を禁止する:
+   - 「いかがでしたでしょうか？」「〜について解説します」「〜が重要です」「〜と言えるでしょう」などの教科書的・評論家的な口調は絶対に使用しない。
+2. 当事者の語り口と心の声（カッコ書き）を混ぜる:
+   - 「（正直、この時は夜も眠れないくらい焦っていました）」「（ぶっちゃけ〜なんです）」などの本音や心の感情描写を本文中に1〜2箇所自然に差し込む。
+3. 不完全さ・泥臭い試行錯誤の描写を残す:
+   - 「何度も設定を間違えて画面の前で頭を抱えました」「手探りで失敗しながら辿り着いた」といったリアルな人間的ドラマを入れる。
+4. 主語を体験者（私・当事者）に寄せる:
+   - 説教くさい「〜しましょう」ではなく、「〜を試したら一気に楽になりました」「〜でした」という体験談スタイルにする。`;
 
     const callGeminiAPI = async (prompt, systemInstruction = "", isJson = false, schema = null) => {
       const url = `${WORKER_URL}/generate-text`;
@@ -168,17 +179,44 @@
       }
     };
 
+    // noteサムネイル集客に特化した「共感・安心・プロ感・インパクト」6大パターン (Midjourney v8基準)
     const THUMBNAIL_STYLES = [
-      { id: 1, name: "[Midjourney] ① プレミアム日本イラスト風（本気推奨）", desc: "やさしい水彩タッチと上品な線画。みっけシリーズ等どんなジャンルにも親しまれる傑作トーン", prompt: "premium Japanese illustration, hand-painted illustration, storybook illustration, soft watercolor texture, elegant line art, clean outlines, subtle brush strokes, warm earthy color palette, friendly corporate mascot style, non-photorealistic, slightly stylized proportions" },
-      { id: 2, name: "[Midjourney] ② スタジオジブリ風ファンタジーイラスト", desc: "温かく優しい感情がダイレクトに伝わる、SNS映え間違いなしのスタジオアニメ風", prompt: "Japanese animated fantasy illustration, whimsical atmosphere, lush natural colors, soft painterly texture, expressive characters, cozy lighting, magical storytelling feeling, hand-painted animation style" },
-      { id: 3, name: "[Midjourney] ③ ピクサー風3Dイラスト", desc: "表情がとても豊かでキャラクター性が強い、YouTubeの動画告知や目に留まるバナー向け", prompt: "stylized 3D animated character, expressive face, cinematic lighting, colorful environment, smooth rendering, playful proportions, premium animated illustration" },
-      { id: 4, name: "[Midjourney] ④ 北欧フラットデザイン風", desc: "アプリの解説やマニュアル紹介に最適。シンプルでおしゃれなミニマルジオメトリック", prompt: "modern Scandinavian illustration, flat design, minimalistic shapes, clean composition, soft pastel colors, friendly business illustration, geometric style" },
-      { id: 5, name: "[Midjourney] ⑤ Apple広告・Airbnb風プレミアムイラスト", desc: "圧倒的な高級感とスタートアップらしい信頼感。洗練されたミニマリズムと上品なカラー", prompt: "premium editorial illustration, Apple-inspired minimalism, clean white background, modern business illustration, elegant composition, soft gradients, sophisticated color palette, premium startup branding" },
-      { id: 6, name: "[Nanobanana] ⑥ シネマティック・ファンタジーイラスト", desc: "深みのある映画調のライティング。1枚目の中世風幻想的アートトーンをシード化", prompt: "Masterpiece high-fidelity digital concept art, beautiful cinematic fantasy scene, atmospheric studio volumetric lighting, deep dual-tone color grading, rich hand-painted details, highly aesthetic fantasy and epic storytelling mood" },
-      { id: 7, name: "[Nanobanana] ⑦ 3Dクレイ＆ミニマリズム", desc: "クリーンで愛らしい粘土フィギュア調。2枚目の温かいトイテイストを完全学習", prompt: "Masterpiece cute 3D claymation style, soft clay model texture, minimalist clean pastel-colored miniature landscape, smooth lighting, adorable toy design, high-contrast octane render, heartwarming clean visual aesthetic" },
-      { id: 8, name: "[Nanobanana] ⑧ YouTubeサムネイル・超目立つネオンポップ", desc: "文字を乗せたときに最もクリックを誘発する、視認性とコントラストを極めた王道ポップ", prompt: "Ultra-high-impact professional YouTube thumbnail style, dramatic high-contrast studio scene, bold glowing outline around a high-fidelity 3D rendered key focal object on the right side, premium dark-to-bright colored textured background, perfect left-side empty space meticulously designed for large title overlay" },
-      { id: 9, name: "[Nanobanana] ⑨ サイバーパンク・フューチャーテック", desc: "ダークトーンの背景に走るネオン。SF、AI、Web3、テック系などで抜群のバズを誘発", prompt: "Stunning cyberpunk digital cityscape, ultra-detailed futuristic tech UI overlay, dark glossy background with glowing neon violet and laser green lights, high-tech holographic interface, octane render, cinematic synthwave vibe" },
-      { id: 10, name: "[Nanobanana] ⑩ 実写・ビジネスインフルエンサー風", desc: "1億画素のプロ機材で撮られたような、高級なオフィス空気感と信頼感を纏う実写クオリティ", prompt: "Premium editorial business portrait photography, shot on Hasselblad 100MP, luxurious modern office workspace background with stunning golden sunlight and soft cinematic f/1.4 lens bokeh, ultra-realistic skin and fabric textures, sophisticated and trustworthy professional atmosphere, minimalist composition with professional empty space" }
+      { 
+        id: 1, 
+        name: "🌸 ①【共感・安心】和風やさしい水彩エディトリアル", 
+        desc: "【一番人気】親しみやすさと温かさで読者を安心させる、手描きの水彩・書籍装丁風スタイル。個人体験談やストーリーに最適。", 
+        prompt: "A heartwarming Japanese watercolor book cover illustration, soft warm pastel lighting, gentle organic line art, cozy approachable character showing a thoughtful relaxed smile, clean spacious pastel background designed for title text overlay, peaceful aesthetic, aesthetic editorial artwork, high emotional resonance --v 6.1" 
+      },
+      { 
+        id: 2, 
+        name: "🏛️ ②【信頼・ビジネス】Apple/Airbnb風 洗練ミニマル", 
+        desc: "【高成約率】圧倒的な高級感と実務信頼感。士業・AI活用・コンサル・高単価コンテンツに威力を発揮するクリアデザイン。", 
+        prompt: "Minimalist modern tech editorial graphic design, Apple-inspired aesthetics, sleek isometric 3D visual metaphor of growth and clarity, clean bright white and soft navy background, soft studio ambient key light, ample empty negative space on the left side for bold typography, professional and highly trustworthy atmosphere --v 6.1" 
+      },
+      { 
+        id: 3, 
+        name: "🎨 ③【インパクト・変化】3Dポップ・クレイアニメ", 
+        desc: "【引き・バズ】立体感と愛らしさでSNSスクロールを完全に止めるスタイル。「Before → After」の変化やノウハウ解説に効果的。", 
+        prompt: "Adorable high-detail 3D claymation scene, soft matte clay texture, vibrant warm tone palette, expressive dynamic character pointing to a glowing lightbulb idea, highly eye-catching octane render visual, clean uncluttered layout with left negative space for banner titles, playful high-impact visual --v 6.1" 
+      },
+      { 
+        id: 4, 
+        name: "✨ ④【情緒・物語】新海誠/ジブリ風 シネマアニメ", 
+        desc: "【ファン化】美しくドラマチックな光の表現。失敗からの逆転劇や熱い理念、ストーリー記事に深い共感を与える。", 
+        prompt: "Masterpiece Japanese animation background key visual, cinematic volumetric sunset sunlight streaming through a window into a tranquil cozy workspace, rich painterly textures, hopeful atmosphere, shallow depth of field, room for prominent header text, beautiful storytelling atmosphere --v 6.1" 
+      },
+      { 
+        id: 5, 
+        name: "📸 ⑤【実写・リアル】単焦点シネマ・ポートレート", 
+        desc: "【本気度・現場感】プロカメラマンが撮影したような美しいボケ感と本物の空気感。リアルな実績報告や士業・個人プロ向け。", 
+        prompt: "Cinematic realistic portrait photography, shot on 85mm f/1.4 lens, Hasselblad color science, professional workspace bathed in warm morning window sunlight, subtle bokeh, trustworthy professional aura, clean minimalist modern composition with wide empty negative space --v 6.1" 
+      },
+      { 
+        id: 6, 
+        name: "💡 ⑥【知性・図解】北欧ミニマル・概念イラスト", 
+        desc: "【理解力・ノウハウ】頭が整理されるシンプルでおしゃれな幾何学・グラフィックアート。解説系やまとめnoteにベストマッチ。", 
+        prompt: "Modern Scandinavian infographic illustration, flat graphic art, clever visual metaphor representing problem solving and breakthrough, elegant muted retro-modern pastel colors, clean geometric layout, spacious background perfectly framed for title overlay --v 6.1" 
+      }
     ];
 
     function App() {
@@ -238,6 +276,13 @@
 
       const [bonusDocument, setBonusDocument] = useState("");
       const [isGeneratingBonus, setIsGeneratingBonus] = useState(false);
+
+      // 人間味手直しチェックリストの状態
+      const [checklistItems, setChecklistItems] = useState({
+        item1: false,
+        item2: false,
+        item3: false,
+      });
 
       const [selectedStyleId, setSelectedStyleId] = useState(1);
       const [aspectRatio, setAspectRatio] = useState("16:9");
@@ -337,6 +382,7 @@
         setArticleBody("");
         setMarketingData(null);
         setBonusDocument("");
+        setChecklistItems({ item1: false, item2: false, item3: false });
         setSelectedStyleId(1);
         setAspectRatio("16:9");
         setGeneratedImagePrompt("");
@@ -526,6 +572,7 @@ ${titleHookRules}
           if (creationMode === "research") {
             systemPrompt = `あなたはプロのコピーライターであり、Webマーケターです。
 渡された【リサーチ情報】と目次を元に、最高に売れるnote記事本文を執筆してください。
+${HUMANLIKE_WRITING_RULES}
 【文字数ボリューム指示】: ${wordCountText}。`;
 
             prompt = `【リサーチ情報】:\n${researchInput}\n\n【テーマ】: ${selectedTheme}\n【設定文字数】: ${targetWordCount}文字目標\n【目次】:\n${toc}`;
@@ -533,7 +580,8 @@ ${titleHookRules}
           } else if (creationMode === "experience") {
             const exitUrl = getExitUrl(experienceExit);
             systemPrompt = `あなたは、70歳のフリーランスWebマーケター「YoshiBon」として記事を書きます。
-主語は「私」。親しみやすい敬体。${wordCountText}。`;
+主語は「私」。親しみやすい敬体。${wordCountText}。
+${HUMANLIKE_WRITING_RULES}`;
 
             prompt = `【入力情報】
 ■ 挑戦したこと: ${experienceChallenge || "未入力"}
@@ -549,6 +597,8 @@ ${titleHookRules}
           } else if (creationMode === "fan_building") {
             systemPrompt = `あなたは読者に心から愛されるコンテンツライターです。
 完全無料の「ファン化・信頼構築note」を執筆してください。
+
+${HUMANLIKE_WRITING_RULES}
 
 【執筆の絶対ルール】
 1. セールスや売り込み文句は一切入れない。
@@ -577,6 +627,7 @@ ${toc}`;
             }
 
             systemPrompt = `プロのライターとして、文字数ガイド: ${wordCountText}に従ってnote本文を執筆してください。
+${HUMANLIKE_WRITING_RULES}
 - 見出しは「## 章タイトル」のみを使用。
 - 本文最後にハッシュタグ7つ。
 ${monetizationContext}`;
@@ -731,18 +782,27 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
       const generateThumbnailImage = async () => {
         const targetTopic = marketingData?.titles?.[0] || experienceChallenge || appName || noteTitle || selectedTheme || genre;
         if (!targetTopic && creationMode !== "research") { setError("画像生成の前に、Step1でテーマを決めてください。"); return; }
-        const style = THUMBNAIL_STYLES.find(s => s.id === selectedStyleId);
+        const style = THUMBNAIL_STYLES.find(s => s.id === selectedStyleId) || THUMBNAIL_STYLES[0];
         
         setIsGeneratingImage(true); setError("");
         
         try {
-          const contextPayload = { creationMode, targetTopic: targetTopic || "リサーチおすすめnote", aspectRatio };
-          const systemPrompt = `You are an elite prompt engineer for Midjourney and Imagen 4. Output ONLY the raw English prompt text for a high-converting banner thumbnail.`;
-          const textPrompt = `Generate a thumbnail prompt for context: ${JSON.stringify(contextPayload)}. Style: "${style.prompt}"`;
+          const contextPayload = { creationMode, targetTopic: targetTopic || "note実践ガイド", aspectRatio };
+          const systemPrompt = `You are a world-class prompt engineer specializing in Midjourney v6.1 and v8 for high-converting note article thumbnails.
+Output ONLY the final English Midjourney prompt string.
+Ensure the prompt includes:
+1. High empathy, sense of security, or professional trust based on the requested style.
+2. A clear empty negative space on the left or top side designated for title text overlays.
+3. Midjourney parameters at the end.`;
+
+          const textPrompt = `Generate a Midjourney prompt for topic: "${targetTopic}". Style baseline: "${style.prompt}". Target aspect ratio: ${aspectRatio}`;
           const imgPrompt = await callGeminiAPI(textPrompt, systemPrompt, false);
           
           let arParam = aspectRatio === "9:16" ? "--ar 9:16" : aspectRatio === "1:1" ? "--ar 1:1" : "--ar 16:9";
-          let finalPrompt = imgPrompt.trim() + ` ${arParam} --stylize 250`;
+          let finalPrompt = imgPrompt.trim();
+          if (!finalPrompt.includes("--ar")) {
+            finalPrompt += ` ${arParam}`;
+          }
 
           setGeneratedImagePrompt(finalPrompt);
           const imageUrl = await generateImageAPI(finalPrompt);
@@ -981,7 +1041,7 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                     </div>
                   )}
 
-                  {/* 2. ❤️ 無料ファン化記事モード（新規追加） */}
+                  {/* 2. ❤️ 無料ファン化記事モード */}
                   {creationMode === "fan_building" && (
                     <div className="space-y-5 animate-fade-in p-5 bg-gradient-to-br from-rose-50/60 to-pink-50/60 rounded-2xl border border-rose-100 shadow-inner">
                       <h2 className="text-lg font-bold flex items-center gap-2 border-b border-rose-100 pb-2 text-rose-950">
@@ -1495,23 +1555,67 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                       </button>
 
                       {articleBody && (
-                        <div className="space-y-3 mt-6 animate-fade-in">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-slate-700">生成された本文</h3>
-                            <button onClick={() => handleCopy(articleBody, 'body')} className="text-slate-500 hover:text-indigo-600 flex items-center gap-1 text-sm bg-slate-100 px-3 py-1 rounded">
-                              {copiedStates['body'] ? <><Check className="text-green-500" /> コピー完了</> : <><Copy /> 全てコピー</>}
-                            </button>
+                        <div className="space-y-6 mt-6 animate-fade-in">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-sm font-bold text-slate-700">生成された本文</h3>
+                              <button onClick={() => handleCopy(articleBody, 'body')} className="text-slate-500 hover:text-indigo-600 flex items-center gap-1 text-sm bg-slate-100 px-3 py-1 rounded">
+                                {copiedStates['body'] ? <><Check className="text-green-500" /> コピー完了</> : <><Copy /> 全てコピー</>}
+                              </button>
+                            </div>
+                            <textarea
+                              value={articleBody}
+                              onChange={(e) => setArticleBody(e.target.value)}
+                              rows={18}
+                              className="w-full p-5 border border-slate-300 rounded-lg text-base leading-relaxed focus:ring-2 focus:ring-indigo-500 outline-none font-sans"
+                            />
                           </div>
-                          <textarea
-                            value={articleBody}
-                            onChange={(e) => setArticleBody(e.target.value)}
-                            rows={18}
-                            className="w-full p-5 border border-slate-300 rounded-lg text-base leading-relaxed focus:ring-2 focus:ring-indigo-500 outline-none font-sans"
-                          />
+
+                          {/* ✍️ AIっぽさを消す「3分手直し」チェックリスト */}
+                          <div className="p-5 bg-gradient-to-r from-emerald-50/80 to-teal-50/80 border border-emerald-200 rounded-2xl space-y-3 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-bold text-emerald-950 text-sm flex items-center gap-2">
+                                <span>✍️</span> AIっぽさを消して「生の実体験」に変える 3分手直しチェックリスト
+                              </h4>
+                              <span className="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">投稿直前推奨</span>
+                            </div>
+                            <p className="text-xs text-emerald-800 leading-relaxed">
+                              noteに貼り付ける前に、下の3点だけ手作業で少し修正するだけで「いいね」や「共感」の集まりやすさが激変します！
+                            </p>
+                            <div className="space-y-2 pt-1">
+                              <label className="flex items-start gap-2.5 text-xs text-slate-700 font-medium cursor-pointer hover:text-emerald-900 select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={checklistItems.item1}
+                                  onChange={(e) => setChecklistItems({ ...checklistItems, item1: e.target.checked })}
+                                  className="mt-0.5 text-emerald-600 focus:ring-emerald-500 rounded"
+                                />
+                                <span>1. 「いかがでしたでしょうか？」や「〜について解説します」などのAI特有の定型句を消したか？</span>
+                              </label>
+                              <label className="flex items-start gap-2.5 text-xs text-slate-700 font-medium cursor-pointer hover:text-emerald-900 select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={checklistItems.item2}
+                                  onChange={(e) => setChecklistItems({ ...checklistItems, item2: e.target.checked })}
+                                  className="mt-0.5 text-emerald-600 focus:ring-emerald-500 rounded"
+                                />
+                                <span>2. 文末の「〜しましょう」「〜と言えます」を2〜3箇所「〜でした」「〜なんです」と自分の言葉に変えたか？</span>
+                              </label>
+                              <label className="flex items-start gap-2.5 text-xs text-slate-700 font-medium cursor-pointer hover:text-emerald-900 select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={checklistItems.item3}
+                                  onChange={(e) => setChecklistItems({ ...checklistItems, item3: e.target.checked })}
+                                  className="mt-0.5 text-emerald-600 focus:ring-emerald-500 rounded"
+                                />
+                                <span>3. `（〜ですよね）` や `（ぶっちゃけ夜も眠れないほど焦りました）` などの心の声・カッコ書きを1〜2個書き足したか？</span>
+                              </label>
+                            </div>
+                          </div>
 
                           {/* 🎁 購入者限定特典資料の独立一括生成セクション */}
                           {creationMode !== "fan_building" && (
-                            <div className="pt-6 border-t border-slate-200 mt-8 space-y-4">
+                            <div className="pt-2 space-y-4">
                               <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-5 rounded-2xl shadow-sm">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                   <div>
@@ -1766,28 +1870,28 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                   <div className="flex items-center justify-between border-b pb-2">
                     <h2 className="text-lg font-bold flex items-center gap-2">
                       <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm">4</span>
-                      AIアイキャッチ・サムネイル画像生成
+                      AIアイキャッチ・サムネイル画像生成 (Midjourney v8最適化)
                     </h2>
                   </div>
 
                   {/* Style Presets */}
                   <div className="space-y-3">
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      スタイルプリセットを選択 (全10種)
+                      note集客に効く 6大サムネイル特化パターン
                     </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
                       {THUMBNAIL_STYLES.map((style) => (
                         <div
                           key={style.id}
                           onClick={() => setSelectedStyleId(style.id)}
-                          className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                          className={`p-4 rounded-xl border cursor-pointer transition-all ${
                             selectedStyleId === style.id
-                              ? "bg-indigo-50 border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm"
+                              ? "bg-indigo-50 border-indigo-500 ring-2 ring-indigo-500/20 shadow-md"
                               : "bg-white border-slate-200 hover:border-indigo-300"
                           }`}
                         >
-                          <div className="font-bold text-sm text-slate-800">{style.name}</div>
-                          <div className="text-xs text-slate-500 mt-1 leading-relaxed">{style.desc}</div>
+                          <div className="font-bold text-sm text-slate-900">{style.name}</div>
+                          <div className="text-xs text-slate-600 mt-1.5 leading-relaxed">{style.desc}</div>
                         </div>
                       ))}
                     </div>
@@ -1825,9 +1929,9 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                     className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 text-base disabled:opacity-50"
                   >
                     {isGeneratingImage ? (
-                      <><Loader2 className="w-5 h-5 animate-spin" /> サムネイル画像を生成中...</>
+                      <><Loader2 className="w-5 h-5 animate-spin" /> 最新プロンプトでサムネイルを生成中...</>
                     ) : (
-                      <><ImageIcon className="w-5 h-5" /> 選択したスタイルでアイキャッチ画像を生成</>
+                      <><ImageIcon className="w-5 h-5" /> 選択したパターンでアイキャッチ画像を生成</>
                     )}
                   </button>
 
@@ -1836,7 +1940,7 @@ ${benefit ? `- 提供価値: ${benefit}` : ''}`;
                     <div className="space-y-2 pt-2 animate-fade-in">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          生成に使用されたMidjourney / Imagenプロンプト
+                          生成された Midjourney プロンプト（コピーしてそのまま使えます）
                         </label>
                         <button
                           onClick={() => handleCopy(generatedImagePrompt, 'img-prompt')}
